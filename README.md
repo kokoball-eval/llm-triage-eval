@@ -393,6 +393,7 @@ uv run pytest -v     # 테스트별 결과 표시
 | `tests/test_pipeline_score.py` | (v1.3) 정답 대조 채점, 가짜 모델로 실행 → 채점 전 과정, (v1.4) v1.4 평가셋 채점과 빈 세트 보고서 |
 | `tests/test_pipeline_gate.py` | (v1.3) 게이트 판정, 비교 조건, 기준 파일 검증 |
 | `tests/test_dataset_v14.py` | (v1.4) v1.4 평가셋이 생성 결과와 같은지, 기존 63건 라벨 무변경, 최종 평가용 25건의 기존 원문 재사용 없음 |
+| `tests/test_dataset_v15.py` | (v1.5) v1.5 평가셋이 생성 결과와 같은지, 변경표 밖 문항·최종 평가용 25건 불변, 허용 답은 뒤에 덧붙이기만, 변경표 값 불일치 거부 |
 | `tests/test_pipeline_screen.py`, `test_pipeline_selection.py` | (v1.4) 후보 사전 점검 판정(판정 불가 HOLD 포함), 모델 교체 판정 규칙 |
 | `tests/test_pipeline_methods.py` | (v1.4) 판정 예시와 평가셋 표현 겹침, Critical 체크리스트 규칙, 기존 방법(M0) 프롬프트 불변 |
 | `tests/test_pipeline_compare.py` | (v1.4) 방법·모델 비교 판정, '예' 편향 체크리스트 탈락, 비교 조건 불일치 거부 |
@@ -545,6 +546,9 @@ llm-triage-eval/
 │   │   └── aether_raid_v13.json  # (v1.3) 현업 기반 평가셋 63건 (정답 라벨, dev/test 분할)
 │   ├── eval_v14/
 │   │   └── aether_raid_v14.json  # (v1.4) 63건 전부 개발용 + 새 최종 평가용 25건(final)
+│   ├── eval_v15/
+│   │   ├── aether_raid_v15.json  # (v1.5) 외부 QA 2명 라벨 일치율 검토를 반영한 개발용 라벨 (최종 평가용은 v1.4 그대로)
+│   │   └── label_changes_v15.json # (v1.5) v1.4 대비 라벨 변경표 (칸마다 이전 값·근거)
 │   └── results/
 │       ├── qwen2.5_7b_verify.json       # 1일차 단일 호출 검증 로그
 │       ├── llama3.1_8b_verify.json      # 1일차 단일 호출 검증 로그
@@ -609,7 +613,8 @@ llm-triage-eval/
 │       └── compare.py            # (v1.4) 방법·모델 비교 판정 (사전 등록 기준)            → triage-compare
 ├── tools/
 │   ├── dataset_v13/              # (v1.3) 평가셋 생성·병합·검증 스크립트 (정답 라벨의 원본)
-│   └── dataset_v14/              # (v1.4) v1.4 평가셋 생성 (63건 개발용 전환 + 최종 평가용 25건 라벨 원본)
+│   ├── dataset_v14/              # (v1.4) v1.4 평가셋 생성 (63건 개발용 전환 + 최종 평가용 25건 라벨 원본)
+│   └── dataset_v15/              # (v1.5) v1.4 평가셋에 라벨 변경표를 적용해 v1.5 평가셋 생성
 └── tests/                        # (v1.1.1) 평가 도구 단위 테스트 (pytest)
     ├── conftest.py               # 공통 준비물 (기준선 로그 로드, 임시 파일)
     ├── test_score_format.py      # 포맷 채점 규칙 R1~R6
@@ -625,6 +630,7 @@ llm-triage-eval/
     ├── test_pipeline_guardrail.py # (v1.3) 후처리 안전장치 규칙, 정답 라벨 미사용, 원본 보존
     ├── test_pipeline_gate.py     # (v1.3) 게이트 판정·비교 조건·기준 파일 검증
     ├── test_dataset_v14.py       # (v1.4) v1.4 평가셋 = 생성 결과, 63건 라벨 무변경, 최종 25건 원문 겹침 없음
+    ├── test_dataset_v15.py       # (v1.5) v1.5 평가셋 = 생성 결과, 변경표 밖·최종 평가용 불변
     ├── test_pipeline_screen.py   # (v1.4) 후보 사전 점검 판정
     ├── test_pipeline_selection.py # (v1.4) 모델 교체 판정 규칙
     ├── test_pipeline_methods.py  # (v1.4) M1 예시·M2 체크리스트 규칙, M0 프롬프트 불변
@@ -671,7 +677,7 @@ v1.3에서 판정 체계를 실무 방식(우선순위·재현 정보·처리)�
 * **판단 정확도가 개발용 문항에 맞춰져 있음** — 같은 방법(M2)에서도 프롬프트를 다듬을 때 쓴 문항은 Critical 누락 1/66, 나머지 문항은 16/54입니다 ([KL-003](docs/issue_log.md#kl-003))
 * **모델 비교가 현재 모델에 맞춘 프롬프트 위에서 이루어짐** — 다른 모델이 불리한 조건일 수 있습니다 ([KL-004](docs/issue_log.md#kl-004))
 * **최종 평가용 세트의 위험 건 문항이 적음** — Critical 10응답(5문항), 사람 확인 2응답(1문항)이라 개발용 결과와 함께 봐야 합니다
-* **정답 라벨의 신뢰도를 아직 재지 않음** — 라벨은 검토를 거쳐 확정했지만, 다른 채점자와의 일치율은 v1.5에서 측정합니다
+* **정답 라벨이 외부 채점자와 충분히 일치하지 않았음 (v1.5)** — 외부 QA 2명의 블라인드 판정이 6칸 모두 사전 등록 기준에 못 미쳤습니다. 불일치를 검토해 라벨 2문항을 바꾸고 허용 답을 넓힌 v1.5 평가셋과 기준서를 만들었으며, v1.4 결과는 v1.5 라벨로 다시 채점합니다 ([검토 기록](docs/dataset/review_log.md))
 * **검증한 도메인이 하나뿐** — 평가 체계는 트리아지 일반을 겨냥하지만, 실제로 검증한 것은 게임 버그 리포트뿐입니다. 판정 기준과 출력 형식의 선택지(`src/triage_eval/pipeline/contract.py`, `prompt.py`)도 게임 도메인에 맞춰져 있습니다 (→ [7절 도메인 확장](#7-고도화-로드맵))
 
 ---

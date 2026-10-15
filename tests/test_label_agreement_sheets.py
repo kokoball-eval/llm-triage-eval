@@ -94,6 +94,8 @@ def test_guide_carries_every_guideline_rule():
     """안내서가 기준서의 판정 규칙 번호를 빠짐없이 옮겼다."""
     codes = set(re.findall(r"\b(?:C-\d+b?|R-\d|F-\d|H-\d+[a-d]?|P-B\d)\b", GUIDELINE.split("## 7.")[0]))
     codes -= {"F-1", "F-2", "F-3"}   # 발생 빈도 규칙은 번호 대신 표와 문장으로 옮겼다 (아래 확인)
+    # 안내서는 판정을 받을 때(기준서 v1.4) 쓴 문서라 고치지 않는다. v1.5 검토에서 새로 생긴 조항은 다음 측정의 안내서에 넣는다.
+    codes -= {"R-6"}
     missing = sorted(c for c in codes if c not in GUIDE)
     assert not missing, missing
     for phrase in ("드문 조건에서만 생기고 우회 경로가 있는 무료 보상 손실", "적힌", "조건문"):

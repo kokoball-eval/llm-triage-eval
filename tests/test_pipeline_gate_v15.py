@@ -1,8 +1,7 @@
 """채택 구성 회귀 게이트 v1.5 라벨(gate_v15.py, triage-gate --dataset v15) 테스트.
 
-계획 report/regression_gate_v15_plan.md. 실제 실행 기록으로 한 재현 점검(G1·G2)은 계획 커밋 뒤 도구로 실행하고,
-그 결과를 회귀 테스트로 고정한다(계획 §5). 이 파일은 기준 파일, 안전장치, v1.4 게이트 불변(G3),
-가짜 모델 실행 기록으로 한 판정만 다룬다.
+계획 report/regression_gate_v15_plan.md. 기준 파일, 안전장치, v1.4 게이트 불변(G3), 가짜 모델 실행 기록으로 한 판정을 다루고,
+실제 실행 기록으로 한 재현 점검(G0·G1·G2)은 계획 커밋 뒤 도구로 실행한 결과를 파일 끝의 회귀 테스트로 고정했다(계획 §5).
 """
 
 import copy
@@ -192,3 +191,34 @@ def test_identical_runs_have_no_response_difference(monkeypatch, tmp_path, crit)
     base, cand = fake_runs(monkeypatch, tmp_path), fake_runs(monkeypatch, tmp_path)
     ident = g15.response_identity(base, cand, fake_crit(crit))
     assert all(v["different"] == 0 and v["compared"] == 126 for v in ident.values())
+
+
+# ── 실제 실행 기록으로 고정한 판정 (계획 §5 G1·G2, 재현 점검 실행 뒤 고정) ──
+
+def test_g1_reproduction_passes_with_no_change(crit):
+    """G1 — v1.4 게이트 PASS 후보는 v1.5 정답표로도 PASS, 문항 단위 변화 0, 기준선과 6칸 값이 같다(G0)."""
+    assert g15.run(GATE_V14_CANDIDATES, crit, write=False) == 0
+    base = [ROOT / p for p in crit["meta"]["baseline"]]
+    ident = g15.response_identity(base, GATE_V14_CANDIDATES, crit)
+    assert all(v["compared"] == 126 and v["different"] == 0 for v in ident.values())
+
+
+def test_g2_m0_fails_on_x1(monkeypatch, tmp_path, crit):
+    """G2 — 체크리스트를 뺀 M0은 seed 3개 모두 X-1 Critical 미상신 증가로 FAIL."""
+    monkeypatch.setattr(g15, "RESULT_JSON", tmp_path / "gate.json")
+    monkeypatch.setattr(g15, "REPORT", tmp_path / "gate.md")
+    assert g15.run(M0, crit, write=True) == 1
+    result = json.loads((tmp_path / "gate.json").read_text(encoding="utf-8"))
+    for s in result["per_seed"]:
+        x1 = next(c for c in s["checks"] if c["name"] == "X-1 Critical 미상신")
+        assert not x1["passed"] and x1["candidate"] > x1["baseline"]
+
+
+def test_committed_gate_result_is_reproduced(monkeypatch, tmp_path, crit):
+    """커밋된 v1.5 게이트 판정 결과·보고서를 같은 입력으로 다시 만들면 똑같다."""
+    monkeypatch.setattr(g15, "RESULT_JSON", tmp_path / "gate.json")
+    monkeypatch.setattr(g15, "REPORT", tmp_path / "gate.md")
+    assert g15.run(GATE_V14_CANDIDATES, crit, write=True) == 0
+    assert json.loads((tmp_path / "gate.json").read_text(encoding="utf-8")) == g.load_log(ROOT / "data/results/v15/gate_result_v15.json")
+    committed = (ROOT / "report/regression_gate_v15.md").read_text(encoding="utf-8").replace("\r\n", "\n")
+    assert (tmp_path / "gate.md").read_text(encoding="utf-8").replace("\r\n", "\n") == committed

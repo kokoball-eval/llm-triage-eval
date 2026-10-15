@@ -8,6 +8,15 @@
 
 ## [Unreleased]
 
+### 추가 (v1.5 3단계: 채택 구성 회귀 게이트 v1.5 라벨 전환 재현 점검 결과)
+- `data/results/v15/gate_result_v15.json`, `report/regression_gate_v15.md` — 계획(`report/regression_gate_v15_plan.md`) §5 점검이 모두 사전 등록한 기대와 같음
+  - G0 응답 동일성: G1 후보 실행과 기준선의 6칸 값이 다른 응답 seed 1·11·21 모두 0/126
+  - G1 기준선 재현: v1.4 게이트 PASS 후보 3개 → **PASS**(seed 3개 모두), 칸별 문항 단위 변화 0
+  - G2 회귀 탐지: 체크리스트를 뺀 M0 → **FAIL**(seed 3개 모두). X-1 Critical 미상신 4→6·4→6·6→9, 처리 정답 2~3응답 하락, seed 21 우선순위 정답 77→74 (판정 결과 파일은 남기지 않음)
+  - G3 v1.4 게이트 불변: v1.4 게이트 테스트 통과, 커밋된 v1.4 판정 결과·보고서 변경 없음
+- 이후 회귀 게이트 명령은 `uv run triage-gate --dataset v15`(기준 `gate_criteria_v15.toml`, 기준선은 v1.4 게이트와 같은 실행 기록, 후보 실행은 `--dataset v14`로 생성). v1.4 게이트(`--dataset v14`)는 동결하고 이전 판정의 재현용으로만 남김
+- 테스트 456 → 460개 (G1 PASS·문항 변화 0·응답 동일성 0, G2 seed 3개 모두 X-1 증가로 FAIL, 커밋된 v1.5 게이트 판정 결과·보고서 재현, 새 JSON 파싱)
+
 ### 추가 (v1.5 3단계: 채택 구성 회귀 게이트 v1.5 라벨 전환 계획과 도구, 재현 점검 실행 전 확정)
 - `report/regression_gate_v15_plan.md`, `gate_criteria_v15.toml` — 모델을 다시 실행하지 않고 v1.4 게이트의 기준선 실행 기록을 그대로 쓰되, 기준선·후보를 채점하는 정답표만 v1.5 평가셋으로 바꾸는 계획. 기준 값은 `gate_criteria_v14.toml`과 같고 `[meta] labels = "v15"`만 추가. 재현 점검(G0 기준선·후보 응답 동일성 기록, G1 v1.4 게이트 PASS 후보 → PASS·6칸 값이 같은 응답은 문항 변화 0, G2 M0 → FAIL, G3 v1.4 게이트 불변)과 기대 결과를 실행 전에 확정
 - `src/triage_eval/pipeline/gate_v15.py` (`uv run triage-gate --dataset v15`) — 판정은 `gate_v14.run`을 그대로 호출. v1.5 정답표의 입력이 v1.4 평가셋과 다르거나(재채점 V0 재사용), 정답표 파일이 v1.5가 아니거나, 기준선·후보 실행 기록의 평가셋 지문이 지금의 v1.4 평가셋과 다르면 판정하지 않음(종료 코드 2). 판정 결과에 정답표 출처와 기준선·후보 응답 동일성(파싱된 6칸 값, 정답표와 무관)을 함께 남김. 출력은 `data/results/v15/gate_result_v15.json`, `report/regression_gate_v15.md`

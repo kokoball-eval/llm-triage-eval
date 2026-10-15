@@ -8,6 +8,11 @@
 
 ## [Unreleased]
 
+### 추가 (v1.5 2단계: v1.4 실행 기록 v1.5 라벨 재채점 계획과 도구, 재채점 결과를 보기 전에 확정)
+- `report/rescore_v15_plan.md` — 저장된 v1.4 실행 기록(게이트 기준선, 실험 A·B, 최종 평가용)을 모델 호출 없이 v1.4·v1.5 라벨로 각각 채점해 나란히 비교하는 계획. 대상·지표·도구 검증 기준(V0~V3)·해석 규칙(사전 등록 판정 불변, 실험 A·B는 참고 재판정, 최종 평가용 F08 주의)을 결과를 보기 전에 확정
+- `src/triage_eval/pipeline/rescore.py` (`uv run triage-rescore`) — 기존 채점·판정 함수(`score.score_one`·`aggregate`, `gate.counts`, `compare.compare_seed`, `selection.decide`)를 그대로 사용. v1.4 라벨 재채점 값이 저장된 결과(`score_v14_final_*.json`, `gate_result_v14.json`, `compare_a/b.json`)와 다르거나, 라벨이 바뀌지 않은 문항에서 채점이 달라지면 결과를 쓰지 않음(종료 코드 2). 출력은 새 파일 `data/results/v15/rescore/rescore_v15.json`, `report/rescore_v15.md`만 사용
+- 테스트 415 → 436개 (커밋된 v1.5 평가셋 V0 통과, V0 거부 7가지(입력·구분 변경, 최종 평가용 라벨 변경, 변경표 밖 라벨 변경, 문항 누락, 변경표 문항의 라벨 미변경·개발용 아님), 실제 실행 기록의 v1.4 라벨 재채점이 저장된 결과와 같음, 저장 값 변조 시 V1 실패, 라벨 변경 범위 V2·V3, 위험 표시 변경 시 분모와 위험 건 목록 변화, 가짜 v1.5 라벨로 끝까지 실행 시 증감·seed별 위험 건 표 출력, 검증 실패 시 파일 미작성)
+
 ### 추가 (v1.5 1단계: 라벨 일치율 결과와 불일치 검토)
 - 외부 게임 QA 2명(시니어 퍼블리셔 QA, 주니어 개발 QA)의 판정 시트를 `data/label_agreement/`에 보관하고 일치율 계산(`report/label_agreement_v15.md`, `data/label_agreement/agreement_v15.json`). 6칸 모두 사전 등록 기준 미달, Critical 인식률 75%·55%(기준 90%). 사전 등록한 판정은 검토 뒤에도 바꾸지 않음
   - 계산 전 처리: 결함이 아닌 글의 재현 정보 빈칸 18곳을 두 채점자에게 같은 문구로 다시 물어 채움, 채점자2 시트의 채점자 표시(같은 시트 파일을 받음)만 바로잡음

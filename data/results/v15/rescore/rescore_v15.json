@@ -1,0 +1,2302 @@
+{
+  "plan": "report/rescore_v15_plan.md",
+  "labels": {
+    "v14": "data/eval_v14/aether_raid_v14.json",
+    "v15": "data/eval_v15/aether_raid_v15.json"
+  },
+  "verification": "V0~V3 통과",
+  "adopted": {
+    "model": "qwen2.5:7b",
+    "seeds": {
+      "1": {
+        "log": "data/results/v14/baseline/v14_dev_m2_seed1_baseline.json",
+        "v14": {
+          "n": 126,
+          "success": 126,
+          "strict_rate": 100.0,
+          "parsable_rate": 100.0,
+          "field_ok_rate": {
+            "분류": 67.5,
+            "우선순위": 63.5,
+            "모듈": 70.6,
+            "재현 정보": 84.1,
+            "발생 빈도": 47.6,
+            "처리": 69.8
+          },
+          "field_best_rate": {
+            "분류": 62.7,
+            "우선순위": 51.6,
+            "모듈": 62.7,
+            "재현 정보": 82.5,
+            "발생 빈도": 41.3,
+            "처리": 66.7
+          },
+          "all_fields_ok_rate": 21.4,
+          "risk_miss": {
+            "X-1": 5,
+            "X-2": 0,
+            "X-3": 4
+          },
+          "risk_items": {
+            "X-1": 40,
+            "X-2": 88,
+            "X-3": 22
+          },
+          "over_escalation": 8,
+          "hallucination_count": 0,
+          "language_violation": 0,
+          "required_coverage_rate": 23.1,
+          "latency_sec_mean": 2.278,
+          "prompt_tokens_max": 2615,
+          "rule_failures": {}
+        },
+        "v15": {
+          "n": 126,
+          "success": 126,
+          "strict_rate": 100.0,
+          "parsable_rate": 100.0,
+          "field_ok_rate": {
+            "분류": 65.9,
+            "우선순위": 64.3,
+            "모듈": 74.6,
+            "재현 정보": 84.1,
+            "발생 빈도": 47.6,
+            "처리": 75.4
+          },
+          "field_best_rate": {
+            "분류": 61.1,
+            "우선순위": 51.6,
+            "모듈": 63.5,
+            "재현 정보": 82.5,
+            "발생 빈도": 41.3,
+            "처리": 66.7
+          },
+          "all_fields_ok_rate": 23.0,
+          "risk_miss": {
+            "X-1": 4,
+            "X-2": 0,
+            "X-3": 4
+          },
+          "risk_items": {
+            "X-1": 34,
+            "X-2": 86,
+            "X-3": 20
+          },
+          "over_escalation": 8,
+          "hallucination_count": 0,
+          "language_violation": 0,
+          "required_coverage_rate": 23.1,
+          "latency_sec_mean": 2.278,
+          "prompt_tokens_max": 2615,
+          "rule_failures": {}
+        },
+        "diff": {
+          "items_changed": [
+            "A03",
+            "A04",
+            "A05",
+            "A10",
+            "B17",
+            "S04",
+            "S08",
+            "S18"
+          ],
+          "fields": {
+            "분류": {
+              "fixed": 0,
+              "broken": 2,
+              "best_gained": 0,
+              "best_lost": 2
+            },
+            "우선순위": {
+              "fixed": 3,
+              "broken": 2,
+              "best_gained": 2,
+              "best_lost": 2
+            },
+            "모듈": {
+              "fixed": 5,
+              "broken": 0,
+              "best_gained": 1,
+              "best_lost": 0
+            },
+            "재현 정보": {
+              "fixed": 0,
+              "broken": 0,
+              "best_gained": 0,
+              "best_lost": 0
+            },
+            "발생 빈도": {
+              "fixed": 0,
+              "broken": 0,
+              "best_gained": 0,
+              "best_lost": 0
+            },
+            "처리": {
+              "fixed": 9,
+              "broken": 2,
+              "best_gained": 2,
+              "best_lost": 2
+            }
+          },
+          "all_fields_ok": {
+            "fixed": 2,
+            "broken": 0
+          },
+          "over_escalation": {
+            "added": 2,
+            "removed": 2
+          },
+          "risk_changes": [
+            {
+              "seed": 1,
+              "eval_id": "qwen2.5_7b_S04_run1",
+              "item_id": "S04",
+              "v14": [
+                "X-1"
+              ],
+              "v15": [],
+              "predicted_처리": "등록(재현 대기)"
+            }
+          ]
+        }
+      },
+      "11": {
+        "log": "data/results/v14/baseline/v14_dev_m2_seed11_baseline.json",
+        "v14": {
+          "n": 126,
+          "success": 126,
+          "strict_rate": 100.0,
+          "parsable_rate": 100.0,
+          "field_ok_rate": {
+            "분류": 69.0,
+            "우선순위": 62.7,
+            "모듈": 72.2,
+            "재현 정보": 81.7,
+            "발생 빈도": 46.8,
+            "처리": 69.8
+          },
+          "field_best_rate": {
+            "분류": 64.3,
+            "우선순위": 51.6,
+            "모듈": 64.3,
+            "재현 정보": 80.2,
+            "발생 빈도": 41.3,
+            "처리": 66.7
+          },
+          "all_fields_ok_rate": 19.0,
+          "risk_miss": {
+            "X-1": 5,
+            "X-2": 0,
+            "X-3": 4
+          },
+          "risk_items": {
+            "X-1": 40,
+            "X-2": 88,
+            "X-3": 22
+          },
+          "over_escalation": 10,
+          "hallucination_count": 0,
+          "language_violation": 0,
+          "required_coverage_rate": 19.2,
+          "latency_sec_mean": 2.267,
+          "prompt_tokens_max": 2615,
+          "rule_failures": {}
+        },
+        "v15": {
+          "n": 126,
+          "success": 126,
+          "strict_rate": 100.0,
+          "parsable_rate": 100.0,
+          "field_ok_rate": {
+            "분류": 67.5,
+            "우선순위": 62.7,
+            "모듈": 77.0,
+            "재현 정보": 81.7,
+            "발생 빈도": 46.8,
+            "처리": 73.8
+          },
+          "field_best_rate": {
+            "분류": 62.7,
+            "우선순위": 50.0,
+            "모듈": 64.3,
+            "재현 정보": 80.2,
+            "발생 빈도": 41.3,
+            "처리": 65.1
+          },
+          "all_fields_ok_rate": 19.8,
+          "risk_miss": {
+            "X-1": 4,
+            "X-2": 0,
+            "X-3": 4
+          },
+          "risk_items": {
+            "X-1": 34,
+            "X-2": 86,
+            "X-3": 20
+          },
+          "over_escalation": 11,
+          "hallucination_count": 0,
+          "language_violation": 0,
+          "required_coverage_rate": 19.2,
+          "latency_sec_mean": 2.267,
+          "prompt_tokens_max": 2615,
+          "rule_failures": {}
+        },
+        "diff": {
+          "items_changed": [
+            "A02",
+            "A04",
+            "A05",
+            "A10",
+            "A11",
+            "B17",
+            "S04",
+            "S08",
+            "S18",
+            "S19"
+          ],
+          "fields": {
+            "분류": {
+              "fixed": 0,
+              "broken": 2,
+              "best_gained": 0,
+              "best_lost": 2
+            },
+            "우선순위": {
+              "fixed": 3,
+              "broken": 3,
+              "best_gained": 1,
+              "best_lost": 3
+            },
+            "모듈": {
+              "fixed": 6,
+              "broken": 0,
+              "best_gained": 0,
+              "best_lost": 0
+            },
+            "재현 정보": {
+              "fixed": 0,
+              "broken": 0,
+              "best_gained": 0,
+              "best_lost": 0
+            },
+            "발생 빈도": {
+              "fixed": 0,
+              "broken": 0,
+              "best_gained": 0,
+              "best_lost": 0
+            },
+            "처리": {
+              "fixed": 8,
+              "broken": 3,
+              "best_gained": 1,
+              "best_lost": 3
+            }
+          },
+          "all_fields_ok": {
+            "fixed": 1,
+            "broken": 0
+          },
+          "over_escalation": {
+            "added": 2,
+            "removed": 1
+          },
+          "risk_changes": [
+            {
+              "seed": 11,
+              "eval_id": "qwen2.5_7b_S04_run1",
+              "item_id": "S04",
+              "v14": [
+                "X-1"
+              ],
+              "v15": [],
+              "predicted_처리": "등록(재현 대기)"
+            },
+            {
+              "seed": 11,
+              "eval_id": "qwen2.5_7b_B17_run2",
+              "item_id": "B17",
+              "v14": [],
+              "v15": [
+                "X-1"
+              ],
+              "predicted_처리": "개발 배정"
+            },
+            {
+              "seed": 11,
+              "eval_id": "qwen2.5_7b_S04_run2",
+              "item_id": "S04",
+              "v14": [
+                "X-1"
+              ],
+              "v15": [],
+              "predicted_처리": "등록(재현 대기)"
+            }
+          ]
+        }
+      },
+      "21": {
+        "log": "data/results/v14/baseline/v14_dev_m2_seed21_baseline.json",
+        "v14": {
+          "n": 126,
+          "success": 126,
+          "strict_rate": 100.0,
+          "parsable_rate": 100.0,
+          "field_ok_rate": {
+            "분류": 64.3,
+            "우선순위": 61.1,
+            "모듈": 70.6,
+            "재현 정보": 84.1,
+            "발생 빈도": 50.0,
+            "처리": 66.7
+          },
+          "field_best_rate": {
+            "분류": 59.5,
+            "우선순위": 50.8,
+            "모듈": 63.5,
+            "재현 정보": 82.5,
+            "발생 빈도": 42.9,
+            "처리": 62.7
+          },
+          "all_fields_ok_rate": 19.0,
+          "risk_miss": {
+            "X-1": 7,
+            "X-2": 0,
+            "X-3": 6
+          },
+          "risk_items": {
+            "X-1": 40,
+            "X-2": 88,
+            "X-3": 22
+          },
+          "over_escalation": 8,
+          "hallucination_count": 0,
+          "language_violation": 0,
+          "required_coverage_rate": 23.1,
+          "latency_sec_mean": 2.261,
+          "prompt_tokens_max": 2615,
+          "rule_failures": {}
+        },
+        "v15": {
+          "n": 126,
+          "success": 126,
+          "strict_rate": 100.0,
+          "parsable_rate": 100.0,
+          "field_ok_rate": {
+            "분류": 62.7,
+            "우선순위": 61.1,
+            "모듈": 76.2,
+            "재현 정보": 84.1,
+            "발생 빈도": 50.0,
+            "처리": 70.6
+          },
+          "field_best_rate": {
+            "분류": 57.9,
+            "우선순위": 49.2,
+            "모듈": 65.1,
+            "재현 정보": 82.5,
+            "발생 빈도": 42.9,
+            "처리": 61.1
+          },
+          "all_fields_ok_rate": 19.8,
+          "risk_miss": {
+            "X-1": 6,
+            "X-2": 0,
+            "X-3": 6
+          },
+          "risk_items": {
+            "X-1": 34,
+            "X-2": 86,
+            "X-3": 20
+          },
+          "over_escalation": 9,
+          "hallucination_count": 0,
+          "language_violation": 0,
+          "required_coverage_rate": 23.1,
+          "latency_sec_mean": 2.261,
+          "prompt_tokens_max": 2615,
+          "rule_failures": {}
+        },
+        "diff": {
+          "items_changed": [
+            "A02",
+            "A03",
+            "A05",
+            "A10",
+            "A11",
+            "B17",
+            "S04",
+            "S08",
+            "S18"
+          ],
+          "fields": {
+            "분류": {
+              "fixed": 0,
+              "broken": 2,
+              "best_gained": 0,
+              "best_lost": 2
+            },
+            "우선순위": {
+              "fixed": 3,
+              "broken": 3,
+              "best_gained": 1,
+              "best_lost": 3
+            },
+            "모듈": {
+              "fixed": 7,
+              "broken": 0,
+              "best_gained": 2,
+              "best_lost": 0
+            },
+            "재현 정보": {
+              "fixed": 0,
+              "broken": 0,
+              "best_gained": 0,
+              "best_lost": 0
+            },
+            "발생 빈도": {
+              "fixed": 0,
+              "broken": 0,
+              "best_gained": 0,
+              "best_lost": 0
+            },
+            "처리": {
+              "fixed": 8,
+              "broken": 3,
+              "best_gained": 1,
+              "best_lost": 3
+            }
+          },
+          "all_fields_ok": {
+            "fixed": 1,
+            "broken": 0
+          },
+          "over_escalation": {
+            "added": 2,
+            "removed": 1
+          },
+          "risk_changes": [
+            {
+              "seed": 21,
+              "eval_id": "qwen2.5_7b_S04_run1",
+              "item_id": "S04",
+              "v14": [
+                "X-1"
+              ],
+              "v15": [],
+              "predicted_처리": "등록(재현 대기)"
+            },
+            {
+              "seed": 21,
+              "eval_id": "qwen2.5_7b_B17_run2",
+              "item_id": "B17",
+              "v14": [],
+              "v15": [
+                "X-1"
+              ],
+              "predicted_처리": "개발 배정"
+            },
+            {
+              "seed": 21,
+              "eval_id": "qwen2.5_7b_S04_run2",
+              "item_id": "S04",
+              "v14": [
+                "X-1"
+              ],
+              "v15": [],
+              "predicted_처리": "등록(재현 대기)"
+            }
+          ]
+        }
+      }
+    },
+    "total": {
+      "v14": {
+        "n": 378,
+        "success": 378,
+        "strict_rate": 100.0,
+        "parsable_rate": 100.0,
+        "field_ok_rate": {
+          "분류": 66.9,
+          "우선순위": 62.4,
+          "모듈": 71.2,
+          "재현 정보": 83.3,
+          "발생 빈도": 48.1,
+          "처리": 68.8
+        },
+        "field_best_rate": {
+          "분류": 62.2,
+          "우선순위": 51.3,
+          "모듈": 63.5,
+          "재현 정보": 81.7,
+          "발생 빈도": 41.8,
+          "처리": 65.3
+        },
+        "all_fields_ok_rate": 19.8,
+        "risk_miss": {
+          "X-1": 17,
+          "X-2": 0,
+          "X-3": 14
+        },
+        "risk_items": {
+          "X-1": 120,
+          "X-2": 264,
+          "X-3": 66
+        },
+        "over_escalation": 26,
+        "hallucination_count": 0,
+        "language_violation": 0,
+        "required_coverage_rate": 21.8,
+        "latency_sec_mean": 2.268,
+        "prompt_tokens_max": 2615,
+        "rule_failures": {}
+      },
+      "v15": {
+        "n": 378,
+        "success": 378,
+        "strict_rate": 100.0,
+        "parsable_rate": 100.0,
+        "field_ok_rate": {
+          "분류": 65.3,
+          "우선순위": 62.7,
+          "모듈": 75.9,
+          "재현 정보": 83.3,
+          "발생 빈도": 48.1,
+          "처리": 73.3
+        },
+        "field_best_rate": {
+          "분류": 60.6,
+          "우선순위": 50.3,
+          "모듈": 64.3,
+          "재현 정보": 81.7,
+          "발생 빈도": 41.8,
+          "처리": 64.3
+        },
+        "all_fields_ok_rate": 20.9,
+        "risk_miss": {
+          "X-1": 14,
+          "X-2": 0,
+          "X-3": 14
+        },
+        "risk_items": {
+          "X-1": 102,
+          "X-2": 258,
+          "X-3": 60
+        },
+        "over_escalation": 28,
+        "hallucination_count": 0,
+        "language_violation": 0,
+        "required_coverage_rate": 21.8,
+        "latency_sec_mean": 2.268,
+        "prompt_tokens_max": 2615,
+        "rule_failures": {}
+      },
+      "diff": {
+        "items_changed": [
+          "A02",
+          "A03",
+          "A04",
+          "A05",
+          "A10",
+          "A11",
+          "B17",
+          "S04",
+          "S08",
+          "S18",
+          "S19"
+        ],
+        "fields": {
+          "분류": {
+            "fixed": 0,
+            "broken": 6,
+            "best_gained": 0,
+            "best_lost": 6
+          },
+          "우선순위": {
+            "fixed": 9,
+            "broken": 8,
+            "best_gained": 4,
+            "best_lost": 8
+          },
+          "모듈": {
+            "fixed": 18,
+            "broken": 0,
+            "best_gained": 3,
+            "best_lost": 0
+          },
+          "재현 정보": {
+            "fixed": 0,
+            "broken": 0,
+            "best_gained": 0,
+            "best_lost": 0
+          },
+          "발생 빈도": {
+            "fixed": 0,
+            "broken": 0,
+            "best_gained": 0,
+            "best_lost": 0
+          },
+          "처리": {
+            "fixed": 25,
+            "broken": 8,
+            "best_gained": 4,
+            "best_lost": 8
+          }
+        },
+        "all_fields_ok": {
+          "fixed": 4,
+          "broken": 0
+        },
+        "over_escalation": {
+          "added": 6,
+          "removed": 4
+        },
+        "risk_changes": [
+          {
+            "seed": 1,
+            "eval_id": "qwen2.5_7b_S04_run1",
+            "item_id": "S04",
+            "v14": [
+              "X-1"
+            ],
+            "v15": [],
+            "predicted_처리": "등록(재현 대기)"
+          },
+          {
+            "seed": 11,
+            "eval_id": "qwen2.5_7b_S04_run1",
+            "item_id": "S04",
+            "v14": [
+              "X-1"
+            ],
+            "v15": [],
+            "predicted_처리": "등록(재현 대기)"
+          },
+          {
+            "seed": 11,
+            "eval_id": "qwen2.5_7b_B17_run2",
+            "item_id": "B17",
+            "v14": [],
+            "v15": [
+              "X-1"
+            ],
+            "predicted_처리": "개발 배정"
+          },
+          {
+            "seed": 11,
+            "eval_id": "qwen2.5_7b_S04_run2",
+            "item_id": "S04",
+            "v14": [
+              "X-1"
+            ],
+            "v15": [],
+            "predicted_처리": "등록(재현 대기)"
+          },
+          {
+            "seed": 21,
+            "eval_id": "qwen2.5_7b_S04_run1",
+            "item_id": "S04",
+            "v14": [
+              "X-1"
+            ],
+            "v15": [],
+            "predicted_처리": "등록(재현 대기)"
+          },
+          {
+            "seed": 21,
+            "eval_id": "qwen2.5_7b_B17_run2",
+            "item_id": "B17",
+            "v14": [],
+            "v15": [
+              "X-1"
+            ],
+            "predicted_처리": "개발 배정"
+          },
+          {
+            "seed": 21,
+            "eval_id": "qwen2.5_7b_S04_run2",
+            "item_id": "S04",
+            "v14": [
+              "X-1"
+            ],
+            "v15": [],
+            "predicted_처리": "등록(재현 대기)"
+          }
+        ]
+      }
+    }
+  },
+  "experiments": {
+    "a": {
+      "baseline": "m0/qwen2.5:7b",
+      "runs": [
+        "data/results/v14/history/v14_dev_m0_20261004_204024.json",
+        "data/results/v14/history/v14_dev_m0_20261004_205305.json",
+        "data/results/v14/history/v14_dev_m0_20261004_210549.json",
+        "data/results/v14/history/v14_dev_m1_20261004_204436.json",
+        "data/results/v14/history/v14_dev_m1_20261004_205719.json",
+        "data/results/v14/history/v14_dev_m1_20261004_211000.json",
+        "data/results/v14/history/v14_dev_m2_20261004_204929.json",
+        "data/results/v14/history/v14_dev_m2_20261004_210209.json",
+        "data/results/v14/history/v14_dev_m2_20261004_211450.json"
+      ],
+      "arms": {
+        "m0/qwen2.5:7b": {
+          "v14": {
+            "n": 378,
+            "success": 378,
+            "strict_rate": 100.0,
+            "parsable_rate": 100.0,
+            "field_ok_rate": {
+              "분류": 66.9,
+              "우선순위": 60.3,
+              "모듈": 71.2,
+              "재현 정보": 83.3,
+              "발생 빈도": 48.1,
+              "처리": 66.7
+            },
+            "field_best_rate": {
+              "분류": 62.2,
+              "우선순위": 49.2,
+              "모듈": 63.5,
+              "재현 정보": 81.7,
+              "발생 빈도": 41.8,
+              "처리": 63.2
+            },
+            "all_fields_ok_rate": 19.8,
+            "risk_miss": {
+              "X-1": 25,
+              "X-2": 0,
+              "X-3": 14
+            },
+            "risk_items": {
+              "X-1": 120,
+              "X-2": 264,
+              "X-3": 66
+            },
+            "over_escalation": 26,
+            "hallucination_count": 0,
+            "language_violation": 0,
+            "required_coverage_rate": 21.8,
+            "latency_sec_mean": 1.695,
+            "prompt_tokens_max": 2615,
+            "rule_failures": {}
+          },
+          "v15": {
+            "n": 378,
+            "success": 378,
+            "strict_rate": 100.0,
+            "parsable_rate": 100.0,
+            "field_ok_rate": {
+              "분류": 65.3,
+              "우선순위": 60.8,
+              "모듈": 75.9,
+              "재현 정보": 83.3,
+              "발생 빈도": 48.1,
+              "처리": 71.4
+            },
+            "field_best_rate": {
+              "분류": 60.6,
+              "우선순위": 48.1,
+              "모듈": 64.3,
+              "재현 정보": 81.7,
+              "발생 빈도": 41.8,
+              "처리": 62.2
+            },
+            "all_fields_ok_rate": 20.9,
+            "risk_miss": {
+              "X-1": 21,
+              "X-2": 0,
+              "X-3": 14
+            },
+            "risk_items": {
+              "X-1": 102,
+              "X-2": 258,
+              "X-3": 60
+            },
+            "over_escalation": 28,
+            "hallucination_count": 0,
+            "language_violation": 0,
+            "required_coverage_rate": 21.8,
+            "latency_sec_mean": 1.695,
+            "prompt_tokens_max": 2615,
+            "rule_failures": {}
+          },
+          "diff": {
+            "items_changed": [
+              "A02",
+              "A03",
+              "A04",
+              "A05",
+              "A10",
+              "A11",
+              "B17",
+              "S04",
+              "S08",
+              "S18",
+              "S19"
+            ],
+            "fields": {
+              "분류": {
+                "fixed": 0,
+                "broken": 6,
+                "best_gained": 0,
+                "best_lost": 6
+              },
+              "우선순위": {
+                "fixed": 10,
+                "broken": 8,
+                "best_gained": 4,
+                "best_lost": 8
+              },
+              "모듈": {
+                "fixed": 18,
+                "broken": 0,
+                "best_gained": 3,
+                "best_lost": 0
+              },
+              "재현 정보": {
+                "fixed": 0,
+                "broken": 0,
+                "best_gained": 0,
+                "best_lost": 0
+              },
+              "발생 빈도": {
+                "fixed": 0,
+                "broken": 0,
+                "best_gained": 0,
+                "best_lost": 0
+              },
+              "처리": {
+                "fixed": 26,
+                "broken": 8,
+                "best_gained": 4,
+                "best_lost": 8
+              }
+            },
+            "all_fields_ok": {
+              "fixed": 4,
+              "broken": 0
+            },
+            "over_escalation": {
+              "added": 6,
+              "removed": 4
+            },
+            "risk_changes": [
+              {
+                "seed": 1,
+                "eval_id": "qwen2.5_7b_S04_run1",
+                "item_id": "S04",
+                "v14": [
+                  "X-1"
+                ],
+                "v15": [],
+                "predicted_처리": "등록(재현 대기)"
+              },
+              {
+                "seed": 1,
+                "eval_id": "qwen2.5_7b_S04_run2",
+                "item_id": "S04",
+                "v14": [
+                  "X-1"
+                ],
+                "v15": [],
+                "predicted_처리": "등록(재현 대기)"
+              },
+              {
+                "seed": 11,
+                "eval_id": "qwen2.5_7b_S04_run1",
+                "item_id": "S04",
+                "v14": [
+                  "X-1"
+                ],
+                "v15": [],
+                "predicted_처리": "등록(재현 대기)"
+              },
+              {
+                "seed": 11,
+                "eval_id": "qwen2.5_7b_B17_run2",
+                "item_id": "B17",
+                "v14": [],
+                "v15": [
+                  "X-1"
+                ],
+                "predicted_처리": "개발 배정"
+              },
+              {
+                "seed": 11,
+                "eval_id": "qwen2.5_7b_S04_run2",
+                "item_id": "S04",
+                "v14": [
+                  "X-1"
+                ],
+                "v15": [],
+                "predicted_처리": "등록(재현 대기)"
+              },
+              {
+                "seed": 21,
+                "eval_id": "qwen2.5_7b_S04_run1",
+                "item_id": "S04",
+                "v14": [
+                  "X-1"
+                ],
+                "v15": [],
+                "predicted_처리": "등록(재현 대기)"
+              },
+              {
+                "seed": 21,
+                "eval_id": "qwen2.5_7b_B17_run2",
+                "item_id": "B17",
+                "v14": [],
+                "v15": [
+                  "X-1"
+                ],
+                "predicted_처리": "개발 배정"
+              },
+              {
+                "seed": 21,
+                "eval_id": "qwen2.5_7b_S04_run2",
+                "item_id": "S04",
+                "v14": [
+                  "X-1"
+                ],
+                "v15": [],
+                "predicted_처리": "등록(재현 대기)"
+              }
+            ]
+          }
+        },
+        "m1/qwen2.5:7b": {
+          "v14": {
+            "n": 378,
+            "success": 378,
+            "strict_rate": 99.2,
+            "parsable_rate": 99.2,
+            "field_ok_rate": {
+              "분류": 83.6,
+              "우선순위": 65.3,
+              "모듈": 55.8,
+              "재현 정보": 85.2,
+              "발생 빈도": 43.9,
+              "처리": 63.2
+            },
+            "field_best_rate": {
+              "분류": 78.8,
+              "우선순위": 55.8,
+              "모듈": 47.1,
+              "재현 정보": 83.6,
+              "발생 빈도": 39.2,
+              "처리": 60.8
+            },
+            "all_fields_ok_rate": 11.1,
+            "risk_miss": {
+              "X-1": 9,
+              "X-2": 0,
+              "X-3": 6
+            },
+            "risk_items": {
+              "X-1": 120,
+              "X-2": 264,
+              "X-3": 66
+            },
+            "over_escalation": 56,
+            "hallucination_count": 0,
+            "language_violation": 3,
+            "required_coverage_rate": 31.6,
+            "latency_sec_mean": 1.96,
+            "prompt_tokens_max": 3823,
+            "rule_failures": {
+              "R2_all_fields": 2,
+              "R3_field_order": 2,
+              "R5_no_stray_text": 1,
+              "R6_enum_valid": 2,
+              "R7_output_language": 3
+            }
+          },
+          "v15": {
+            "n": 378,
+            "success": 378,
+            "strict_rate": 99.2,
+            "parsable_rate": 99.2,
+            "field_ok_rate": {
+              "분류": 82.0,
+              "우선순위": 66.4,
+              "모듈": 66.9,
+              "재현 정보": 85.2,
+              "발생 빈도": 43.9,
+              "처리": 69.3
+            },
+            "field_best_rate": {
+              "분류": 77.2,
+              "우선순위": 55.8,
+              "모듈": 55.8,
+              "재현 정보": 83.6,
+              "발생 빈도": 39.2,
+              "처리": 60.8
+            },
+            "all_fields_ok_rate": 12.7,
+            "risk_miss": {
+              "X-1": 9,
+              "X-2": 0,
+              "X-3": 6
+            },
+            "risk_items": {
+              "X-1": 102,
+              "X-2": 258,
+              "X-3": 60
+            },
+            "over_escalation": 56,
+            "hallucination_count": 0,
+            "language_violation": 3,
+            "required_coverage_rate": 31.6,
+            "latency_sec_mean": 1.96,
+            "prompt_tokens_max": 3823,
+            "rule_failures": {
+              "R2_all_fields": 2,
+              "R3_field_order": 2,
+              "R5_no_stray_text": 1,
+              "R6_enum_valid": 2,
+              "R7_output_language": 3
+            }
+          },
+          "diff": {
+            "items_changed": [
+              "A02",
+              "A04",
+              "A05",
+              "A10",
+              "A12",
+              "B15",
+              "B17",
+              "B18",
+              "S07",
+              "S08",
+              "S13",
+              "S18"
+            ],
+            "fields": {
+              "분류": {
+                "fixed": 0,
+                "broken": 6,
+                "best_gained": 0,
+                "best_lost": 6
+              },
+              "우선순위": {
+                "fixed": 10,
+                "broken": 6,
+                "best_gained": 6,
+                "best_lost": 6
+              },
+              "모듈": {
+                "fixed": 42,
+                "broken": 0,
+                "best_gained": 33,
+                "best_lost": 0
+              },
+              "재현 정보": {
+                "fixed": 0,
+                "broken": 0,
+                "best_gained": 0,
+                "best_lost": 0
+              },
+              "발생 빈도": {
+                "fixed": 0,
+                "broken": 0,
+                "best_gained": 0,
+                "best_lost": 0
+              },
+              "처리": {
+                "fixed": 29,
+                "broken": 6,
+                "best_gained": 6,
+                "best_lost": 6
+              }
+            },
+            "all_fields_ok": {
+              "fixed": 6,
+              "broken": 0
+            },
+            "over_escalation": {
+              "added": 6,
+              "removed": 6
+            },
+            "risk_changes": []
+          }
+        },
+        "m2/qwen2.5:7b": {
+          "v14": {
+            "n": 378,
+            "success": 378,
+            "strict_rate": 100.0,
+            "parsable_rate": 100.0,
+            "field_ok_rate": {
+              "분류": 66.9,
+              "우선순위": 62.4,
+              "모듈": 71.2,
+              "재현 정보": 83.3,
+              "발생 빈도": 48.1,
+              "처리": 68.8
+            },
+            "field_best_rate": {
+              "분류": 62.2,
+              "우선순위": 51.3,
+              "모듈": 63.5,
+              "재현 정보": 81.7,
+              "발생 빈도": 41.8,
+              "처리": 65.3
+            },
+            "all_fields_ok_rate": 19.8,
+            "risk_miss": {
+              "X-1": 17,
+              "X-2": 0,
+              "X-3": 14
+            },
+            "risk_items": {
+              "X-1": 120,
+              "X-2": 264,
+              "X-3": 66
+            },
+            "over_escalation": 26,
+            "hallucination_count": 0,
+            "language_violation": 0,
+            "required_coverage_rate": 21.8,
+            "latency_sec_mean": 2.268,
+            "prompt_tokens_max": 2615,
+            "rule_failures": {}
+          },
+          "v15": {
+            "n": 378,
+            "success": 378,
+            "strict_rate": 100.0,
+            "parsable_rate": 100.0,
+            "field_ok_rate": {
+              "분류": 65.3,
+              "우선순위": 62.7,
+              "모듈": 75.9,
+              "재현 정보": 83.3,
+              "발생 빈도": 48.1,
+              "처리": 73.3
+            },
+            "field_best_rate": {
+              "분류": 60.6,
+              "우선순위": 50.3,
+              "모듈": 64.3,
+              "재현 정보": 81.7,
+              "발생 빈도": 41.8,
+              "처리": 64.3
+            },
+            "all_fields_ok_rate": 20.9,
+            "risk_miss": {
+              "X-1": 14,
+              "X-2": 0,
+              "X-3": 14
+            },
+            "risk_items": {
+              "X-1": 102,
+              "X-2": 258,
+              "X-3": 60
+            },
+            "over_escalation": 28,
+            "hallucination_count": 0,
+            "language_violation": 0,
+            "required_coverage_rate": 21.8,
+            "latency_sec_mean": 2.268,
+            "prompt_tokens_max": 2615,
+            "rule_failures": {}
+          },
+          "diff": {
+            "items_changed": [
+              "A02",
+              "A03",
+              "A04",
+              "A05",
+              "A10",
+              "A11",
+              "B17",
+              "S04",
+              "S08",
+              "S18",
+              "S19"
+            ],
+            "fields": {
+              "분류": {
+                "fixed": 0,
+                "broken": 6,
+                "best_gained": 0,
+                "best_lost": 6
+              },
+              "우선순위": {
+                "fixed": 9,
+                "broken": 8,
+                "best_gained": 4,
+                "best_lost": 8
+              },
+              "모듈": {
+                "fixed": 18,
+                "broken": 0,
+                "best_gained": 3,
+                "best_lost": 0
+              },
+              "재현 정보": {
+                "fixed": 0,
+                "broken": 0,
+                "best_gained": 0,
+                "best_lost": 0
+              },
+              "발생 빈도": {
+                "fixed": 0,
+                "broken": 0,
+                "best_gained": 0,
+                "best_lost": 0
+              },
+              "처리": {
+                "fixed": 25,
+                "broken": 8,
+                "best_gained": 4,
+                "best_lost": 8
+              }
+            },
+            "all_fields_ok": {
+              "fixed": 4,
+              "broken": 0
+            },
+            "over_escalation": {
+              "added": 6,
+              "removed": 4
+            },
+            "risk_changes": [
+              {
+                "seed": 1,
+                "eval_id": "qwen2.5_7b_S04_run1",
+                "item_id": "S04",
+                "v14": [
+                  "X-1"
+                ],
+                "v15": [],
+                "predicted_처리": "등록(재현 대기)"
+              },
+              {
+                "seed": 11,
+                "eval_id": "qwen2.5_7b_S04_run1",
+                "item_id": "S04",
+                "v14": [
+                  "X-1"
+                ],
+                "v15": [],
+                "predicted_처리": "등록(재현 대기)"
+              },
+              {
+                "seed": 11,
+                "eval_id": "qwen2.5_7b_B17_run2",
+                "item_id": "B17",
+                "v14": [],
+                "v15": [
+                  "X-1"
+                ],
+                "predicted_처리": "개발 배정"
+              },
+              {
+                "seed": 11,
+                "eval_id": "qwen2.5_7b_S04_run2",
+                "item_id": "S04",
+                "v14": [
+                  "X-1"
+                ],
+                "v15": [],
+                "predicted_처리": "등록(재현 대기)"
+              },
+              {
+                "seed": 21,
+                "eval_id": "qwen2.5_7b_S04_run1",
+                "item_id": "S04",
+                "v14": [
+                  "X-1"
+                ],
+                "v15": [],
+                "predicted_처리": "등록(재현 대기)"
+              },
+              {
+                "seed": 21,
+                "eval_id": "qwen2.5_7b_B17_run2",
+                "item_id": "B17",
+                "v14": [],
+                "v15": [
+                  "X-1"
+                ],
+                "predicted_처리": "개발 배정"
+              },
+              {
+                "seed": 21,
+                "eval_id": "qwen2.5_7b_S04_run2",
+                "item_id": "S04",
+                "v14": [
+                  "X-1"
+                ],
+                "v15": [],
+                "predicted_처리": "등록(재현 대기)"
+              }
+            ]
+          }
+        }
+      },
+      "reference_rejudge": {
+        "chosen_v14": "m2/qwen2.5:7b",
+        "chosen_v15": "m2/qwen2.5:7b",
+        "reasons_v14": {
+          "m1/qwen2.5:7b": "기준 미통과 (seed 중 하나 이상에서 절대·회귀 기준 FAIL)",
+          "m2/qwen2.5:7b": "교체 조건 충족 (X-1 누락 25→17, 우선순위 정답 228→236)"
+        },
+        "reasons_v15": {
+          "m1/qwen2.5:7b": "기준 미통과 (seed 중 하나 이상에서 절대·회귀 기준 FAIL)",
+          "m2/qwen2.5:7b": "교체 조건 충족 (X-1 누락 21→14, 우선순위 정답 230→237)"
+        },
+        "summaries_v15": {
+          "m1/qwen2.5:7b": {
+            "all_seeds_passed": false,
+            "x1_base": 21,
+            "x1_cand": 9,
+            "pri_base": 230,
+            "pri_cand": 251,
+            "latency_cand": 1.96
+          },
+          "m2/qwen2.5:7b": {
+            "all_seeds_passed": true,
+            "x1_base": 21,
+            "x1_cand": 14,
+            "pri_base": 230,
+            "pri_cand": 237,
+            "latency_cand": 2.269
+          }
+        },
+        "per_seed_v15": {
+          "m1/qwen2.5:7b": [
+            {
+              "seed": 1,
+              "passed": false,
+              "failed_checks": [
+                {
+                  "name": "출력 언어 위반(R7)",
+                  "kind": "절대",
+                  "baseline": 0,
+                  "candidate": 1,
+                  "limit": "≤ 0",
+                  "passed": false
+                },
+                {
+                  "name": "허용 값 위반(R6)",
+                  "kind": "절대",
+                  "baseline": 0,
+                  "candidate": 1,
+                  "limit": "≤ 0",
+                  "passed": false
+                },
+                {
+                  "name": "과잉 상신",
+                  "kind": "회귀",
+                  "baseline": 8,
+                  "candidate": 19,
+                  "limit": "증가 ≤ 4",
+                  "passed": false
+                },
+                {
+                  "name": "처리 정답(응답 수)",
+                  "kind": "회귀",
+                  "baseline": 93,
+                  "candidate": 87,
+                  "limit": "하락 ≤ 0",
+                  "passed": false
+                },
+                {
+                  "name": "모듈 정답(응답 수)",
+                  "kind": "회귀",
+                  "baseline": 94,
+                  "candidate": 84,
+                  "limit": "하락 ≤ 6",
+                  "passed": false
+                },
+                {
+                  "name": "6칸 모두 정답(응답 수)",
+                  "kind": "회귀",
+                  "baseline": 29,
+                  "candidate": 16,
+                  "limit": "하락 ≤ 6",
+                  "passed": false
+                },
+                {
+                  "name": "처리 문항 단위 회귀(응답 수)",
+                  "kind": "회귀",
+                  "baseline": 0,
+                  "candidate": 17,
+                  "limit": "≤ 4",
+                  "passed": false
+                }
+              ]
+            },
+            {
+              "seed": 11,
+              "passed": false,
+              "failed_checks": [
+                {
+                  "name": "출력 언어 위반(R7)",
+                  "kind": "절대",
+                  "baseline": 0,
+                  "candidate": 1,
+                  "limit": "≤ 0",
+                  "passed": false
+                },
+                {
+                  "name": "허용 값 위반(R6)",
+                  "kind": "절대",
+                  "baseline": 0,
+                  "candidate": 1,
+                  "limit": "≤ 0",
+                  "passed": false
+                },
+                {
+                  "name": "과잉 상신",
+                  "kind": "회귀",
+                  "baseline": 11,
+                  "candidate": 19,
+                  "limit": "증가 ≤ 4",
+                  "passed": false
+                },
+                {
+                  "name": "처리 정답(응답 수)",
+                  "kind": "회귀",
+                  "baseline": 91,
+                  "candidate": 86,
+                  "limit": "하락 ≤ 0",
+                  "passed": false
+                },
+                {
+                  "name": "모듈 정답(응답 수)",
+                  "kind": "회귀",
+                  "baseline": 97,
+                  "candidate": 84,
+                  "limit": "하락 ≤ 6",
+                  "passed": false
+                },
+                {
+                  "name": "6칸 모두 정답(응답 수)",
+                  "kind": "회귀",
+                  "baseline": 25,
+                  "candidate": 16,
+                  "limit": "하락 ≤ 6",
+                  "passed": false
+                },
+                {
+                  "name": "처리 문항 단위 회귀(응답 수)",
+                  "kind": "회귀",
+                  "baseline": 0,
+                  "candidate": 15,
+                  "limit": "≤ 4",
+                  "passed": false
+                }
+              ]
+            },
+            {
+              "seed": 21,
+              "passed": false,
+              "failed_checks": [
+                {
+                  "name": "출력 언어 위반(R7)",
+                  "kind": "절대",
+                  "baseline": 0,
+                  "candidate": 1,
+                  "limit": "≤ 0",
+                  "passed": false
+                },
+                {
+                  "name": "과잉 상신",
+                  "kind": "회귀",
+                  "baseline": 9,
+                  "candidate": 18,
+                  "limit": "증가 ≤ 4",
+                  "passed": false
+                },
+                {
+                  "name": "모듈 정답(응답 수)",
+                  "kind": "회귀",
+                  "baseline": 96,
+                  "candidate": 85,
+                  "limit": "하락 ≤ 6",
+                  "passed": false
+                },
+                {
+                  "name": "발생 빈도 정답(응답 수)",
+                  "kind": "회귀",
+                  "baseline": 63,
+                  "candidate": 54,
+                  "limit": "하락 ≤ 6",
+                  "passed": false
+                },
+                {
+                  "name": "6칸 모두 정답(응답 수)",
+                  "kind": "회귀",
+                  "baseline": 25,
+                  "candidate": 16,
+                  "limit": "하락 ≤ 6",
+                  "passed": false
+                },
+                {
+                  "name": "처리 문항 단위 회귀(응답 수)",
+                  "kind": "회귀",
+                  "baseline": 0,
+                  "candidate": 13,
+                  "limit": "≤ 4",
+                  "passed": false
+                }
+              ]
+            }
+          ],
+          "m2/qwen2.5:7b": [
+            {
+              "seed": 1,
+              "passed": true,
+              "failed_checks": []
+            },
+            {
+              "seed": 11,
+              "passed": true,
+              "failed_checks": []
+            },
+            {
+              "seed": 21,
+              "passed": true,
+              "failed_checks": []
+            }
+          ]
+        }
+      }
+    },
+    "b": {
+      "baseline": "m2/qwen2.5:7b",
+      "runs": [
+        "data/results/v14/history/v14_dev_m2_20261004_214913.json",
+        "data/results/v14/history/v14_dev_m2_20261004_222158.json",
+        "data/results/v14/history/v14_dev_m2_20261004_223945.json"
+      ],
+      "arms": {
+        "m2/qwen2.5:7b": {
+          "v14": {
+            "n": 378,
+            "success": 378,
+            "strict_rate": 100.0,
+            "parsable_rate": 100.0,
+            "field_ok_rate": {
+              "분류": 66.9,
+              "우선순위": 62.4,
+              "모듈": 71.2,
+              "재현 정보": 83.3,
+              "발생 빈도": 48.1,
+              "처리": 68.8
+            },
+            "field_best_rate": {
+              "분류": 62.2,
+              "우선순위": 51.3,
+              "모듈": 63.5,
+              "재현 정보": 81.7,
+              "발생 빈도": 41.8,
+              "처리": 65.3
+            },
+            "all_fields_ok_rate": 19.8,
+            "risk_miss": {
+              "X-1": 17,
+              "X-2": 0,
+              "X-3": 14
+            },
+            "risk_items": {
+              "X-1": 120,
+              "X-2": 264,
+              "X-3": 66
+            },
+            "over_escalation": 26,
+            "hallucination_count": 0,
+            "language_violation": 0,
+            "required_coverage_rate": 21.8,
+            "latency_sec_mean": 2.269,
+            "prompt_tokens_max": 2615,
+            "rule_failures": {}
+          },
+          "v15": {
+            "n": 378,
+            "success": 378,
+            "strict_rate": 100.0,
+            "parsable_rate": 100.0,
+            "field_ok_rate": {
+              "분류": 65.3,
+              "우선순위": 62.7,
+              "모듈": 75.9,
+              "재현 정보": 83.3,
+              "발생 빈도": 48.1,
+              "처리": 73.3
+            },
+            "field_best_rate": {
+              "분류": 60.6,
+              "우선순위": 50.3,
+              "모듈": 64.3,
+              "재현 정보": 81.7,
+              "발생 빈도": 41.8,
+              "처리": 64.3
+            },
+            "all_fields_ok_rate": 20.9,
+            "risk_miss": {
+              "X-1": 14,
+              "X-2": 0,
+              "X-3": 14
+            },
+            "risk_items": {
+              "X-1": 102,
+              "X-2": 258,
+              "X-3": 60
+            },
+            "over_escalation": 28,
+            "hallucination_count": 0,
+            "language_violation": 0,
+            "required_coverage_rate": 21.8,
+            "latency_sec_mean": 2.269,
+            "prompt_tokens_max": 2615,
+            "rule_failures": {}
+          },
+          "diff": {
+            "items_changed": [
+              "A02",
+              "A03",
+              "A04",
+              "A05",
+              "A10",
+              "A11",
+              "B17",
+              "S04",
+              "S08",
+              "S18",
+              "S19"
+            ],
+            "fields": {
+              "분류": {
+                "fixed": 0,
+                "broken": 6,
+                "best_gained": 0,
+                "best_lost": 6
+              },
+              "우선순위": {
+                "fixed": 9,
+                "broken": 8,
+                "best_gained": 4,
+                "best_lost": 8
+              },
+              "모듈": {
+                "fixed": 18,
+                "broken": 0,
+                "best_gained": 3,
+                "best_lost": 0
+              },
+              "재현 정보": {
+                "fixed": 0,
+                "broken": 0,
+                "best_gained": 0,
+                "best_lost": 0
+              },
+              "발생 빈도": {
+                "fixed": 0,
+                "broken": 0,
+                "best_gained": 0,
+                "best_lost": 0
+              },
+              "처리": {
+                "fixed": 25,
+                "broken": 8,
+                "best_gained": 4,
+                "best_lost": 8
+              }
+            },
+            "all_fields_ok": {
+              "fixed": 4,
+              "broken": 0
+            },
+            "over_escalation": {
+              "added": 6,
+              "removed": 4
+            },
+            "risk_changes": [
+              {
+                "seed": 1,
+                "eval_id": "qwen2.5_7b_S04_run1",
+                "item_id": "S04",
+                "v14": [
+                  "X-1"
+                ],
+                "v15": [],
+                "predicted_처리": "등록(재현 대기)"
+              },
+              {
+                "seed": 11,
+                "eval_id": "qwen2.5_7b_S04_run1",
+                "item_id": "S04",
+                "v14": [
+                  "X-1"
+                ],
+                "v15": [],
+                "predicted_처리": "등록(재현 대기)"
+              },
+              {
+                "seed": 11,
+                "eval_id": "qwen2.5_7b_B17_run2",
+                "item_id": "B17",
+                "v14": [],
+                "v15": [
+                  "X-1"
+                ],
+                "predicted_처리": "개발 배정"
+              },
+              {
+                "seed": 11,
+                "eval_id": "qwen2.5_7b_S04_run2",
+                "item_id": "S04",
+                "v14": [
+                  "X-1"
+                ],
+                "v15": [],
+                "predicted_처리": "등록(재현 대기)"
+              },
+              {
+                "seed": 21,
+                "eval_id": "qwen2.5_7b_S04_run1",
+                "item_id": "S04",
+                "v14": [
+                  "X-1"
+                ],
+                "v15": [],
+                "predicted_처리": "등록(재현 대기)"
+              },
+              {
+                "seed": 21,
+                "eval_id": "qwen2.5_7b_B17_run2",
+                "item_id": "B17",
+                "v14": [],
+                "v15": [
+                  "X-1"
+                ],
+                "predicted_처리": "개발 배정"
+              },
+              {
+                "seed": 21,
+                "eval_id": "qwen2.5_7b_S04_run2",
+                "item_id": "S04",
+                "v14": [
+                  "X-1"
+                ],
+                "v15": [],
+                "predicted_처리": "등록(재현 대기)"
+              }
+            ]
+          }
+        },
+        "m2/gemma4:12b": {
+          "v14": {
+            "n": 378,
+            "success": 378,
+            "strict_rate": 100.0,
+            "parsable_rate": 100.0,
+            "field_ok_rate": {
+              "분류": 87.8,
+              "우선순위": 81.0,
+              "모듈": 82.3,
+              "재현 정보": 80.2,
+              "발생 빈도": 84.9,
+              "처리": 72.0
+            },
+            "field_best_rate": {
+              "분류": 85.7,
+              "우선순위": 65.6,
+              "모듈": 77.8,
+              "재현 정보": 78.6,
+              "발생 빈도": 80.2,
+              "처리": 70.4
+            },
+            "all_fields_ok_rate": 45.8,
+            "risk_miss": {
+              "X-1": 0,
+              "X-2": 0,
+              "X-3": 12
+            },
+            "risk_items": {
+              "X-1": 120,
+              "X-2": 264,
+              "X-3": 66
+            },
+            "over_escalation": 43,
+            "hallucination_count": 0,
+            "language_violation": 0,
+            "required_coverage_rate": 53.0,
+            "latency_sec_mean": 6.091,
+            "prompt_tokens_max": 2254,
+            "rule_failures": {}
+          },
+          "v15": {
+            "n": 378,
+            "success": 378,
+            "strict_rate": 100.0,
+            "parsable_rate": 100.0,
+            "field_ok_rate": {
+              "분류": 86.2,
+              "우선순위": 82.5,
+              "모듈": 87.8,
+              "재현 정보": 80.2,
+              "발생 빈도": 84.9,
+              "처리": 73.5
+            },
+            "field_best_rate": {
+              "분류": 84.1,
+              "우선순위": 62.4,
+              "모듈": 81.0,
+              "재현 정보": 78.6,
+              "발생 빈도": 78.6,
+              "처리": 67.2
+            },
+            "all_fields_ok_rate": 47.4,
+            "risk_miss": {
+              "X-1": 6,
+              "X-2": 0,
+              "X-3": 12
+            },
+            "risk_items": {
+              "X-1": 102,
+              "X-2": 258,
+              "X-3": 60
+            },
+            "over_escalation": 49,
+            "hallucination_count": 0,
+            "language_violation": 0,
+            "required_coverage_rate": 53.0,
+            "latency_sec_mean": 6.091,
+            "prompt_tokens_max": 2254,
+            "rule_failures": {}
+          },
+          "diff": {
+            "items_changed": [
+              "A02",
+              "A04",
+              "A05",
+              "A10",
+              "B17",
+              "S03",
+              "S07",
+              "S08",
+              "S15",
+              "S18",
+              "S19"
+            ],
+            "fields": {
+              "분류": {
+                "fixed": 0,
+                "broken": 6,
+                "best_gained": 0,
+                "best_lost": 6
+              },
+              "우선순위": {
+                "fixed": 18,
+                "broken": 12,
+                "best_gained": 0,
+                "best_lost": 12
+              },
+              "모듈": {
+                "fixed": 21,
+                "broken": 0,
+                "best_gained": 12,
+                "best_lost": 0
+              },
+              "재현 정보": {
+                "fixed": 0,
+                "broken": 0,
+                "best_gained": 0,
+                "best_lost": 0
+              },
+              "발생 빈도": {
+                "fixed": 0,
+                "broken": 0,
+                "best_gained": 0,
+                "best_lost": 6
+              },
+              "처리": {
+                "fixed": 18,
+                "broken": 12,
+                "best_gained": 0,
+                "best_lost": 12
+              }
+            },
+            "all_fields_ok": {
+              "fixed": 12,
+              "broken": 6
+            },
+            "over_escalation": {
+              "added": 6,
+              "removed": 0
+            },
+            "risk_changes": [
+              {
+                "seed": 1,
+                "eval_id": "gemma4_12b_B17_run1",
+                "item_id": "B17",
+                "v14": [],
+                "v15": [
+                  "X-1"
+                ],
+                "predicted_처리": "개발 배정"
+              },
+              {
+                "seed": 1,
+                "eval_id": "gemma4_12b_B17_run2",
+                "item_id": "B17",
+                "v14": [],
+                "v15": [
+                  "X-1"
+                ],
+                "predicted_처리": "개발 배정"
+              },
+              {
+                "seed": 11,
+                "eval_id": "gemma4_12b_B17_run1",
+                "item_id": "B17",
+                "v14": [],
+                "v15": [
+                  "X-1"
+                ],
+                "predicted_처리": "개발 배정"
+              },
+              {
+                "seed": 11,
+                "eval_id": "gemma4_12b_B17_run2",
+                "item_id": "B17",
+                "v14": [],
+                "v15": [
+                  "X-1"
+                ],
+                "predicted_처리": "개발 배정"
+              },
+              {
+                "seed": 21,
+                "eval_id": "gemma4_12b_B17_run1",
+                "item_id": "B17",
+                "v14": [],
+                "v15": [
+                  "X-1"
+                ],
+                "predicted_처리": "개발 배정"
+              },
+              {
+                "seed": 21,
+                "eval_id": "gemma4_12b_B17_run2",
+                "item_id": "B17",
+                "v14": [],
+                "v15": [
+                  "X-1"
+                ],
+                "predicted_처리": "개발 배정"
+              }
+            ]
+          }
+        }
+      },
+      "reference_rejudge": {
+        "chosen_v14": null,
+        "chosen_v15": null,
+        "reasons_v14": {
+          "m2/gemma4:12b": "기준 미통과 (seed 중 하나 이상에서 절대·회귀 기준 FAIL)"
+        },
+        "reasons_v15": {
+          "m2/gemma4:12b": "기준 미통과 (seed 중 하나 이상에서 절대·회귀 기준 FAIL)"
+        },
+        "summaries_v15": {
+          "m2/gemma4:12b": {
+            "all_seeds_passed": false,
+            "x1_base": 14,
+            "x1_cand": 6,
+            "pri_base": 237,
+            "pri_cand": 312,
+            "latency_cand": 6.091
+          }
+        },
+        "per_seed_v15": {
+          "m2/gemma4:12b": [
+            {
+              "seed": 1,
+              "passed": false,
+              "failed_checks": [
+                {
+                  "name": "과잉 상신",
+                  "kind": "회귀",
+                  "baseline": 8,
+                  "candidate": 14,
+                  "limit": "증가 ≤ 4",
+                  "passed": false
+                },
+                {
+                  "name": "처리 정답(응답 수)",
+                  "kind": "회귀",
+                  "baseline": 95,
+                  "candidate": 93,
+                  "limit": "하락 ≤ 0",
+                  "passed": false
+                },
+                {
+                  "name": "처리 문항 단위 회귀(응답 수)",
+                  "kind": "회귀",
+                  "baseline": 0,
+                  "candidate": 20,
+                  "limit": "≤ 4",
+                  "passed": false
+                },
+                {
+                  "name": "분류 문항 단위 회귀(응답 수)",
+                  "kind": "회귀",
+                  "baseline": 0,
+                  "candidate": 7,
+                  "limit": "≤ 4",
+                  "passed": false
+                },
+                {
+                  "name": "X-3 경계 건 확정 처리",
+                  "kind": "기준선 대비",
+                  "baseline": 4,
+                  "candidate": 5,
+                  "limit": "증가 ≤ 0",
+                  "passed": false
+                }
+              ]
+            },
+            {
+              "seed": 11,
+              "passed": false,
+              "failed_checks": [
+                {
+                  "name": "과잉 상신",
+                  "kind": "회귀",
+                  "baseline": 11,
+                  "candidate": 19,
+                  "limit": "증가 ≤ 4",
+                  "passed": false
+                },
+                {
+                  "name": "처리 정답(응답 수)",
+                  "kind": "회귀",
+                  "baseline": 93,
+                  "candidate": 92,
+                  "limit": "하락 ≤ 0",
+                  "passed": false
+                },
+                {
+                  "name": "처리 문항 단위 회귀(응답 수)",
+                  "kind": "회귀",
+                  "baseline": 0,
+                  "candidate": 17,
+                  "limit": "≤ 4",
+                  "passed": false
+                },
+                {
+                  "name": "분류 문항 단위 회귀(응답 수)",
+                  "kind": "회귀",
+                  "baseline": 0,
+                  "candidate": 6,
+                  "limit": "≤ 4",
+                  "passed": false
+                }
+              ]
+            },
+            {
+              "seed": 21,
+              "passed": false,
+              "failed_checks": [
+                {
+                  "name": "과잉 상신",
+                  "kind": "회귀",
+                  "baseline": 9,
+                  "candidate": 16,
+                  "limit": "증가 ≤ 4",
+                  "passed": false
+                },
+                {
+                  "name": "처리 문항 단위 회귀(응답 수)",
+                  "kind": "회귀",
+                  "baseline": 0,
+                  "candidate": 18,
+                  "limit": "≤ 4",
+                  "passed": false
+                },
+                {
+                  "name": "분류 문항 단위 회귀(응답 수)",
+                  "kind": "회귀",
+                  "baseline": 0,
+                  "candidate": 6,
+                  "limit": "≤ 4",
+                  "passed": false
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  "final": {
+    "models": {
+      "qwen2.5:7b": {
+        "v14": {
+          "n": 50,
+          "success": 50,
+          "strict_rate": 100.0,
+          "parsable_rate": 100.0,
+          "field_ok_rate": {
+            "분류": 78.0,
+            "우선순위": 68.0,
+            "모듈": 76.0,
+            "재현 정보": 88.0,
+            "발생 빈도": 78.0,
+            "처리": 72.0
+          },
+          "field_best_rate": {
+            "분류": 74.0,
+            "우선순위": 62.0,
+            "모듈": 68.0,
+            "재현 정보": 88.0,
+            "발생 빈도": 76.0,
+            "처리": 68.0
+          },
+          "all_fields_ok_rate": 32.0,
+          "risk_miss": {
+            "X-1": 2,
+            "X-2": 0,
+            "X-3": 0
+          },
+          "risk_items": {
+            "X-1": 10,
+            "X-2": 42,
+            "X-3": 2
+          },
+          "over_escalation": 3,
+          "hallucination_count": 0,
+          "language_violation": 0,
+          "required_coverage_rate": 14.3,
+          "latency_sec_mean": 2.294,
+          "prompt_tokens_max": 2604,
+          "rule_failures": {}
+        },
+        "v15": {
+          "n": 50,
+          "success": 50,
+          "strict_rate": 100.0,
+          "parsable_rate": 100.0,
+          "field_ok_rate": {
+            "분류": 78.0,
+            "우선순위": 68.0,
+            "모듈": 76.0,
+            "재현 정보": 88.0,
+            "발생 빈도": 78.0,
+            "처리": 72.0
+          },
+          "field_best_rate": {
+            "분류": 74.0,
+            "우선순위": 62.0,
+            "모듈": 68.0,
+            "재현 정보": 88.0,
+            "발생 빈도": 76.0,
+            "처리": 68.0
+          },
+          "all_fields_ok_rate": 32.0,
+          "risk_miss": {
+            "X-1": 2,
+            "X-2": 0,
+            "X-3": 0
+          },
+          "risk_items": {
+            "X-1": 10,
+            "X-2": 42,
+            "X-3": 2
+          },
+          "over_escalation": 3,
+          "hallucination_count": 0,
+          "language_violation": 0,
+          "required_coverage_rate": 14.3,
+          "latency_sec_mean": 2.294,
+          "prompt_tokens_max": 2604,
+          "rule_failures": {}
+        },
+        "diff": {
+          "items_changed": [],
+          "fields": {
+            "분류": {
+              "fixed": 0,
+              "broken": 0,
+              "best_gained": 0,
+              "best_lost": 0
+            },
+            "우선순위": {
+              "fixed": 0,
+              "broken": 0,
+              "best_gained": 0,
+              "best_lost": 0
+            },
+            "모듈": {
+              "fixed": 0,
+              "broken": 0,
+              "best_gained": 0,
+              "best_lost": 0
+            },
+            "재현 정보": {
+              "fixed": 0,
+              "broken": 0,
+              "best_gained": 0,
+              "best_lost": 0
+            },
+            "발생 빈도": {
+              "fixed": 0,
+              "broken": 0,
+              "best_gained": 0,
+              "best_lost": 0
+            },
+            "처리": {
+              "fixed": 0,
+              "broken": 0,
+              "best_gained": 0,
+              "best_lost": 0
+            }
+          },
+          "all_fields_ok": {
+            "fixed": 0,
+            "broken": 0
+          },
+          "over_escalation": {
+            "added": 0,
+            "removed": 0
+          },
+          "risk_changes": []
+        },
+        "note_item": [
+          {
+            "eval_id": "qwen2.5_7b_F08_run1",
+            "우선순위": "Major",
+            "처리": "등록(재현 대기)",
+            "label_우선순위": [
+              "Major"
+            ],
+            "label_처리": [
+              "등록(재현 대기)"
+            ]
+          },
+          {
+            "eval_id": "qwen2.5_7b_F08_run2",
+            "우선순위": "Major",
+            "처리": "등록(재현 대기)",
+            "label_우선순위": [
+              "Major"
+            ],
+            "label_처리": [
+              "등록(재현 대기)"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

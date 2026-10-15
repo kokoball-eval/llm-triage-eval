@@ -8,6 +8,10 @@
 
 ## [Unreleased]
 
+### 추가 (v1.5 2단계: v1.5 라벨 재채점 결과)
+- `report/rescore_v15.md`, `data/results/v15/rescore/rescore_v15.json` — 도구 검증 V0~V3 통과. 채택 구성(qwen2.5:7b + M2, 개발용 378응답) 처리 정답률 68.8 → 73.3%, 전 칸 정답 19.8 → 20.9%, X-1 누락 17/120 → 14/102(S04 측정 제외로 5건 소멸, B17 신규 측정에서 2건 누락). 실험 A·B 참고 재판정은 v1.4 판정과 같음(M2 채택, qwen2.5:7b 유지). gemma4:12b X-1 누락 0/120 → 6/102(전부 B17). 사전 등록 판정은 변경 없음
+- 최종 평가용은 라벨 불변으로 결과 동일. F08은 모델이 2회 모두 Major·등록(재현 대기)으로 답해 v1.4 라벨로는 정답이나, v1.5 앱 재실행 규칙으로는 Critical 누락에 해당
+
 ### 추가 (v1.5 2단계: v1.4 실행 기록 v1.5 라벨 재채점 계획과 도구, 재채점 결과를 보기 전에 확정)
 - `report/rescore_v15_plan.md` — 저장된 v1.4 실행 기록(게이트 기준선, 실험 A·B, 최종 평가용)을 모델 호출 없이 v1.4·v1.5 라벨로 각각 채점해 나란히 비교하는 계획. 대상·지표·도구 검증 기준(V0~V3)·해석 규칙(사전 등록 판정 불변, 실험 A·B는 참고 재판정, 최종 평가용 F08 주의)을 결과를 보기 전에 확정
 - `src/triage_eval/pipeline/rescore.py` (`uv run triage-rescore`) — 기존 채점·판정 함수(`score.score_one`·`aggregate`, `gate.counts`, `compare.compare_seed`, `selection.decide`)를 그대로 사용. v1.4 라벨 재채점 값이 저장된 결과(`score_v14_final_*.json`, `gate_result_v14.json`, `compare_a/b.json`)와 다르거나, 라벨이 바뀌지 않은 문항에서 채점이 달라지면 결과를 쓰지 않음(종료 코드 2). 출력은 새 파일 `data/results/v15/rescore/rescore_v15.json`, `report/rescore_v15.md`만 사용

@@ -40,7 +40,7 @@ def test_every_json_parses(path):
 def loaders():
     """저장소 루트의 기준 파일 → 그 파일을 읽는 함수. 새 기준 파일을 추가하면 여기에 등록해야 테스트가 통과한다."""
     from triage_eval.bench_v1 import compare_runs
-    from triage_eval.pipeline import agreement, compare, gate, gate_v14, gate_v15, selection
+    from triage_eval.pipeline import agreement, compare, gate, gate_v14, gate_v15, judge, selection
 
     return {
         "gate_criteria.toml": lambda p: compare_runs.validate_criteria(tomllib.loads(p.read_text(encoding="utf-8"))),
@@ -50,6 +50,7 @@ def loaders():
         "model_selection_v14.toml": selection.load_select_criteria,
         "method_selection_v14.toml": compare.load_criteria,
         "label_agreement_v15.toml": agreement.load_criteria,
+        "judge_v15.toml": judge.load_criteria,
     }
 
 
@@ -60,7 +61,8 @@ def test_every_root_criteria_file_has_a_loader():
 
 
 @pytest.mark.parametrize("name", ["gate_criteria.toml", "gate_criteria_v13.toml", "gate_criteria_v14.toml", "gate_criteria_v15.toml",
-                                  "model_selection_v14.toml", "method_selection_v14.toml", "label_agreement_v15.toml"])
+                                  "model_selection_v14.toml", "method_selection_v14.toml", "label_agreement_v15.toml",
+                                  "judge_v15.toml"])
 def test_every_criteria_file_passes_its_loader(name):
     """문법뿐 아니라 각 도구의 키 검사(모르는 섹션·키, 빠진 키)까지 통과한다."""
     loaders()[name](ROOT / name)

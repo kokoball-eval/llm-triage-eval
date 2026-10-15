@@ -1,0 +1,64 @@
+# ─────────────────────────────────────────────────────────────
+# 채택 구성 회귀 게이트 합격 기준 (v1.5 라벨) — 평가셋 aether_raid_v14 개발용 63건 입력, 정답표 aether_raid_v15, 방법 M2, 출력 형식 v2
+#
+# src/triage_eval/pipeline/gate_v15.py(uv run triage-gate --dataset v15)가 이 파일을 읽어,
+# v1.4에서 채택한 구성(qwen2.5:7b + Critical 체크리스트 M2)보다 후보가 나빠졌는지 seed 3개로 판정한다.
+# 계획: report/regression_gate_v15_plan.md
+#
+# 기준 값은 gate_criteria_v14.toml 과 같다. 다른 점은 [meta] labels 하나다.
+#   - 실행 기록은 v1.4 평가셋으로 만든다(입력이 v1.5와 같다). 기준선·후보를 채점하는 정답표만 v1.5 평가셋이다.
+#   - 기준선은 v1.4 게이트와 같은 실행 기록을 가리킨다. 모델을 다시 실행하지 않는다(계획 §2).
+# 재현 점검(계획 §5 G1·G2) 전에 확정했다. 결과를 본 뒤 바꾸지 않는다.
+# ─────────────────────────────────────────────────────────────
+
+[meta]
+version = "1.5"
+dataset = "v14"               # 실행 기록의 평가셋 (모델이 본 입력)
+labels = "v15"                # 채점 정답표 (계획 §1)
+split = "dev"                 # 최종 평가용(final) 25건은 게이트에 쓰지 않는다
+seeds = [1, 11, 21]           # 3개 모두 통과해야 PASS (seed 하나로는 효과와 우연을 구분할 수 없다, KL-002)
+repeat = 2                    # seed당 63건 × 2회 = 126응답
+target_model = "qwen2.5:7b"
+# 고정 기준선 — v1.4 게이트와 같은 실행 기록(v1.4 실험 A의 M2 실행 사본). 정답표만 v1.5로 바꿔 채점한다. 덮어쓰지 않는다.
+baseline = [
+    "data/results/v14/baseline/v14_dev_m2_seed1_baseline.json",
+    "data/results/v14/baseline/v14_dev_m2_seed11_baseline.json",
+    "data/results/v14/baseline/v14_dev_m2_seed21_baseline.json",
+]
+
+# ── 절대 기준 ────────────────────────────────────────────────
+# 기준선과 상관없이 후보가 단독으로 지켜야 하는 바닥선 (method_selection_v14.toml 과 같은 값)
+[absolute]
+success_rate_min = 100.0
+hallucination_max = 0
+language_violation_max = 0    # R7
+enum_violation_max = 0        # R6
+latency_max_sec = 10.0        # 1건 평균. 형식 재요청·체크리스트·폐기 확인 시간 포함
+
+# ── 기준선 대비 상한 ─────────────────────────────────────────
+# 기준선(M2)도 개발용 63건에서 X-3이 0건이 아니므로, 0건이 아니라 "늘지 않을 것"으로 판정한다.
+# 0건 기준은 최종 측정과 v1.5 라우팅 목표에서 따로 판정한다.
+[relative_to_baseline]
+x2_miss_increase_max = 0
+x3_miss_increase_max = 0
+
+# ── 회귀 기준 ────────────────────────────────────────────────
+# seed당 126응답 기준 (gate_criteria_v13.toml 64응답 허용폭의 2배, 원칙상 0인 항목은 0)
+[regression]
+x1_miss_increase_max = 0
+over_escalation_increase_max = 4
+format_drop_max_responses = 4
+latency_increase_max_pct = 20.0       # v1.3 게이트와 같은 값
+
+[regression.field_drop_max_responses]
+"처리" = 0
+"분류" = 0
+"우선순위" = 2
+"모듈" = 6
+"재현 정보" = 6
+"발생 빈도" = 6
+"6칸 정답" = 6
+
+[regression.item_regression_max_responses]
+"처리" = 4
+"분류" = 4

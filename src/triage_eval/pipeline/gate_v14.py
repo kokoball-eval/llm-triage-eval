@@ -36,6 +36,9 @@ gate_criteria_v14.toml 의 합격 기준으로 "나빠지지 않았는가"를 �
    걸린다(OBS-005 실측 8.2·16.4초). 이 확인은 품질 기준이 아니라 "비교해도 되는가"의 조건이라 기준 파일에 두지 않는다.
    실행 기록에는 각 문항의 첫 호출 로드 시간만 남으므로, 형식 재요청·체크리스트·폐기 확인 호출에서 다시 로드된 경우는
    이 확인으로 잡지 못한다.
+8. (v1.5 라벨 전환) 채점 정답표·출력 경로·보고서 머리말·기준 파일 키 목록을 인자로 받을 수 있다. v1.5 라벨 게이트
+   (gate_v15.py)가 같은 판정 함수를 쓰게 하려는 것이며, 기본값은 이전과 같아 이 게이트의 동작은 바뀌지 않는다.
+   판정 규칙을 복사하면 두 게이트의 판정이 어긋날 수 있다(설계 의도 1과 같은 이유).
 """
 
 import json
@@ -50,6 +53,7 @@ CRITERIA = ROOT / "gate_criteria_v14.toml"
 DATASET = ROOT / "data" / "eval_v14" / "aether_raid_v14.json"
 RESULT_JSON = ROOT / "data" / "results" / "v14" / "gate_result_v14.json"
 REPORT = ROOT / "report" / "regression_gate_v14.md"
+HEADER = ("채택 구성 회귀 게이트 판정 (v1.4 평가셋 · M2)", "gate_criteria_v14.toml", "src/triage_eval/pipeline/gate_v14.py")   # 설계 의도 8
 
 KNOWN = {
     "meta": {"version", "dataset", "split", "seeds", "repeat", "target_model", "baseline"},
@@ -67,14 +71,15 @@ CHANGE_NOTES = (("prompt_version", "프롬프트 버전"), ("system_prompt_sha25
                 ("critical_check_policy", "Critical 체크리스트 정책"), ("think", "생각 끄기 설정"))
 
 
-def load_criteria(path: Path) -> dict:
-    """설계 의도 6."""
+def load_criteria(path: Path, known: dict | None = None) -> dict:
+    """설계 의도 6. known 은 v1.5 라벨 게이트가 키를 더할 때 쓴다(설계 의도 8)."""
+    known = KNOWN if known is None else known
     if not path.exists():
         raise g.GateError(f"기준 파일이 없습니다: {path}")
     c = tomllib.loads(path.read_text(encoding="utf-8"))
-    problems = [f"모르는 섹션 [{s}]" for s in c if s not in KNOWN]
-    problems += [f"[{s}] 모르는 키 {k!r}" for s, body in c.items() if s in KNOWN for k in body if k not in KNOWN[s]]
-    problems += [f"[{s}] {k} 가 없습니다" for s, keys in KNOWN.items() for k in keys if k not in c.get(s, {})]
+    problems = [f"모르는 섹션 [{s}]" for s in c if s not in known]
+    problems += [f"[{s}] 모르는 키 {k!r}" for s, body in c.items() if s in known for k in body if k not in known[s]]
+    problems += [f"[{s}] {k} 가 없습니다" for s, keys in known.items() for k in keys if k not in c.get(s, {})]
     reg = c.get("regression", {})
     problems += [f"[regression.field_drop_max_responses] 모르는 칸 {f!r}"
                  for f in reg.get("field_drop_max_responses", {}) if f not in g.FIELD_KEYS]
@@ -157,11 +162,11 @@ def change_totals(per_seed: list[dict]) -> dict[str, dict[str, int]]:
             for f in g.FIELD_KEYS}
 
 
-def render(crit, base, cand, notes, per_seed, totals, verdict) -> str:
+def render(crit, base, cand, notes, per_seed, totals, verdict, header: tuple[str, str, str] = HEADER) -> str:
     seeds = crit["meta"]["seeds"]
-    L = ["# 채택 구성 회귀 게이트 판정 (v1.4 평가셋 · M2)", "",
-         f"> 대상 `{crit['meta']['target_model']}` · 기준 파일 `gate_criteria_v14.toml` · "
-         "`src/triage_eval/pipeline/gate_v14.py` 생성", "",
+    title, criteria_name, tool = header
+    L = [f"# {title}", "",
+         f"> 대상 `{crit['meta']['target_model']}` · 기준 파일 `{criteria_name}` · `{tool}` 생성", "",
          f"## 판정: **{verdict}**", "",
          "| seed | 기준선 | 후보 | 결과 |", "| ---: | :--- | :--- | :---: |"]
     for s, r in zip(seeds, per_seed):
@@ -184,12 +189,17 @@ def render(crit, base, cand, notes, per_seed, totals, verdict) -> str:
     return "\n".join(L) + "\n"
 
 
-def run(cand_paths: list[Path], crit: dict, base_paths: list[Path] | None = None, write: bool = True) -> int:
+def run(cand_paths: list[Path], crit: dict, base_paths: list[Path] | None = None, write: bool = True, *,
+        items: dict | None = None, result_json: Path | None = None, report: Path | None = None,
+        header: tuple[str, str, str] = HEADER) -> int:
+    """items·result_json·report·header 를 생략하면 v1.4 게이트 그대로다 (설계 의도 8)."""
+    result_json, report = result_json or RESULT_JSON, report or REPORT
     base_paths = base_paths or [ROOT / p for p in crit["meta"]["baseline"]]
     base = by_seed([(p, g.load_log(p)) for p in base_paths], "기준선", crit)
     cand = by_seed([(p, g.load_log(p)) for p in cand_paths], "후보", crit)
     notes = check_comparable(base, cand, crit)
-    items = {i["id"]: i for i in json.loads(DATASET.read_text(encoding="utf-8"))["items"]}
+    if items is None:
+        items = {i["id"]: i for i in json.loads(DATASET.read_text(encoding="utf-8"))["items"]}
     arm = f"m2/{crit['meta']['target_model']}"   # compare_seed 는 arm 에서 모델 이름만 쓴다
     per_seed = [cmp.compare_seed(base[s][1], cand[s][1], arm, arm, items, judge_criteria(crit)) for s in crit["meta"]["seeds"]]
     verdict = "PASS" if all(r["passed"] for r in per_seed) else "FAIL"
@@ -207,13 +217,13 @@ def run(cand_paths: list[Path], crit: dict, base_paths: list[Path] | None = None
     print("  문항 단위 변화(seed 합계): " + (", ".join(f"{f} 새로 틀림 {t['regressed']}·새로 맞힘 {t['fixed']}"
                                               for f, t in changed.items()) or "없음"))
     if write:
-        RESULT_JSON.parent.mkdir(parents=True, exist_ok=True)
-        RESULT_JSON.write_text(json.dumps({
+        result_json.parent.mkdir(parents=True, exist_ok=True)
+        result_json.write_text(json.dumps({
             "verdict": verdict, "target_model": crit["meta"]["target_model"], "notes": notes,
             "baseline": [g.rel(base[s][0]) for s in crit["meta"]["seeds"]],
             "candidate": [g.rel(cand[s][0]) for s in crit["meta"]["seeds"]],
             "item_change_totals": totals, "per_seed": per_seed}, ensure_ascii=False, indent=2), encoding="utf-8")
-        REPORT.parent.mkdir(parents=True, exist_ok=True)
-        REPORT.write_text(render(crit, base, cand, notes, per_seed, totals, verdict), encoding="utf-8")
-        print(f"\n저장: {g.rel(RESULT_JSON)}, {g.rel(REPORT)}")
+        report.parent.mkdir(parents=True, exist_ok=True)
+        report.write_text(render(crit, base, cand, notes, per_seed, totals, verdict, header), encoding="utf-8")
+        print(f"\n저장: {g.rel(result_json)}, {g.rel(report)}")
     return 0 if verdict == "PASS" else 1

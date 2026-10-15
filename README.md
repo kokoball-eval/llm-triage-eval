@@ -476,8 +476,10 @@ uv run triage-score --dataset v14
 * **(v1.5) 채택 구성 회귀 게이트** — 위 실행을 seed 1·11·21로 하고 게이트에 넣습니다. seed 3개가 모두 통과해야 PASS입니다.
 
 ```powershell
-uv run triage-gate --dataset v14 --candidate <seed1.json> --candidate <seed11.json> --candidate <seed21.json>
+uv run triage-gate --dataset v15 --candidate <seed1.json> --candidate <seed11.json> --candidate <seed21.json>
 ```
+
+  (v1.5 라벨 전환) 게이트는 v1.5 정답표로 채점합니다. 기준선 실행 기록과 기준 값은 아래 v1.4 게이트와 같고, 정답표만 v1.5 평가셋으로 바꿨습니다([계획](report/regression_gate_v15_plan.md), 기준 [`gate_criteria_v15.toml`](gate_criteria_v15.toml)). 재현 점검에서 같은 구성은 PASS·문항 단위 변화 0건, 체크리스트를 뺀 구성은 Critical 누락 증가로 FAIL이었습니다([`report/regression_gate_v15.md`](report/regression_gate_v15.md)). v1.4 게이트(`--dataset v14`)는 이전 판정의 재현용으로 동결했습니다.
 
   기준선은 M2 채택의 근거가 된 v1.4 실험 A 실행 기록(`data/results/v14/baseline/`)이고, 합격 기준은 [`gate_criteria_v14.toml`](gate_criteria_v14.toml)입니다. 기준 값은 v1.4 방법 선택 기준과 같고, 평균 지연 증가 20% 이하를 더했습니다. X-2·X-3은 기준선(M2)도 개발용에서 0건이 아니어서 "기준선보다 늘지 않을 것"으로 판정합니다. 실행 도중 모델이 다시 로드된 실행은 같은 seed로 재현되지 않으므로 판정하지 않습니다([OBS-005](docs/issue_log.md#obs-005)). 기준선 재현 점검(같은 구성을 다시 실행해 게이트에 넣는 확인)에서 seed 3개 모두 응답 126/126이 기준선과 같았고, PASS·문항 단위 변화 0건이었습니다([`report/regression_gate_v14.md`](report/regression_gate_v14.md)). 결과: `data/results/v14/gate_result_v14.json`, `report/regression_gate_v14.md`
 
@@ -504,7 +506,10 @@ uv run triage-gate --dataset v14 --candidate <seed1.json> --candidate <seed11.js
 | [`report/eval_v14_final.md`](report/eval_v14_final.md) | **(v1.4) 최종 보고서.** 실험 A(방법)·B(모델) 결과와 원인 분석, 최종 평가용 세트 측정, 한계와 v1.5 과제 |
 | [`report/method_comparison_v14_a.md`](report/method_comparison_v14_a.md), [`_b.md`](report/method_comparison_v14_b.md) | **(v1.4) 비교 판정표.** seed별 기준 판정 (`pipeline/compare.py` 생성) |
 | [`report/eval_v14.md`](report/eval_v14.md) | **(v1.4) 최종 평가용 세트 채점 요약** (`pipeline/score.py` 생성) |
-| [`CHANGELOG.md`](CHANGELOG.md) | **버전별 변경 이력.** v1.0부터 v1.4까지, 버전마다 답하려는 질문 |
+| [`report/label_agreement_v15_results.md`](report/label_agreement_v15_results.md) | **(v1.5) 라벨 일치율 결과 보고서.** 외부 QA 2명의 블라인드 판정 결과, 불일치 177건 검토, 기준서·평가셋 변경, 모델 성적에 준 영향, 채점자끼리 갈린 문항과 라우팅 시사점 |
+| [`report/rescore_v15.md`](report/rescore_v15.md) | **(v1.5) v1.4 실행 기록 v1.5 라벨 재채점.** 모델을 다시 돌리지 않고 정답표만 바꿔 다시 센 값과 참고 재판정 (`pipeline/rescore.py` 생성) |
+| [`report/regression_gate_v15.md`](report/regression_gate_v15.md) | **(v1.5) 채택 구성 회귀 게이트 판정 근거(v1.5 정답표).** seed별 기준 판정, 문항 단위 변화, 응답 동일성 (`pipeline/gate_v15.py` 생성) |
+| [`CHANGELOG.md`](CHANGELOG.md) | **버전별 변경 이력.** v1.0부터 v1.5 진행분까지, 버전마다 답하려는 질문 |
 | [`docs/issue_log.md`](docs/issue_log.md) | **이슈 기록.** 고도화 중 발견한 결함, v1.3 실사용 시나리오, 알려진 한계, 관찰 사항을 현상 → 원인 → 조치 → 재발 방지 형식으로 정리 |
 | [`docs/dataset/triage_guideline.md`](docs/dataset/triage_guideline.md) | **(v1.3, v1.4 보완) 트리아지 판정 기준서.** 분류·우선순위·처리·발생 빈도 규칙과 조항별 근거(인터뷰 출처) |
 | [`docs/dataset/review_log.md`](docs/dataset/review_log.md) | **(v1.3) 평가셋 검토 기록.** 배치·전체 검토의 쟁점, 검토자 판단, 그에 따른 라벨·기준서 변경 (v1.4 최종 평가용 세트 검토 포함) |
@@ -677,7 +682,7 @@ v1.3에서 판정 체계를 실무 방식(우선순위·재현 정보·처리)�
 * **판단 정확도가 개발용 문항에 맞춰져 있음** — 같은 방법(M2)에서도 프롬프트를 다듬을 때 쓴 문항은 Critical 누락 1/66, 나머지 문항은 16/54입니다 ([KL-003](docs/issue_log.md#kl-003))
 * **모델 비교가 현재 모델에 맞춘 프롬프트 위에서 이루어짐** — 다른 모델이 불리한 조건일 수 있습니다 ([KL-004](docs/issue_log.md#kl-004))
 * **최종 평가용 세트의 위험 건 문항이 적음** — Critical 10응답(5문항), 사람 확인 2응답(1문항)이라 개발용 결과와 함께 봐야 합니다
-* **정답 라벨이 외부 채점자와 충분히 일치하지 않았음 (v1.5)** — 외부 QA 2명의 블라인드 판정이 6칸 모두 사전 등록 기준에 못 미쳤습니다. 불일치를 검토해 라벨 2문항을 바꾸고 허용 답을 넓힌 v1.5 평가셋과 기준서를 만들었으며, v1.4 결과는 v1.5 라벨로 다시 채점합니다 ([검토 기록](docs/dataset/review_log.md))
+* **정답 라벨이 외부 채점자와 충분히 일치하지 않았음 (v1.5)** — 외부 QA 2명의 블라인드 판정이 6칸 모두 사전 등록 기준에 못 미쳤습니다. 불일치를 검토해 라벨 2문항을 바꾸고 허용 답을 넓힌 v1.5 평가셋과 기준서를 만들었으며, v1.4 결과를 v1.5 라벨로 다시 채점했습니다. 판정(M2 채택, qwen2.5:7b 유지)은 바뀌지 않았습니다 ([결과 보고서](report/label_agreement_v15_results.md), [검토 기록](docs/dataset/review_log.md))
 * **검증한 도메인이 하나뿐** — 평가 체계는 트리아지 일반을 겨냥하지만, 실제로 검증한 것은 게임 버그 리포트뿐입니다. 판정 기준과 출력 형식의 선택지(`src/triage_eval/pipeline/contract.py`, `prompt.py`)도 게임 도메인에 맞춰져 있습니다 (→ [7절 도메인 확장](#7-고도화-로드맵))
 
 ---
@@ -710,7 +715,7 @@ v1.0은 "지금 어떤 모델이 이 업무에 맞는가"를 **한 번** 측정�
 | ✅&nbsp;v1.2 | 가장 위험한 결함(날조)을 사람 없이 잡을 수 있는가? | 환각 자동 탐지 + seed 고정 모드 + 측정 환경 체크리스트 |
 | ✅&nbsp;v1.3 | 평가셋이 실제 현업 인입을 대표하는가? | ✅ 현업 기반 평가셋 63건 (분류 체계 → 판정 기준서 → 시드 케이스·정답 라벨), 개발용/평가용 분리 · ✅ 출력 형식 v2와 기준선 측정 · ✅ v1.3 게이트·실사용 시나리오 · ✅ 저장소 구조 정리 · ✅ 평가용 세트 최종 측정 |
 | ✅&nbsp;v1.4 | 판단 기준을 프롬프트 문장이 아닌 방식으로 전달하면 Critical 누락을 줄일 수 있는가? | ✅ 모델 재선정(현재 모델 유지) · ✅ 날조 탐지기 오탐 수정 · ✅ 새 최종 평가용 세트 25건 · ✅ 방법 비교 사전 등록 · ✅ 방법 비교(Critical 체크리스트 채택) · ✅ 최종 측정 |
-| 🔨&nbsp;v1.5 | 무엇을 자동 처리하고 무엇을 사람에게 넘길지 시스템이 판단할 수 있는가? | 채점자 간 라벨 일치율 + LLM-as-judge와 사람 채점의 일치율 → 확신도 기반 라우팅 + 자동 처리율·정확도·위험 건 누락 측정 |
+| 🔨&nbsp;v1.5 | 무엇을 자동 처리하고 무엇을 사람에게 넘길지 시스템이 판단할 수 있는가? | ✅ 채점자 간 라벨 일치율([결과 보고서](report/label_agreement_v15_results.md)) · ✅ v1.5 라벨 재채점·게이트 전환 · LLM-as-judge와 사람 채점의 일치율 → 확신도 기반 라우팅 + 자동 처리율·정확도·위험 건 누락 측정 |
 | ⏳&nbsp;v2.0 | 사람이 보지 않는 동안에도 BTS에 올바르게 인입되는가? | BTS 자동 인입 (Redmine) + 중복 티켓 감지(RAG) + 무인 운영 데모 |
 | ⏳&nbsp;도메인 확장 | 같은 평가 체계가 다른 도메인의 트리아지에서도 작동하는가? | 두 번째 도메인(예: 공정 알람, 가상 데이터) 평가셋 + 도메인별 판정 기준·출력 형식 분리 |
 

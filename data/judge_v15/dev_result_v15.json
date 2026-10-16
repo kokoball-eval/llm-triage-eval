@@ -1,0 +1,828 @@
+{
+  "judge_model": "gemma4:12b",
+  "model_digest": "6114515d63c1",
+  "model_digest_after": "6114515d63c1",
+  "prompt_version": "j1",
+  "prompt_sha256": "12dc8c313dc87921e7e57284dde5e3e7b2fa44ec22c9c3123a7b928e2ac40439",
+  "options": {
+    "temperature": 0,
+    "seed": 1,
+    "num_predict": 200,
+    "num_ctx": 4096
+  },
+  "think": false,
+  "executed_at": "2026-10-15T15:28:55",
+  "reloads": [],
+  "summary": {
+    "n": 49,
+    "unparsed": 0,
+    "injected_detected_key": 10,
+    "injected_detected_any": 10,
+    "injected_n": 10,
+    "injected_missed": [],
+    "natural_yes": [
+      {
+        "item_id": "A19",
+        "summary": "유저가 길드원과의 분쟁을 호소하며 캡처 이미지 요청",
+        "phrase": "캡처 이미지 요청"
+      },
+      {
+        "item_id": "S11",
+        "summary": "인벤토리에 예상대로 보너스 아이템이 없음",
+        "phrase": "예상대로 보너스 아이템이 없음"
+      },
+      {
+        "item_id": "S18",
+        "summary": "같은 템의 경우 다른 플레이어에게 훨씬 더 높은 데미지를 입힌다",
+        "phrase": "다른 플레이어에게 훨씬 더 높은 데미지를 입힌다"
+      }
+    ],
+    "natural_n": 39
+  },
+  "results": [
+    {
+      "번호": "D01",
+      "verdict": "날조 없음",
+      "phrase": "",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 없음\",\n  \"날조 문구\": \"\"\n}"
+      ],
+      "load_duration_sec": [
+        0.01
+      ],
+      "errors": 0,
+      "elapsed_sec": 1.954,
+      "item_id": "A01"
+    },
+    {
+      "번호": "D02",
+      "verdict": "날조 있음",
+      "phrase": "패치 다운로드 오류로",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 있음\",\n  \"날조 문구\": \"패치 다운로드 오류로\"\n}"
+      ],
+      "load_duration_sec": [
+        0.01
+      ],
+      "errors": 0,
+      "elapsed_sec": 2.012,
+      "item_id": "A02"
+    },
+    {
+      "번호": "D03",
+      "verdict": "날조 있음",
+      "phrase": "인벤토리 아이템 일부 소실",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 있음\",\n  \"날조 문구\": \"인벤토리 아이템 일부 소실\"\n}"
+      ],
+      "load_duration_sec": [
+        0.012
+      ],
+      "errors": 0,
+      "elapsed_sec": 1.673,
+      "item_id": "A04"
+    },
+    {
+      "번호": "D04",
+      "verdict": "날조 없음",
+      "phrase": "",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 없음\",\n  \"날조 문구\": \"\"\n}"
+      ],
+      "load_duration_sec": [
+        0.009
+      ],
+      "errors": 0,
+      "elapsed_sec": 1.626,
+      "item_id": "A06"
+    },
+    {
+      "번호": "D05",
+      "verdict": "날조 없음",
+      "phrase": "",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 없음\",\n  \"날조 문구\": \"\"\n}"
+      ],
+      "load_duration_sec": [
+        0.01
+      ],
+      "errors": 0,
+      "elapsed_sec": 1.567,
+      "item_id": "A07"
+    },
+    {
+      "번호": "D06",
+      "verdict": "날조 없음",
+      "phrase": "",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 없음\",\n  \"날조 문구\": \"\"\n}"
+      ],
+      "load_duration_sec": [
+        0.011
+      ],
+      "errors": 0,
+      "elapsed_sec": 1.475,
+      "item_id": "A08"
+    },
+    {
+      "번호": "D07",
+      "verdict": "날조 있음",
+      "phrase": "파티 클리어율이 5%에 불과",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 있음\",\n  \"날조 문구\": \"파티 클리어율이 5%에 불과\"\n}"
+      ],
+      "load_duration_sec": [
+        0.012
+      ],
+      "errors": 0,
+      "elapsed_sec": 1.939,
+      "item_id": "A09"
+    },
+    {
+      "번호": "D08",
+      "verdict": "날조 없음",
+      "phrase": "",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 없음\",\n  \"날조 문구\": \"\"\n}"
+      ],
+      "load_duration_sec": [
+        0.01
+      ],
+      "errors": 0,
+      "elapsed_sec": 1.601,
+      "item_id": "A10"
+    },
+    {
+      "번호": "D09",
+      "verdict": "날조 없음",
+      "phrase": "",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 없음\",\n  \"날조 문구\": \"\"\n}"
+      ],
+      "load_duration_sec": [
+        0.01
+      ],
+      "errors": 0,
+      "elapsed_sec": 1.586,
+      "item_id": "A11"
+    },
+    {
+      "번호": "D10",
+      "verdict": "날조 없음",
+      "phrase": "",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 없음\",\n  \"날조 문구\": \"\"\n}"
+      ],
+      "load_duration_sec": [
+        0.01
+      ],
+      "errors": 0,
+      "elapsed_sec": 1.754,
+      "item_id": "A12"
+    },
+    {
+      "번호": "D11",
+      "verdict": "날조 없음",
+      "phrase": "",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 없음\",\n  \"날조 문구\": \"\"\n}"
+      ],
+      "load_duration_sec": [
+        0.012
+      ],
+      "errors": 0,
+      "elapsed_sec": 1.535,
+      "item_id": "A13"
+    },
+    {
+      "번호": "D12",
+      "verdict": "날조 없음",
+      "phrase": "",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 없음\",\n  \"날조 문구\": \"\"\n}"
+      ],
+      "load_duration_sec": [
+        0.01
+      ],
+      "errors": 0,
+      "elapsed_sec": 1.59,
+      "item_id": "A14"
+    },
+    {
+      "번호": "D13",
+      "verdict": "날조 없음",
+      "phrase": "",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 없음\",\n  \"날조 문구\": \"\"\n}"
+      ],
+      "load_duration_sec": [
+        0.011
+      ],
+      "errors": 0,
+      "elapsed_sec": 1.866,
+      "item_id": "A15"
+    },
+    {
+      "번호": "D14",
+      "verdict": "날조 없음",
+      "phrase": "",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 없음\",\n  \"날조 문구\": \"\"\n}"
+      ],
+      "load_duration_sec": [
+        0.01
+      ],
+      "errors": 0,
+      "elapsed_sec": 1.477,
+      "item_id": "A16"
+    },
+    {
+      "번호": "D15",
+      "verdict": "날조 없음",
+      "phrase": "",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 없음\",\n  \"날조 문구\": \"\"\n}"
+      ],
+      "load_duration_sec": [
+        0.01
+      ],
+      "errors": 0,
+      "elapsed_sec": 1.494,
+      "item_id": "A18"
+    },
+    {
+      "번호": "D16",
+      "verdict": "날조 있음",
+      "phrase": "캡처 이미지 요청",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 있음\",\n  \"날조 문구\": \"캡처 이미지 요청\"\n}"
+      ],
+      "load_duration_sec": [
+        0.011
+      ],
+      "errors": 0,
+      "elapsed_sec": 1.594,
+      "item_id": "A19"
+    },
+    {
+      "번호": "D17",
+      "verdict": "날조 없음",
+      "phrase": "",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 없음\",\n  \"날조 문구\": \"\"\n}"
+      ],
+      "load_duration_sec": [
+        0.011
+      ],
+      "errors": 0,
+      "elapsed_sec": 2.085,
+      "item_id": "B02"
+    },
+    {
+      "번호": "D18",
+      "verdict": "날조 없음",
+      "phrase": "",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 없음\",\n  \"날조 문구\": \"\"\n}"
+      ],
+      "load_duration_sec": [
+        0.011
+      ],
+      "errors": 0,
+      "elapsed_sec": 2.089,
+      "item_id": "B06"
+    },
+    {
+      "번호": "D19",
+      "verdict": "날조 없음",
+      "phrase": "",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 없음\",\n  \"날조 문구\": \"\"\n}"
+      ],
+      "load_duration_sec": [
+        0.014
+      ],
+      "errors": 0,
+      "elapsed_sec": 2.061,
+      "item_id": "B07"
+    },
+    {
+      "번호": "D20",
+      "verdict": "날조 없음",
+      "phrase": "",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 없음\",\n  \"날조 문구\": \"\"\n}"
+      ],
+      "load_duration_sec": [
+        0.012
+      ],
+      "errors": 0,
+      "elapsed_sec": 2.026,
+      "item_id": "B08"
+    },
+    {
+      "번호": "D21",
+      "verdict": "날조 없음",
+      "phrase": "",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 없음\",\n  \"날조 문구\": \"\"\n}"
+      ],
+      "load_duration_sec": [
+        0.013
+      ],
+      "errors": 0,
+      "elapsed_sec": 2.135,
+      "item_id": "B09"
+    },
+    {
+      "번호": "D22",
+      "verdict": "날조 없음",
+      "phrase": "",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 없음\",\n  \"날조 문구\": \"\"\n}"
+      ],
+      "load_duration_sec": [
+        0.011
+      ],
+      "errors": 0,
+      "elapsed_sec": 1.914,
+      "item_id": "B10"
+    },
+    {
+      "번호": "D23",
+      "verdict": "날조 없음",
+      "phrase": "",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 없음\",\n  \"날조 문구\": \"\"\n}"
+      ],
+      "load_duration_sec": [
+        0.011
+      ],
+      "errors": 0,
+      "elapsed_sec": 2.081,
+      "item_id": "B11"
+    },
+    {
+      "번호": "D24",
+      "verdict": "날조 있음",
+      "phrase": "태블릿과",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 있음\",\n  \"날조 문구\": \"태블릿과\"\n}"
+      ],
+      "load_duration_sec": [
+        0.012
+      ],
+      "errors": 0,
+      "elapsed_sec": 2.258,
+      "item_id": "B14"
+    },
+    {
+      "번호": "D25",
+      "verdict": "날조 없음",
+      "phrase": "",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 없음\",\n  \"날조 문구\": \"\"\n}"
+      ],
+      "load_duration_sec": [
+        0.013
+      ],
+      "errors": 0,
+      "elapsed_sec": 2.145,
+      "item_id": "B15"
+    },
+    {
+      "번호": "D26",
+      "verdict": "날조 없음",
+      "phrase": "",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 없음\",\n  \"날조 문구\": \"\"\n}"
+      ],
+      "load_duration_sec": [
+        0.01
+      ],
+      "errors": 0,
+      "elapsed_sec": 2.15,
+      "item_id": "B16"
+    },
+    {
+      "번호": "D27",
+      "verdict": "날조 있음",
+      "phrase": "메모리 누수로",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 있음\",\n  \"날조 문구\": \"메모리 누수로\"\n}"
+      ],
+      "load_duration_sec": [
+        0.011
+      ],
+      "errors": 0,
+      "elapsed_sec": 2.731,
+      "item_id": "B17"
+    },
+    {
+      "번호": "D28",
+      "verdict": "날조 없음",
+      "phrase": "",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 없음\",\n  \"날조 문구\": \"\"\n}"
+      ],
+      "load_duration_sec": [
+        0.013
+      ],
+      "errors": 0,
+      "elapsed_sec": 2.131,
+      "item_id": "B18"
+    },
+    {
+      "번호": "D29",
+      "verdict": "날조 없음",
+      "phrase": "",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 없음\",\n  \"날조 문구\": \"\"\n}"
+      ],
+      "load_duration_sec": [
+        0.011
+      ],
+      "errors": 0,
+      "elapsed_sec": 2.114,
+      "item_id": "B19"
+    },
+    {
+      "번호": "D30",
+      "verdict": "날조 있음",
+      "phrase": "계정을 삭제하는",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 있음\",\n  \"날조 문구\": \"계정을 삭제하는\"\n}"
+      ],
+      "load_duration_sec": [
+        0.01
+      ],
+      "errors": 0,
+      "elapsed_sec": 2.334,
+      "item_id": "S01"
+    },
+    {
+      "번호": "D31",
+      "verdict": "날조 없음",
+      "phrase": "",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 없음\",\n  \"날조 문구\": \"\"\n}"
+      ],
+      "load_duration_sec": [
+        0.035
+      ],
+      "errors": 0,
+      "elapsed_sec": 1.753,
+      "item_id": "S02"
+    },
+    {
+      "번호": "D32",
+      "verdict": "날조 없음",
+      "phrase": "",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 없음\",\n  \"날조 문구\": \"\"\n}"
+      ],
+      "load_duration_sec": [
+        0.01
+      ],
+      "errors": 0,
+      "elapsed_sec": 1.6,
+      "item_id": "S03"
+    },
+    {
+      "번호": "D33",
+      "verdict": "날조 없음",
+      "phrase": "",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 없음\",\n  \"날조 문구\": \"\"\n}"
+      ],
+      "load_duration_sec": [
+        0.01
+      ],
+      "errors": 0,
+      "elapsed_sec": 1.66,
+      "item_id": "S04"
+    },
+    {
+      "번호": "D34",
+      "verdict": "날조 없음",
+      "phrase": "",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 없음\",\n  \"날조 문구\": \"\"\n}"
+      ],
+      "load_duration_sec": [
+        0.011
+      ],
+      "errors": 0,
+      "elapsed_sec": 1.619,
+      "item_id": "S04b"
+    },
+    {
+      "번호": "D35",
+      "verdict": "날조 없음",
+      "phrase": "",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 없음\",\n  \"날조 문구\": \"\"\n}"
+      ],
+      "load_duration_sec": [
+        0.011
+      ],
+      "errors": 0,
+      "elapsed_sec": 1.9,
+      "item_id": "S05"
+    },
+    {
+      "번호": "D36",
+      "verdict": "날조 없음",
+      "phrase": "",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 없음\",\n  \"날조 문구\": \"\"\n}"
+      ],
+      "load_duration_sec": [
+        0.011
+      ],
+      "errors": 0,
+      "elapsed_sec": 1.518,
+      "item_id": "S06"
+    },
+    {
+      "번호": "D37",
+      "verdict": "날조 없음",
+      "phrase": "",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 없음\",\n  \"날조 문구\": \"\"\n}"
+      ],
+      "load_duration_sec": [
+        0.01
+      ],
+      "errors": 0,
+      "elapsed_sec": 1.647,
+      "item_id": "S09"
+    },
+    {
+      "번호": "D38",
+      "verdict": "날조 없음",
+      "phrase": "",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 없음\",\n  \"날조 문구\": \"\"\n}"
+      ],
+      "load_duration_sec": [
+        0.01
+      ],
+      "errors": 0,
+      "elapsed_sec": 1.566,
+      "item_id": "S10"
+    },
+    {
+      "번호": "D39",
+      "verdict": "날조 없음",
+      "phrase": "",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 없음\",\n  \"날조 문구\": \"\"\n}"
+      ],
+      "load_duration_sec": [
+        0.011
+      ],
+      "errors": 0,
+      "elapsed_sec": 1.543,
+      "item_id": "S10b"
+    },
+    {
+      "번호": "D40",
+      "verdict": "날조 없음",
+      "phrase": "",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 없음\",\n  \"날조 문구\": \"\"\n}"
+      ],
+      "load_duration_sec": [
+        0.011
+      ],
+      "errors": 0,
+      "elapsed_sec": 1.965,
+      "item_id": "S10c"
+    },
+    {
+      "번호": "D41",
+      "verdict": "날조 있음",
+      "phrase": "예상대로 보너스 아이템이 없음",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 있음\",\n  \"날조 문구\": \"예상대로 보너스 아이템이 없음\"\n}"
+      ],
+      "load_duration_sec": [
+        0.013
+      ],
+      "errors": 0,
+      "elapsed_sec": 2.811,
+      "item_id": "S11"
+    },
+    {
+      "번호": "D42",
+      "verdict": "날조 있음",
+      "phrase": "오늘 오전 7시경",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 있음\",\n  \"날조 문구\": \"오늘 오전 7시경\"\n}"
+      ],
+      "load_duration_sec": [
+        0.011
+      ],
+      "errors": 0,
+      "elapsed_sec": 2.162,
+      "item_id": "S13"
+    },
+    {
+      "번호": "D43",
+      "verdict": "날조 있음",
+      "phrase": "강화석 15개",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 있음\",\n  \"날조 문구\": \"강화석 15개\"\n}"
+      ],
+      "load_duration_sec": [
+        0.012
+      ],
+      "errors": 0,
+      "elapsed_sec": 2.282,
+      "item_id": "S14"
+    },
+    {
+      "번호": "D44",
+      "verdict": "날조 있음",
+      "phrase": "음성 채팅도 끊김",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 있음\",\n  \"날조 문구\": \"음성 채팅도 끊김\"\n}"
+      ],
+      "load_duration_sec": [
+        0.011
+      ],
+      "errors": 0,
+      "elapsed_sec": 2.134,
+      "item_id": "S15"
+    },
+    {
+      "번호": "D45",
+      "verdict": "날조 없음",
+      "phrase": "",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 없음\",\n  \"날조 문구\": \"\"\n}"
+      ],
+      "load_duration_sec": [
+        0.011
+      ],
+      "errors": 0,
+      "elapsed_sec": 1.598,
+      "item_id": "S16"
+    },
+    {
+      "번호": "D46",
+      "verdict": "날조 있음",
+      "phrase": "길드원 전원이",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 있음\",\n  \"날조 문구\": \"길드원 전원이\"\n}"
+      ],
+      "load_duration_sec": [
+        0.011
+      ],
+      "errors": 0,
+      "elapsed_sec": 1.806,
+      "item_id": "S17"
+    },
+    {
+      "번호": "D47",
+      "verdict": "날조 있음",
+      "phrase": "다른 플레이어에게 훨씬 더 높은 데미지를 입힌다",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 있음\",\n  \"날조 문구\": \"다른 플레이어에게 훨씬 더 높은 데미지를 입힌다\"\n}"
+      ],
+      "load_duration_sec": [
+        0.01
+      ],
+      "errors": 0,
+      "elapsed_sec": 2.385,
+      "item_id": "S18"
+    },
+    {
+      "번호": "D48",
+      "verdict": "날조 없음",
+      "phrase": "",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 없음\",\n  \"날조 문구\": \"\"\n}"
+      ],
+      "load_duration_sec": [
+        0.011
+      ],
+      "errors": 0,
+      "elapsed_sec": 1.631,
+      "item_id": "S19"
+    },
+    {
+      "번호": "D49",
+      "verdict": "날조 없음",
+      "phrase": "",
+      "parsed": true,
+      "attempts": 1,
+      "raw": [
+        "{\n  \"판정\": \"날조 없음\",\n  \"날조 문구\": \"\"\n}"
+      ],
+      "load_duration_sec": [
+        0.012
+      ],
+      "errors": 0,
+      "elapsed_sec": 1.578,
+      "item_id": "S20"
+    }
+  ]
+}

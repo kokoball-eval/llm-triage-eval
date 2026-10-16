@@ -34,7 +34,8 @@ def test_criteria_match_plan():
     """계획 §6의 값과 같다."""
     c = judge.load_criteria()
     assert c["meta"]["judge_model"] == bs.JUDGE_MODEL == "gemma4:12b"
-    assert c["natural"] == {"agreement_min": 90.0, "kappa_min": 0.61, "min_positive_for_kappa": 5, "false_alarm_max": 10.0}
+    assert c["natural"] == {"agreement_min": 90.0, "kappa_min": 0.61, "min_positive_for_kappa": 5, "false_alarm_max": 10.0,
+                            "excluded_items": ["A06"]}   # 계획 §11 추가 기록 (ISSUE-012)
     assert c["injected"] == {"recall_min": 90.0, "credit_requires_key": True}
 
 

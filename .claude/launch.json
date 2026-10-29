@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "quality-rater",
+      "runtimeExecutable": "uv",
+      "runtimeArgs": ["run", "python", "tools/quality_v15/rater_server.py", "--port", "8765"],
+      "port": 8765
+    },
+    {
+      "name": "quality-rater-test",
+      "runtimeExecutable": "uv",
+      "runtimeArgs": ["run", "python", "tools/quality_v15/rater_server.py", "--port", "8766", "--answers-dir", "dist/quality_ui_test"],
+      "port": 8766
+    }
+  ]
+}

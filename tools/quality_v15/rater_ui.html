@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>요약 품질 채점</title>
+<style>
+  :root { --bg:#f6f7f9; --card:#fff; --ink:#1d2433; --muted:#5b6475; --line:#d9dee7; --accent:#1f5fbf;
+          --yes:#b3261e; --no:#1e7a3c; --sum:#fff8e1; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.6 "맑은 고딕","Malgun Gothic",system-ui,sans-serif; }
+  header { position:sticky; top:0; z-index:2; background:var(--card); border-bottom:1px solid var(--line); padding:10px 16px;
+           display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+  header h1 { font-size:17px; margin:0 12px 0 0; }
+  .tab { border:1px solid var(--line); background:#fff; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:600; }
+  .tab.on { background:var(--accent); color:#fff; border-color:var(--accent); }
+  #progress { color:var(--muted); margin-left:auto; }
+  main { max-width:1200px; margin:0 auto; padding:16px; }
+  details.def { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:10px 14px; margin-bottom:14px; }
+  details.def summary { cursor:pointer; font-weight:700; }
+  .def table { border-collapse:collapse; margin:8px 0; width:100%; }
+  .def td, .def th { border:1px solid var(--line); padding:4px 8px; text-align:left; vertical-align:top; }
+  .note { color:var(--yes); font-weight:600; }
+  .grid { display:grid; grid-template-columns: 1.15fr 1fr; gap:14px; }
+  @media (max-width: 860px) { .grid { grid-template-columns:1fr; } }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:14px; }
+  .card h2 { font-size:15px; margin:0 0 8px; color:var(--muted); }
+  .field { margin-bottom:10px; }
+  .field .k { font-size:12px; color:var(--muted); font-weight:700; }
+  .field .v { white-space:pre-wrap; word-break:break-word; }
+  .sumbox { background:var(--sum); border:2px solid #e0c35a; border-radius:8px; padding:12px; font-size:18px; font-weight:700;
+            white-space:pre-wrap; word-break:break-word; margin-bottom:14px; }
+  .row { margin:10px 0; }
+  .row .lab { font-weight:700; margin-bottom:4px; }
+  .btn { border:2px solid var(--line); background:#fff; padding:8px 14px; border-radius:6px; cursor:pointer; font-size:15px; margin:0 6px 6px 0; }
+  .btn.no.on { border-color:var(--no); background:#e7f5ec; color:var(--no); font-weight:700; }
+  .btn.yes.on { border-color:var(--yes); background:#fdecea; color:var(--yes); font-weight:700; }
+  .chk { display:block; margin:3px 0; }
+  .chk.off { color:#aab; }
+  textarea { width:100%; min-height:60px; font:inherit; padding:6px; border:1px solid var(--line); border-radius:6px; }
+  .actions { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:10px; }
+  .primary { background:var(--accent); color:#fff; border-color:var(--accent); font-weight:700; }
+  #msg { margin-left:6px; font-weight:600; }
+  #msg.err { color:var(--yes); }
+  #msg.ok { color:var(--no); }
+  .ref { margin-top:12px; padding:10px; border-radius:6px; background:#eef3fb; border:1px solid #c6d6f0; }
+  select { font:inherit; padding:4px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>요약 품질 채점</h1>
+  <button class="tab" id="tab-practice">1. 연습 (5문항)</button>
+  <button class="tab" id="tab-measure">2. 채점 (측정 세트)</button>
+  <span id="progress"></span>
+</header>
+<main>
+  <details class="def" open>
+    <summary>판정 기준 (채점 중 언제든 펼쳐 보세요)</summary>
+    <p><b>질문:</b> 이 요약 한 줄만 읽은 담당자가 이슈를 <b>정확히</b> 이해할 수 있는가? 문제가 있으면 "품질 문제 있음"과 유형을 고릅니다(여러 개 가능).</p>
+    <table>
+      <tr><th>유형</th><th>뜻</th></tr>
+      <tr><td>Q1 대상 누락</td><td>무엇이·어디서가 빠져, 무엇에 대한 이슈인지 알 수 없다</td></tr>
+      <tr><td>Q2 오해 소지</td><td>원문과 다른 뜻으로 읽힌다. 이슈의 성격이 바뀐 경우(건의 → 오류, 의심 → 확정 등)도 포함</td></tr>
+      <tr><td>Q3 문장 결함</td><td>목적어·서술어가 빠지거나 문장이 어색해 뜻이 흐려진다</td></tr>
+    </table>
+    <p class="note">원문에 없는 사실(날조)은 이번에 판정하지 않습니다(이미 따로 쟀습니다). 날조가 보이면 메모에만 적고, 나머지로 판정해 주세요. 단, 이슈의 성격을 바꾸는 서술(건의 → 오류, 의심 → 확정 등)은 날조가 아니라 Q2로 본다.
+      짧은 요약도 위 세 가지 문제가 없으면 "없음"입니다.</p>
+    <p><b>확신도</b> — 높음: 다른 QA도 같게 볼 것 같다 / 보통: 대체로 그렇지만 다르게 볼 수도 있다 / 낮음: 경계에 있어 확신이 없다</p>
+  </details>
+
+  <div class="grid">
+    <section class="card">
+      <h2 id="src-title">리포트 원문</h2>
+      <div id="source"></div>
+    </section>
+    <section class="card">
+      <h2 id="item-title">요약</h2>
+      <div class="sumbox" id="summary"></div>
+      <div class="row">
+        <div class="lab">판정</div>
+        <button class="btn no" data-v="품질 문제 없음">품질 문제 없음</button>
+        <button class="btn yes" data-v="품질 문제 있음">품질 문제 있음</button>
+      </div>
+      <div class="row" id="kinds">
+        <div class="lab">유형 (있음일 때, 여러 개 가능)</div>
+        <label class="chk"><input type="checkbox" value="Q1"> Q1 대상 누락</label>
+        <label class="chk"><input type="checkbox" value="Q2"> Q2 오해 소지</label>
+        <label class="chk"><input type="checkbox" value="Q3"> Q3 문장 결함</label>
+      </div>
+      <div class="row">
+        <div class="lab">확신도</div>
+        <label><input type="radio" name="conf" value="높음"> 높음</label>
+        <label><input type="radio" name="conf" value="보통"> 보통</label>
+        <label><input type="radio" name="conf" value="낮음"> 낮음</label>
+      </div>
+      <div class="row">
+        <div class="lab">메모 (선택)</div>
+        <textarea id="memo" placeholder="문제 문구, 판단 이유, 날조가 보이면 여기에"></textarea>
+      </div>
+      <div class="actions">
+        <button class="btn" id="prev">◀ 이전</button>
+        <button class="btn primary" id="save">저장</button>
+        <button class="btn" id="next">다음 ▶</button>
+        <select id="jump"></select>
+        <span id="msg"></span>
+      </div>
+      <div class="ref" id="ref" hidden></div>
+    </section>
+  </div>
+</main>
+<script>
+const S = { mode: "practice", idx: 0, data: null, verdict: null, dirty: false, busy: false };
+const $ = (id) => document.getElementById(id);
+const items = () => S.mode === "practice" ? S.data.practice : S.data.measure;
+const answers = () => S.mode === "practice" ? S.data.practice_answers : S.data.answers;
+const PRACTICE_FIELDS = ["제목", "본문"];
+const MEASURE_FIELDS = ["입력 종류", "게시판 / 작성자", "게시 일시", "제목", "본문", "참고: 업데이트 공지", "참고: 기존 등록 이슈"];
+
+function say(text, kind) { $("msg").textContent = text; $("msg").className = kind || ""; }
+async function load() {
+  try {
+    const res = await fetch("/api/state");
+    S.data = await res.json();
+    if (!res.ok) { say(S.data.error || "불러오지 못했습니다", "err"); return; }
+  } catch (e) { say("서버에 연결할 수 없습니다. 채점 화면 서버가 켜져 있는지 확인하세요", "err"); return; }
+  const practiceDone = S.data.practice.every(p => S.data.practice_answers[p["번호"]]);
+  if (practiceDone) { S.mode = "measure"; S.idx = firstOpen(); }
+  render();
+}
+function firstOpen() {
+  const i = items().findIndex(r => !answers()[r["번호"]]);
+  return i < 0 ? 0 : i;
+}
+function esc(t) { const d = document.createElement("div"); d.textContent = t; return d.innerHTML; }
+function render() {
+  $("tab-practice").classList.toggle("on", S.mode === "practice");
+  $("tab-measure").classList.toggle("on", S.mode === "measure");
+  if (S.lastMode !== S.mode) { document.querySelector("details.def").open = S.mode === "practice"; S.lastMode = S.mode; }   // 채점에서는 접어 요약이 먼저 보이게
+  const list = items(), r = list[S.idx], a = answers()[r["번호"]];
+  const fields = S.mode === "practice" ? PRACTICE_FIELDS : MEASURE_FIELDS;
+  $("source").innerHTML = fields.map(k => `<div class="field"><div class="k">${esc(k)}</div><div class="v">${esc(String(r[k] || "").trim() || "(없음)")}</div></div>`).join("");
+  $("item-title").textContent = `${r["번호"]} 요약 (판정 대상)`;
+  $("summary").textContent = r["요약"];
+  S.verdict = a ? a["판정"] : null;
+  document.querySelectorAll("#kinds input").forEach(c => { c.checked = !!(a && a["유형"].includes(c.value)); });
+  document.querySelectorAll("input[name=conf]").forEach(c => { c.checked = !!(a && a["확신도"] === c.value); });
+  $("memo").value = a ? a["메모"] : "";
+  syncVerdict();
+  $("jump").innerHTML = list.map((x, i) => `<option value="${i}" ${i === S.idx ? "selected" : ""}>${answers()[x["번호"]] ? "✓" : "·"} ${x["번호"]}</option>`).join("");
+  const done = Object.keys(answers()).length;
+  $("progress").textContent = `${S.mode === "practice" ? "연습" : "채점"} ${done}/${list.length} 저장됨`;
+  const ref = $("ref");
+  if (S.mode === "practice" && a) {
+    ref.hidden = false;
+    ref.innerHTML = `<b>참고 답:</b> ${esc(r["참고 답"])}<br>${esc(r["참고 설명"])}<br><small>참고 답은 정의를 맞추기 위한 예시입니다. 연습 답은 지표에 쓰지 않습니다.</small>`;
+  } else { ref.hidden = true; }
+  S.dirty = false;
+  say("");
+  window.scrollTo(0, 0);
+}
+function syncVerdict() {
+  document.querySelectorAll(".btn[data-v]").forEach(b => b.classList.toggle("on", b.dataset.v === S.verdict));
+  const yes = S.verdict === "품질 문제 있음";
+  document.querySelectorAll("#kinds input").forEach(c => { c.disabled = !yes; if (!yes) c.checked = false; });
+  document.querySelectorAll("#kinds .chk").forEach(l => l.classList.toggle("off", !yes));
+}
+function leaveOk() { return !S.dirty || confirm("저장하지 않은 입력이 있습니다. 저장하지 않고 이동할까요?"); }
+function go(fn) { if (leaveOk()) { fn(); render(); } else { $("jump").value = S.idx; } }
+document.querySelectorAll(".btn[data-v]").forEach(b => b.onclick = () => { S.verdict = b.dataset.v; S.dirty = true; syncVerdict(); });
+document.querySelectorAll("#kinds input, input[name=conf]").forEach(c => c.onchange = () => { S.dirty = true; });
+$("memo").oninput = () => { S.dirty = true; };
+$("prev").onclick = () => { if (S.idx > 0) go(() => S.idx--); };
+$("next").onclick = () => { if (S.idx < items().length - 1) go(() => S.idx++); };
+$("jump").onchange = (e) => go(() => { S.idx = Number(e.target.value); });
+$("tab-practice").onclick = () => go(() => { S.mode = "practice"; S.idx = 0; });
+$("tab-measure").onclick = () => {
+  const practiceDone = S.data.practice.every(p => S.data.practice_answers[p["번호"]]);
+  if (!practiceDone && !confirm("연습 5문항을 먼저 마치는 것이 계획입니다(계획 §4). 그래도 채점으로 갈까요?")) return;
+  go(() => { S.mode = "measure"; S.idx = firstOpen(); });
+};
+window.addEventListener("beforeunload", (e) => { if (S.dirty) { e.preventDefault(); e.returnValue = ""; } });
+$("save").onclick = async () => {
+  if (S.busy) return;
+  const r = items()[S.idx];
+  const conf = document.querySelector("input[name=conf]:checked");
+  const payload = { "세트": S.mode, "번호": r["번호"], "판정": S.verdict,
+    "유형": [...document.querySelectorAll("#kinds input:checked")].map(c => c.value),
+    "확신도": conf ? conf.value : null, "메모": $("memo").value };
+  S.busy = true; $("save").disabled = true;
+  let res, out;
+  try {
+    res = await fetch("/api/answer", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    out = await res.json();
+  } catch (e) { say("저장하지 못했습니다 — 서버 연결을 확인하세요", "err"); return; }
+  finally { S.busy = false; $("save").disabled = false; }
+  if (!res.ok) { say(out.error, "err"); return; }
+  if (out.saved.reference) { r["참고 답"] = out.saved.reference["참고 답"]; r["참고 설명"] = out.saved.reference["참고 설명"]; }
+  answers()[r["번호"]] = out.saved;
+  const last = S.idx === items().length - 1;
+  if (S.mode === "practice") { render(); say("저장됨 — 참고 답을 확인한 뒤 다음 ▶", "ok"); return; }
+  if (!last) S.idx++;
+  render();
+  say(last ? "저장됨 — 마지막 문항입니다. 목록에서 · 표시가 남았는지 확인하세요" : "저장됨 — 다음 문항", "ok");
+};
+load();
+</script>
+</body>
+</html>

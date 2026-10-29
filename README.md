@@ -507,6 +507,7 @@ uv run triage-gate --dataset v15 --candidate <seed1.json> --candidate <seed11.js
 | [`report/method_comparison_v14_a.md`](report/method_comparison_v14_a.md), [`_b.md`](report/method_comparison_v14_b.md) | **(v1.4) 비교 판정표.** seed별 기준 판정 (`pipeline/compare.py` 생성) |
 | [`report/eval_v14.md`](report/eval_v14.md) | **(v1.4) 최종 평가용 세트 채점 요약** (`pipeline/score.py` 생성) |
 | [`report/label_agreement_v15_results.md`](report/label_agreement_v15_results.md) | **(v1.5) 라벨 일치율 결과 보고서.** 외부 QA 2명의 블라인드 판정 결과, 불일치 177건 검토, 기준서·평가셋 변경, 모델 성적에 준 영향, 채점자끼리 갈린 문항과 라우팅 시사점 |
+| [`report/judge_v15_results.md`](report/judge_v15_results.md) | **(v1.5) LLM-as-judge 결과 보고서(요약 날조).** 채점관 gemma4:12b와 검토자 판정의 일치율 — 미채택(일치율 85.71%·κ 0.18 미달, 심은 날조 검출 95%), 갈린 문항과 사후 의견, 재현성, 다음 버전 과제. 판정표는 [`judge_v15.md`](report/judge_v15.md) |
 | [`report/rescore_v15.md`](report/rescore_v15.md) | **(v1.5) v1.4 실행 기록 v1.5 라벨 재채점.** 모델을 다시 돌리지 않고 정답표만 바꿔 다시 센 값과 참고 재판정 (`pipeline/rescore.py` 생성) |
 | [`report/regression_gate_v15.md`](report/regression_gate_v15.md) | **(v1.5) 채택 구성 회귀 게이트 판정 근거(v1.5 정답표).** seed별 기준 판정, 문항 단위 변화, 응답 동일성 (`pipeline/gate_v15.py` 생성) |
 | [`CHANGELOG.md`](CHANGELOG.md) | **버전별 변경 이력.** v1.0부터 v1.5 진행분까지, 버전마다 답하려는 질문 |
@@ -715,7 +716,7 @@ v1.0은 "지금 어떤 모델이 이 업무에 맞는가"를 **한 번** 측정�
 | ✅&nbsp;v1.2 | 가장 위험한 결함(날조)을 사람 없이 잡을 수 있는가? | 환각 자동 탐지 + seed 고정 모드 + 측정 환경 체크리스트 |
 | ✅&nbsp;v1.3 | 평가셋이 실제 현업 인입을 대표하는가? | ✅ 현업 기반 평가셋 63건 (분류 체계 → 판정 기준서 → 시드 케이스·정답 라벨), 개발용/평가용 분리 · ✅ 출력 형식 v2와 기준선 측정 · ✅ v1.3 게이트·실사용 시나리오 · ✅ 저장소 구조 정리 · ✅ 평가용 세트 최종 측정 |
 | ✅&nbsp;v1.4 | 판단 기준을 프롬프트 문장이 아닌 방식으로 전달하면 Critical 누락을 줄일 수 있는가? | ✅ 모델 재선정(현재 모델 유지) · ✅ 날조 탐지기 오탐 수정 · ✅ 새 최종 평가용 세트 25건 · ✅ 방법 비교 사전 등록 · ✅ 방법 비교(Critical 체크리스트 채택) · ✅ 최종 측정 |
-| 🔨&nbsp;v1.5 | 무엇을 자동 처리하고 무엇을 사람에게 넘길지 시스템이 판단할 수 있는가? | ✅ 채점자 간 라벨 일치율([결과 보고서](report/label_agreement_v15_results.md)) · ✅ v1.5 라벨 재채점·게이트 전환 · LLM-as-judge와 사람 채점의 일치율 → 확신도 기반 라우팅 + 자동 처리율·정확도·위험 건 누락 측정 |
+| 🔨&nbsp;v1.5 | 무엇을 자동 처리하고 무엇을 사람에게 넘길지 시스템이 판단할 수 있는가? | ✅ 채점자 간 라벨 일치율([결과 보고서](report/label_agreement_v15_results.md)) · ✅ v1.5 라벨 재채점·게이트 전환 · ✅ LLM-as-judge와 사람 채점의 일치율(요약 날조 — 미채택, [결과 보고서](report/judge_v15_results.md)) · 요약 품질 측정 → 확신도 기반 라우팅 + 자동 처리율·정확도·위험 건 누락 측정 |
 | ⏳&nbsp;v2.0 | 사람이 보지 않는 동안에도 BTS에 올바르게 인입되는가? | BTS 자동 인입 (Redmine) + 중복 티켓 감지(RAG) + 무인 운영 데모 |
 | ⏳&nbsp;도메인 확장 | 같은 평가 체계가 다른 도메인의 트리아지에서도 작동하는가? | 두 번째 도메인(예: 공정 알람, 가상 데이터) 평가셋 + 도메인별 판정 기준·출력 형식 분리 |
 

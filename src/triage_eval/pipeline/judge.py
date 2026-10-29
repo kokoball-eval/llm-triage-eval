@@ -41,6 +41,9 @@
     거짓 경보. 검토자가 자연 응답을 모두 있음으로 보면 거짓 경보율의 분모가 0이라 값이 없고, 그 기준은 충족하지 못한 것으로 본다.
 11. 기준 파일의 excluded_items 문항은 자연 응답 지표(일치율·κ·거짓 경보)에서 뺀다. 검토자 채점 전에 그 문항의 날조 내용이
     검토자에게 노출되어 사람 판정이 독립적이지 않기 때문이다(docs/issue_log.md ISSUE-012). 뺀 문항의 두 판정은 결과에 따로 남긴다.
+12. 측정 결과는 화면에 출력하기 전에 파일로 저장하고, 표준 출력은 UTF-8로 맞춘다. 측정 1회차는 채점관 판정 63건을 마친 뒤
+    Windows 콘솔 인코딩(cp949)이 ✅ 기호를 출력하지 못해 저장 전에 멈췄다(docs/issue_log.md ISSUE-014). 출력 문제로 측정 결과를
+    잃지 않게 한다. 판정·지표 계산은 바꾸지 않았다(프롬프트 지문 그대로).
 """
 
 import argparse
@@ -417,14 +420,13 @@ def run_measure(client, crit: dict, sheet: Path, write: bool = True, guard: bool
     mx = metrics(key, human, judged, crit)
     verdict = decide(mx, crit)
     det = detector_reference(measure, key)
+    RESULT_JSON.write_text(json.dumps({**meta, "metrics": mx, "verdict": verdict, "human": human, "judge": judged,   # 설계 의도 12
+                                       "detector": det}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    REPORT.write_text(render(meta, mx, verdict, key, human, judged, det), encoding="utf-8")
     for c in verdict["checks"]:
         print(f"  {'✅' if c['passed'] else '❌'} {c['name']}: {c['value']} ({c['limit']})")
     print(f"판정: {'채택' if verdict['adopted'] else '미채택'}")
-    if write:
-        RESULT_JSON.write_text(json.dumps({**meta, "metrics": mx, "verdict": verdict, "human": human, "judge": judged,
-                                           "detector": det}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        REPORT.write_text(render(meta, mx, verdict, key, human, judged, det), encoding="utf-8")
-        print(f"저장: {rel(RESULT_JSON)}, {rel(REPORT)}")
+    print(f"저장: {rel(RESULT_JSON)}, {rel(REPORT)}")
     return 0 if verdict["adopted"] else 1
 
 
@@ -436,6 +438,9 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--sheet", type=Path, help="검토자가 채점한 시트 (--measure)")
     p.add_argument("--no-write", action="store_true")
     args = p.parse_args(argv)
+    for stream in (sys.stdout, sys.stderr):                    # 설계 의도 12 — Windows 콘솔(cp949)에서도 ✅·한글 출력
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
     import ollama
 
     try:

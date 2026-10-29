@@ -4,6 +4,7 @@
 """
 
 import json
+import sys
 from pathlib import Path
 
 import pytest
@@ -261,6 +262,36 @@ def test_measure_full_flow_with_fake_judge(monkeypatch, tmp_path, crit):
     assert result["metrics"]["natural_n"] == 42 and result["metrics"]["injected_n"] == 20   # A06 제외 (ISSUE-012)
     assert [x["item_id"] for x in result["metrics"]["excluded"]] == ["A06"]
     assert "## 판정:" in (tmp_path / "report.md").read_text(encoding="utf-8")
+
+
+def test_measure_saves_result_before_printing(monkeypatch, tmp_path, crit):
+    """설계 의도 12 (ISSUE-014) — 화면 출력이 실패해도 측정 결과는 이미 파일로 남아 있다."""
+    monkeypatch.setattr(jd, "RESULT_JSON", tmp_path / "result.json")
+    monkeypatch.setattr(jd, "REPORT", tmp_path / "report.md")
+    monkeypatch.setattr(jd, "get_model_digests", lambda c, ms: {m: "fake" for m in ms})
+    sheet = _filled_sheet(tmp_path)
+
+    def failing_print(*args, **kwargs):
+        if "✅" in str(args) or "❌" in str(args):
+            raise UnicodeEncodeError("cp949", "✅", 0, 1, "illegal multibyte sequence")
+
+    monkeypatch.setattr("builtins.print", failing_print)
+    with pytest.raises(UnicodeEncodeError):
+        jd.run_measure(FakeJudge(), crit, sheet, guard=False)
+    assert json.loads((tmp_path / "result.json").read_text(encoding="utf-8"))["metrics"]["natural_n"] == 42
+    assert (tmp_path / "report.md").exists()
+
+
+def test_cli_prints_on_cp949_console(monkeypatch):
+    """설계 의도 12 (ISSUE-014) — cp949 콘솔에서도 ✅·한글 출력이 멈추지 않는다."""
+    import io
+    out = io.TextIOWrapper(io.BytesIO(), encoding="cp949")
+    monkeypatch.setattr(sys, "stdout", out)
+    monkeypatch.setattr(sys, "stderr", io.TextIOWrapper(io.BytesIO(), encoding="cp949"))   # pytest의 stderr를 바꾸지 않게
+    assert jd.main(["--measure"]) == 2
+    print("✅")
+    out.flush()
+    assert out.encoding == "utf-8" and "✅" in out.buffer.getvalue().decode("utf-8")
 
 
 def test_measure_with_connection_error_is_invalid(monkeypatch, tmp_path, crit):

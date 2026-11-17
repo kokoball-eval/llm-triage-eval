@@ -4,14 +4,54 @@
     {
       "name": "quality-rater",
       "runtimeExecutable": "uv",
-      "runtimeArgs": ["run", "python", "tools/quality_v15/rater_server.py", "--port", "8765"],
+      "runtimeArgs": [
+        "run",
+        "python",
+        "tools/quality_v15/rater_server.py",
+        "--port",
+        "8765"
+      ],
       "port": 8765
     },
     {
       "name": "quality-rater-test",
       "runtimeExecutable": "uv",
-      "runtimeArgs": ["run", "python", "tools/quality_v15/rater_server.py", "--port", "8766", "--answers-dir", "dist/quality_ui_test"],
+      "runtimeArgs": [
+        "run",
+        "python",
+        "tools/quality_v15/rater_server.py",
+        "--port",
+        "8766",
+        "--answers-dir",
+        "dist/quality_ui_test"
+      ],
       "port": 8766
+    },
+    {
+      "name": "final-review",
+      "runtimeExecutable": "uv",
+      "runtimeArgs": [
+        "run",
+        "python",
+        "tools/dataset_v15_final/review_server.py",
+        "--port",
+        "8767"
+      ],
+      "port": 8767
+    },
+    {
+      "name": "final-review-test",
+      "runtimeExecutable": "uv",
+      "runtimeArgs": [
+        "run",
+        "python",
+        "tools/dataset_v15_final/review_server.py",
+        "--port",
+        "8768",
+        "--answers-dir",
+        "dist/final_review_test"
+      ],
+      "port": 8768
     }
   ]
 }

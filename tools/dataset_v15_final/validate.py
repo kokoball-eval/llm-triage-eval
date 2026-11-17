@@ -60,8 +60,8 @@ def risk_of(item):
     return r[0] if r else None
 
 
-def check_item(item):
-    """문항 하나의 형식과 라벨 규칙. 문제 목록을 돌려준다."""
+def check_item(item, review="pending"):
+    """문항 하나의 형식과 라벨 규칙. 문제 목록을 돌려준다. review 는 기대하는 검토 상태(초안 pending, 봉인본 approved)."""
     k = item.get("id", "?")
     p = []
     m = ID_PATTERN.match(k)
@@ -69,8 +69,8 @@ def check_item(item):
         return [f"{k}: 문항 번호는 NA01~NA40, NB01~NB20 형식이어야 합니다"]
     if item.get("track") != m.group(1):
         p.append(f"{k}: 트랙 {item.get('track')} 이(가) 번호와 맞지 않습니다")
-    if (item.get("split"), item.get("set"), item.get("review")) != ("final", "representative", "pending"):
-        p.append(f"{k}: split·set·review 값이 초안 규칙(final·representative·pending)과 다릅니다")
+    if (item.get("split"), item.get("set"), item.get("review")) != ("final", "representative", review):
+        p.append(f"{k}: split·set·review 값이 규칙(final·representative·{review})과 다릅니다")
     inp = item.get("input", {})
     if not inp.get("title") or not inp.get("body"):
         p.append(f"{k}: 제목 또는 본문이 비어 있습니다")
@@ -179,10 +179,10 @@ def check_quota(items):
     return p
 
 
-def validate(items, existing_items, full=True):
+def validate(items, existing_items, full=True, review="pending"):
     problems = []
     for it in items:
-        problems += check_item(it)
+        problems += check_item(it, review)
     sim, notes = check_similarity(items, existing_items)
     problems += sim
     if full:

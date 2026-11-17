@@ -153,6 +153,7 @@ def run_env(tmp_path, monkeypatch):
     monkeypatch.setattr(fv, "load_criteria", lambda *a, **k: crit)
     monkeypatch.setattr(fv, "guard", lambda: None)
     monkeypatch.setattr(fv, "check_seal", lambda c: None)
+    monkeypatch.setattr(fv, "current_digests", lambda model: {model: "845dbda0ea48"})   # CI 에는 Ollama 가 없다 — 모델 조회를 막아 둔다
     calls = []
     behavior = {"fail_seed": None}
 

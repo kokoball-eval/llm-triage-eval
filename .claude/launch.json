@@ -52,6 +52,20 @@
         "dist/final_review_test"
       ],
       "port": 8768
+    },
+    {
+      "name": "final-rater",
+      "runtimeExecutable": "uv",
+      "runtimeArgs": [
+        "run",
+        "python",
+        "-X",
+        "utf8",
+        "tools/final_v15/rater_server.py",
+        "--port",
+        "8769"
+      ],
+      "port": 8769
     }
   ]
 }

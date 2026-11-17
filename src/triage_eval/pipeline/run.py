@@ -98,6 +98,10 @@
    거부했다(docs/issue_log.md ISSUE-011). 응답을 다 받은 뒤에 내리므로 응답 내용에는 영향이 없고,
    run_config 에 항목을 더하지 않아 기존 실행 기록과의 비교 조건도 바뀌지 않는다.
    실행을 중간에 멈춘 경우는 내리지 않는다. 그때는 측정 환경 점검의 안내대로 ollama stop 으로 내린다.
+14. (v1.5 9단계) --dataset v15final 은 봉인된 새 최종 평가용 세트(data/eval_v15_final/)를 고른다. 기록은 data/results/v15_final/history/
+   에 저장한다. 한 번만 쓰는 장치(STARTED 마커·guard·봉인 확인)는 이 도구가 아니라 triage-final(final_v15.py)이 맡고, 이 도구는
+   평가셋 경로·출력 폴더만 더했다. 프롬프트·방법·안전장치·옵션은 바꾸지 않았으므로 기존 실행 결과에 영향이 없다
+   (tests/test_final_run_v15.py 가 v13·v14 경로 선택이 그대로임을 확인한다).
 """
 
 import argparse
@@ -124,6 +128,8 @@ DATASET = ROOT / "data" / "eval_v13" / "aether_raid_v13.json"   # 기본 평가�
 OUT_DIR = ROOT / "data" / "results" / "v13" / "history"
 DATASET_V14 = ROOT / "data" / "eval_v14" / "aether_raid_v14.json"   # 설계 의도 11
 OUT_DIR_V14 = ROOT / "data" / "results" / "v14" / "history"
+DATASET_V15_FINAL = ROOT / "data" / "eval_v15_final" / "aether_raid_v15_final.json"   # 설계 의도 14 — 봉인본, triage-final 이 호출한다
+OUT_DIR_V15_FINAL = ROOT / "data" / "results" / "v15_final" / "history"
 
 MODELS = ["qwen2.5:7b"]  # 설계 의도 10
 THINK = False  # 설계 의도 8
@@ -335,7 +341,7 @@ def options_for(seed_base: int | None, run_idx: int) -> dict:
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description="평가셋 실행 (출력 형식 v2)")
-    p.add_argument("--dataset", choices=["v13", "v14"], default="v13", help="평가셋 (기본: v13, 설계 의도 11)")
+    p.add_argument("--dataset", choices=["v13", "v14", "v15final"], default="v13", help="평가셋 (기본: v13, 설계 의도 11)")
     p.add_argument("--split", choices=["dev", "test", "final", "all"], default="dev")
     p.add_argument("--method", choices=list(methods.METHODS), default="m0", help="방법 (기본: m0, 설계 의도 12)")
     p.add_argument("--set", dest="set_name", choices=["representative", "focused", "all"], default="all")
@@ -354,10 +360,11 @@ def main(argv: list[str] | None = None) -> int:
         print(blocked)
         return 2
 
-    if args.method != "m0" and args.dataset != "v14":
+    if args.method != "m0" and args.dataset not in ("v14", "v15final"):
         print("m0이 아닌 방법은 v14 평가셋에서만 실행합니다 (설계 의도 12). --dataset v14 를 함께 주세요.")
         return 2
-    dataset_path, out_dir = (DATASET, OUT_DIR) if args.dataset == "v13" else (DATASET_V14, OUT_DIR_V14)
+    dataset_path, out_dir = {"v13": (DATASET, OUT_DIR), "v14": (DATASET_V14, OUT_DIR_V14),
+                             "v15final": (DATASET_V15_FINAL, OUT_DIR_V15_FINAL)}[args.dataset]
     dataset = json.loads(dataset_path.read_text(encoding="utf-8"))
     items = select_items(dataset, args.split, args.set_name)
     if not items:

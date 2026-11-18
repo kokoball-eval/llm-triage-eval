@@ -8,6 +8,9 @@
 
 ## [Unreleased]
 
+### 추가 (서비스 설계 — 구현 전)
+- [`docs/service_design.md`](docs/service_design.md) — 링크 접수부터 BTS 등록까지의 서비스 설계. 출처(`Source`)와 BTS(`Tracker`)를 계약으로 분리해 파일 하나 단위로 바꿔 끼우는 구조, 영역 분리, FastAPI + HTMX 화면, 안전장치, 진행 순서
+
 ### 삭제 (코드 정리 A단계: 측정이 끝난 단계의 코드 — 동작 변경 없음)
 - 개인 프로젝트로 전환하며 코드에는 지금 쓰는 것만 남기고, 이력은 보고서(`report/`)·데이터(`data/`)·기준 파일(`*.toml`)과 태그 `v1.5-archive`에 둔다. 남은 코드가 import 하지 않는 것만 지웠다
 - `src/triage_eval/bench_v1/`(v1.0 벤치마크 `bench-run`·`bench-gate`·`bench-summarize`·`bench-capture-env`), `pipeline/screen.py`(`triage-screen`), `pipeline/agreement.py`(`triage-agreement`), `pipeline/judge.py`(`triage-judge`), `pipeline/quality.py`, `pyproject.toml`의 `bench-score-format`·`bench-hallucination` 명령(모듈은 채점기가 쓰므로 남김)

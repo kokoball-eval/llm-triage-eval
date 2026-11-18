@@ -25,8 +25,8 @@ v1.0과 9/30 재실행에서 Llama-3.1-8B가 단문 리포트 "크래시남"에 
 
 사용법
 ------
-    uv run bench-hallucination                  # 문서 기준 로그 + Cloud 로그
-    uv run bench-hallucination --log <로그.json>  # 특정 실행 로그
+    uv run python -m triage_eval.common.detect_hallucination                  # 문서 기준 로그 + Cloud 로그
+    uv run python -m triage_eval.common.detect_hallucination --log <로그.json>  # 특정 실행 로그
 
 출력
 ----

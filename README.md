@@ -108,7 +108,7 @@ v1.0에서 8GB VRAM 노트북에서 구동 가능한 경량 로컬 LLM 2종을 �
 
 ## 3. 출발점 — v1.0 모델 선정
 
-v1.0(KANT 부트캠프 1차 프로젝트)에서 이 업무에 맞는 로컬 모델을 고른 과정과 결과입니다. 이 절의 수치는 동결된 v1.0 벤치마크(`src/triage_eval/bench_v1/`)에서 나왔고, 이후 버전에서 바꾸지 않습니다. 재현 방법은 [4절](#4-실행-및-재현)에 있습니다.
+v1.0(KANT 부트캠프 1차 프로젝트)에서 이 업무에 맞는 로컬 모델을 고른 과정과 결과입니다. 이 절의 수치는 동결된 v1.0 벤치마크(`src/triage_eval/bench_v1/`, 지금은 태그 `v1.5-archive`)에서 나왔고, 이후 버전에서 바꾸지 않습니다. 재현 방법은 [4절](#4-실행-및-재현)에 있습니다.
 
 > **v1.0 요약**
 > * **선정**: `qwen2.5:7b` (Qwen2.5-7B-Instruct, Q4_K_M) — 품질 81점 / 포맷 엄격 준수 100% / 평균 1.390초
@@ -206,7 +206,7 @@ v1.0(KANT 부트캠프 1차 프로젝트)에서 이 업무에 맞는 로컬 모�
 > Llama의 실패 사유는 전량 '필드 사이 빈 줄'이며, **서두 사족은 45건 전수에서 0건**이었습니다.<br>
 > 규칙 정의와 회차별 판정은 [`report/format_compliance.md`](report/format_compliance.md) 참조.
 >
-> **성능 수치 산출 기준** — 지연·속도·토큰·VRAM은 `src/triage_eval/bench_v1/summarize_eval.py`가 원본 로그에서 재집계한 값입니다.
+> **성능 수치 산출 기준** — 지연·속도·토큰·VRAM은 `src/triage_eval/bench_v1/summarize_eval.py`(태그 `v1.5-archive`)가 원본 로그에서 재집계한 값입니다.
 > 워밍업은 제외했고, 평균 속도는 회차별 `tokens_per_sec`의 단순 평균입니다. 집계 결과는 `data/results/benchmark_summary.json`에 저장됩니다.
 >
 > **워밍업 로딩 시간은 비교 지표가 아닙니다.** 디스크 캐시 상태에 따라 실행마다 달라지므로(재실행 시 4.065초 / 4.672초 관측) 값만 참고로 싣고 본 통계와 우열 판정에서 제외했습니다.
@@ -256,6 +256,8 @@ v1.0(KANT 부트캠프 1차 프로젝트)에서 이 업무에 맞는 로컬 모�
 ---
 
 ## 4. 실행 및 재현
+
+> **코드 정리 안내** — v1.5 이후 측정이 끝난 단계의 코드(v1.0 벤치마크 `bench-*`, `scripts/legacy/`, 후보 사전 점검 `triage-screen`, 라벨 일치율·LLM-as-judge 도구, 버전별 평가셋 생성 도구 `tools/dataset_v13~v15/`)를 지웠습니다. 이 절에서 그 명령을 쓰는 재현 절차는 태그 `v1.5-archive`를 받아 실행합니다(`git switch --detach v1.5-archive`). 결과와 근거는 `report/`와 `data/`에 그대로 있습니다.
 
 ### 1) 선행 환경 준비
 
@@ -381,20 +383,14 @@ uv run pytest -v     # 테스트별 결과 표시
 | 테스트 파일 | 검증하는 것 |
 | :--- | :--- |
 | `tests/test_score_format.py` | R1~R6 규칙이 각자 정확히 자기 위반만 잡는지, v1.0 로그 채점 결과가 README 준수율과 같은지 |
-| `tests/test_summarize_eval.py` | half-up 반올림, 워밍업 제외, 결측 속도 처리, v1.0 로그 집계가 README 성능 표와 같은지 |
-| `tests/test_compare_runs.py` | 게이트 판정(통과·실패·경계값), 비교 불가 조건, 기준 파일 오타 거부, 종료 코드 0/1/2, (v1.2) 날조 기준·seed별 판정 변화 기준·환경 경고 |
 | `tests/test_detect_hallucination.py` | (v1.2) 범주별 탐지, 근거 있는 사실·요청 문맥·선택지 필드 오탐 방지, 실제 로그의 Llama Q08 날조 4건 전수 탐지와 Qwen·Cloud 오탐 0건 |
 | `tests/test_preflight.py` | (v1.2) 측정 환경 경고 판정 (다른 프로그램의 GPU 사용, 배터리 구동, 측정 불가와 문제 있음의 구분) |
-| `tests/test_run_eval.py` | (v1.2) seed 고정 모드의 회차별 seed, 기본 옵션 보존 |
-| `tests/test_dataset_v13.py` | (v1.3) 평가셋이 생성 스크립트 결과와 같은지, 라벨 규칙 일관성, 개발용/평가용 분할 균형 |
 | `tests/test_pipeline_contract.py` | (v1.3) 출력 형식 v2 채점 규칙 R1~R7 |
 | `tests/test_pipeline_run.py` | (v1.3) 평가용 문항 실행 차단, 문항 유출 없음, 형식 재요청·폐기 확인 |
 | `tests/test_pipeline_guardrail.py` | (v1.3) 후처리 안전장치 규칙, 정답 라벨 미사용, 모델 원본 보존 |
 | `tests/test_pipeline_score.py` | (v1.3) 정답 대조 채점, 가짜 모델로 실행 → 채점 전 과정, (v1.4) v1.4 평가셋 채점과 빈 세트 보고서 |
 | `tests/test_pipeline_gate.py` | (v1.3) 게이트 판정, 비교 조건, 기준 파일 검증 |
-| `tests/test_dataset_v14.py` | (v1.4) v1.4 평가셋이 생성 결과와 같은지, 기존 63건 라벨 무변경, 최종 평가용 25건의 기존 원문 재사용 없음 |
-| `tests/test_dataset_v15.py` | (v1.5) v1.5 평가셋이 생성 결과와 같은지, 변경표 밖 문항·최종 평가용 25건 불변, 허용 답은 뒤에 덧붙이기만, 변경표 값 불일치 거부 |
-| `tests/test_pipeline_screen.py`, `test_pipeline_selection.py` | (v1.4) 후보 사전 점검 판정(판정 불가 HOLD 포함), 모델 교체 판정 규칙 |
+| `tests/test_pipeline_selection.py` | (v1.4) 모델 교체 판정 규칙 |
 | `tests/test_pipeline_methods.py` | (v1.4) 판정 예시와 평가셋 표현 겹침, Critical 체크리스트 규칙, 기존 방법(M0) 프롬프트 불변 |
 | `tests/test_pipeline_compare.py` | (v1.4) 방법·모델 비교 판정, '예' 편향 체크리스트 탈락, 비교 조건 불일치 거부 |
 | `tests/test_pipeline_gate_v14.py` | (v1.5) 채택 구성 게이트 — 기준선이 실험 A 기록과 같은지, 재현된 실행은 PASS·이전 방법(M0)과 지연 증가는 FAIL, seed 누락·최종 평가용·구성 혼합·digest 불일치 거부, 가짜 모델로 실행 → 게이트 |
@@ -529,7 +525,7 @@ llm-triage-eval/
 ├── .github/workflows/tests.yml   # (v1.1.1) push 시 pytest 자동 실행 (GitHub Actions)
 ├── .gitattributes                # 줄바꿈(EOL) 정규화 규칙
 ├── .python-version               # Python 3.12 고정
-├── pyproject.toml                # uv 기반 의존성 명세 (ollama, openai / 개발용 pytest)
+├── pyproject.toml                # uv 기반 의존성 명세 (ollama / 개발용 pytest)
 ├── gate_criteria.toml            # (v1.1) 회귀 게이트 합격 기준
 ├── gate_criteria_v13.toml        # (v1.3) 평가셋 회귀 게이트 합격 기준 (응답 수 기준 허용폭)
 ├── gate_criteria_v14.toml        # (v1.5) 채택 구성 회귀 게이트 합격 기준 (seed 3개)
@@ -591,22 +587,13 @@ llm-triage-eval/
 │   ├── method_comparison_v14_b.md # (v1.4) 실험 B 판정표 (pipeline/compare.py 생성)
 │   ├── eval_v14.md              # (v1.4) 최종 평가용 세트 채점 요약 (pipeline/score.py 생성)
 │   └── eval_v14_final.md        # (v1.4) 최종 보고서
-├── scripts/legacy/               # 5일 실험 당시의 일회용 스크립트 (v1.3 구조 정리 때 src/ 에서 이동)
-│   ├── 01_ollama_chat.py         # 단일 모델 적재/VRAM 측정 스모크 테스트
-│   ├── 02_luna_chat.py           # OpenAI Responses API Cloud 비교 스크립트
-│   └── test_fewshot.py           # 4일차 Qwen 단문 결함 교정 Few-Shot 검증 스크립트
 ├── src/triage_eval/              # (v1.3 구조 정리) 패키지 — 실행 명령은 pyproject.toml [project.scripts]
-│   ├── common/                   # v1.0 벤치마크와 현역 파이프라인이 함께 쓰는 도구
+│   ├── common/                   # 파이프라인이 함께 쓰는 도구
 │   │   ├── paths.py              # 저장소 루트 경로 (한 곳에서만 정의)
 │   │   ├── ollama_runtime.py     # 모델 digest·VRAM·프롬프트 지문 수집
 │   │   ├── score_format.py       # 응답 줄 파서 + v1.0 포맷 계약 채점 (R1~R6)   → bench-score-format
 │   │   ├── detect_hallucination.py # (v1.2) 입력에 근거 없는 구체 사실 탐지      → bench-hallucination
 │   │   └── preflight.py          # (v1.2) 실행 전 측정 환경 점검 (GPU 점유·전원)
-│   ├── bench_v1/                 # v1.0 모델 선정 벤치마크 (동결 — README 3절 수치의 출처)
-│   │   ├── run_eval.py           # 워밍업 분리 40회 로컬 벤치마크                 → bench-run
-│   │   ├── summarize_eval.py     # 성능 지표(지연·속도·토큰) 재집계              → bench-summarize
-│   │   ├── compare_runs.py       # (v1.1) 두 실행 비교 + 회귀 게이트             → bench-gate
-│   │   └── capture_env.py        # 실행 환경/자원 점유 실측 캡처                 → bench-capture-env
 │   └── pipeline/                 # 현역 트리아지 파이프라인 (버전은 파일 이름이 아니라 코드 안 상수로 관리)
 │       ├── contract.py           # 출력 형식 v2 — 8칸 정의·파싱·형식 채점 (R1~R7)
 │       ├── prompt.py             # 판정 기준서 요약 프롬프트(v2.3)와 재요청·폐기 확인 질문 조립
@@ -616,30 +603,21 @@ llm-triage-eval/
 │       ├── score.py              # 정답 대조 채점 (칸별 정답률·위험 건·과잉 상신·날조)   → triage-score
 │       ├── gate.py               # 평가셋 회귀 게이트 판정                               → triage-gate
 │       ├── gate_v14.py           # (v1.5) 채택 구성 회귀 게이트 (seed 3개)             → triage-gate --dataset v14
-│       ├── screen.py             # (v1.4) 후보 모델 사전 점검                            → triage-screen
 │       ├── selection.py          # (v1.4) 모델 교체 판정 (seed 3개)                      → triage-select
 │       └── compare.py            # (v1.4) 방법·모델 비교 판정 (사전 등록 기준)            → triage-compare
 ├── tools/
-│   ├── dataset_v13/              # (v1.3) 평가셋 생성·병합·검증 스크립트 (정답 라벨의 원본)
-│   ├── dataset_v14/              # (v1.4) v1.4 평가셋 생성 (63건 개발용 전환 + 최종 평가용 25건 라벨 원본)
-│   └── dataset_v15/              # (v1.5) v1.4 평가셋에 라벨 변경표를 적용해 v1.5 평가셋 생성
+│   ├── dataset_v15_final/        # (v1.5) 새 최종 평가용 세트 문항 작성·검토 화면·SHA-256 봉인 (v1.5 이전 도구는 태그 v1.5-archive)
+│   └── final_v15/                # (v1.5) 9단계 날조 사람 확인 화면
 └── tests/                        # (v1.1.1) 평가 도구 단위 테스트 (pytest)
     ├── conftest.py               # 공통 준비물 (기준선 로그 로드, 임시 파일)
     ├── test_score_format.py      # 포맷 채점 규칙 R1~R6
-    ├── test_summarize_eval.py    # 성능 지표 집계 정의
-    ├── test_compare_runs.py      # 회귀 게이트 판정·종료 코드
     ├── test_detect_hallucination.py # (v1.2) 환각 탐지 범주·오탐 방지·실제 로그 골든 테스트
     ├── test_preflight.py         # (v1.2) 측정 환경 경고 판정
-    ├── test_run_eval.py          # (v1.2) seed 고정 모드
-    ├── test_dataset_v13.py       # (v1.3) 평가셋 = 생성 스크립트 결과, 라벨 규칙 일관성, 분할 균형
     ├── test_pipeline_contract.py # (v1.3) 출력 형식 v2 채점 규칙 (R1~R7)
     ├── test_pipeline_score.py    # (v1.3) 정답 대조 채점, 가짜 모델로 실행→채점 전 과정
     ├── test_pipeline_run.py      # (v1.3) 평가용 실행 차단, 문항 유출 없음, 형식 재요청·폐기 확인
     ├── test_pipeline_guardrail.py # (v1.3) 후처리 안전장치 규칙, 정답 라벨 미사용, 원본 보존
     ├── test_pipeline_gate.py     # (v1.3) 게이트 판정·비교 조건·기준 파일 검증
-    ├── test_dataset_v14.py       # (v1.4) v1.4 평가셋 = 생성 결과, 63건 라벨 무변경, 최종 25건 원문 겹침 없음
-    ├── test_dataset_v15.py       # (v1.5) v1.5 평가셋 = 생성 결과, 변경표 밖·최종 평가용 불변
-    ├── test_pipeline_screen.py   # (v1.4) 후보 사전 점검 판정
     ├── test_pipeline_selection.py # (v1.4) 모델 교체 판정 규칙
     ├── test_pipeline_methods.py  # (v1.4) M1 예시·M2 체크리스트 규칙, M0 프롬프트 불변
     ├── test_pipeline_compare.py  # (v1.4) 방법·모델 비교 판정, 비교 조건 불일치 거부
@@ -751,7 +729,7 @@ v1.0은 "지금 어떤 모델이 이 업무에 맞는가"를 **한 번** 측정�
      - 대조군 Llama3.1-8B는 평가용에서도 형식 STRICT 50%, X-1 누락 18/18로 Qwen 선정 판단이 유지됩니다
      - 이 결과로 v1.4의 과제가 분명해졌습니다: 판단 기준을 프롬프트 문장이 아닌 방식으로 전달하는 방법을 여러 seed로 비교하고, v1.5에서는 확신할 수 없는 건을 사람 검토 큐로 보내 위험 건 누락 0건을 지킵니다
 
-  정답 라벨의 원본은 생성 스크립트([`tools/dataset_v13/`](tools/dataset_v13/))이고 JSON은 그 결과물입니다. 테스트가 둘의 일치와 라벨 규칙 간 일관성을 CI에서 확인합니다.
+  정답 라벨의 원본은 생성 스크립트(`tools/dataset_v13/`, 지금은 태그 `v1.5-archive`)이고 JSON은 그 결과물입니다. 테스트가 둘의 일치와 라벨 규칙 간 일관성을 CI에서 확인했습니다.
 
   실사용 시나리오(프롬프트 수정 → 게이트 FAIL → 원인 분석 → 수정 → PASS)는 [ISSUE-007](docs/issue_log.md#issue-007)에 기록했습니다. 남은 한계는 [KL-002](docs/issue_log.md#kl-002)에 있습니다.
 * **v1.4** — v1.3 최종 측정에서 모델 판단(Critical 인식·우선순위)이 처음 보는 리포트에서 크게 떨어졌습니다. 판단 문제의 해법은 판단을 더 잘하는 모델로 바꾸거나, 판단 기준을 전달하는 방법을 바꾸는 것입니다. 두 가지를 한 번에 바꾸면 무엇 덕분인지 알 수 없어 한 가지씩 비교합니다.

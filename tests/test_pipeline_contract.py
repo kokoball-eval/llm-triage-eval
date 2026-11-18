@@ -1,13 +1,14 @@
 """출력 형식 v2 (contract.py) 테스트."""
 
-import sys
+import json
 from pathlib import Path
 
-from triage_eval.pipeline.contract import ENUMS_V2, FIELDS_V2, MODULES, parse_v2, score_format_v2, split_modules
+import pytest
+
+from triage_eval.pipeline.contract import ENUMS_V2, FIELDS_V2, MODULES, NO_MODULE, parse_v2, score_format_v2, split_modules
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "tools" / "dataset_v13"))
-import merge_dataset  # noqa: E402
+LABEL_SETS = ["data/eval_v15/aether_raid_v15.json", "data/eval_v15_final/aether_raid_v15_final.json"]
 
 GOOD = "\n".join([
     "[요약]: 패키지 결제 후 다이아 미지급",
@@ -21,11 +22,15 @@ GOOD = "\n".join([
 ])
 
 
-def test_enums_match_dataset_validator():
-    """출력 형식의 허용 값과 정답 라벨 검증의 허용 값은 같아야 한다 (설계 의도 2)."""
-    for field, values in ENUMS_V2.items():
-        assert values == merge_dataset.ENUMS[field]
-    assert MODULES == merge_dataset.ENUMS["모듈"]
+@pytest.mark.parametrize("path", LABEL_SETS)
+def test_labels_use_only_contract_values(path):
+    """정답 라벨은 출력 형식의 허용 값만 쓴다 — 라벨과 형식이 갈라지면 맞는 응답도 오답이 된다 (설계 의도 2)."""
+    items = json.loads((ROOT / path).read_text(encoding="utf-8"))["items"]
+    for item in items:
+        for field, values in item["labels"].items():
+            allowed = [*MODULES, NO_MODULE] if field == "모듈" else ENUMS_V2.get(field)
+            if allowed is not None:
+                assert set(values) <= set(allowed), (item["id"], field, values)
 
 
 def test_good_response_passes_all_rules():

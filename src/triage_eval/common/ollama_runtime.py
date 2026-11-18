@@ -1,6 +1,6 @@
-"""Ollama 실행 정보 수집 — v1.0 벤치마크(bench_v1.run_eval)와 현역 파이프라인(pipeline.run)이 함께 쓴다.
+"""Ollama 실행 정보 수집 — 파이프라인(pipeline.run)이 쓴다.
 
-v1.3 구조 정리 때 bench_v1/run_eval.py 에서 그대로 옮겼다. 함수 본문은 바꾸지 않았다
+v1.3 구조 정리 때 v1.0 벤치마크(bench_v1/run_eval.py, 태그 v1.5-archive)에서 그대로 옮겼다. 함수 본문은 바꾸지 않았다
 (v1.0 실행 기록의 vram_mib·model_digests·system_prompt_sha256 값이 같은 방식으로 계산되어야 한다).
 """
 

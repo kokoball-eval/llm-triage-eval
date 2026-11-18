@@ -23,8 +23,8 @@ PARSABLE (R4 제외 통과)    : 빈 줄만 허용. 정규식/필드 파서로 �
 
 사용법
 ------
-    uv run bench-score-format
-    uv run bench-score-format --root <프로젝트 루트 경로>
+    uv run python -m triage_eval.common.score_format
+    uv run python -m triage_eval.common.score_format --root <프로젝트 루트 경로>
 """
 
 import argparse

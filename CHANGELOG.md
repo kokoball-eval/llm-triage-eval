@@ -8,6 +8,17 @@
 
 ## [Unreleased]
 
+### 삭제 (코드 정리 A단계: 측정이 끝난 단계의 코드 — 동작 변경 없음)
+- 개인 프로젝트로 전환하며 코드에는 지금 쓰는 것만 남기고, 이력은 보고서(`report/`)·데이터(`data/`)·기준 파일(`*.toml`)과 태그 `v1.5-archive`에 둔다. 남은 코드가 import 하지 않는 것만 지웠다
+- `src/triage_eval/bench_v1/`(v1.0 벤치마크 `bench-run`·`bench-gate`·`bench-summarize`·`bench-capture-env`), `pipeline/screen.py`(`triage-screen`), `pipeline/agreement.py`(`triage-agreement`), `pipeline/judge.py`(`triage-judge`), `pipeline/quality.py`, `pyproject.toml`의 `bench-score-format`·`bench-hallucination` 명령(모듈은 채점기가 쓰므로 남김)
+- `tools/dataset_v13`·`dataset_v14`·`dataset_v15`·`label_agreement`·`judge_v15`·`quality_v15`, `scripts/legacy/`, 위 코드 전용 테스트 18개, `.claude/launch.json`의 요약 품질 채점 화면 항목
+- 의존성 `openai` 제거(v1.0 클라우드 대조군·벤치마크만 썼다)
+- `tests/test_repo_integrity.py` — 읽는 코드를 지운 기준 파일 4개(`gate_criteria.toml`·`label_agreement_v15.toml`·`judge_v15.toml`·`quality_v15.toml`)는 보고서가 가리키는 기록이라 남기고 문법 검사만 한다
+- `tests/test_pipeline_contract.py` — 지운 라벨 생성 도구의 허용 값 사본과 비교하던 시험을, v1.5 평가셋·봉인본의 정답 라벨이 출력 형식의 허용 값만 쓰는지 확인하는 시험으로 바꿨다
+- v1.5 게이트가 아직 import 하는 v1.3·v1.4 게이트·방법 비교·모델 선택·재채점 코드와 9단계 도구는 남겼다(B단계에서 게이트를 단독 코드로 정리할 때 판정 재현을 확인하고 지운다)
+- 테스트 789 → 526개 통과(지운 코드 전용 시험 263개)
+- 알려진 영향: CI의 참고용 단계 `uv run bench-gate --no-write || true`(`.github/workflows/tests.yml`)는 명령이 없어져 매번 오류를 찍는다. `|| true`라 CI 성패에는 영향이 없고, 워크플로 파일은 이 저장소 규칙상 고치지 않는다
+
 ### 추가 (v1.5 9단계: 새 최종 평가용 세트 라우팅 판정 — 계획·도구, 모델 실행 전)
 - [`report/final_run_v15_plan.md`](report/final_run_v15_plan.md)·`final_run_v15.toml` — 사전 등록. 봉인본 60문항에 채택 구성(qwen2.5:7b·M2)을 seed 1·11·21 × 2회(문항당 6응답, 360응답)로 한 번 실행하고 라우터 S1+S2를 `routing_v15_results.md` §6 기준(표본 부족 → 처리율 30% → 통과 0건 채택 → 50% 이하 부분 채택 → 미채택)으로 판정한다. 날조는 라우팅·정답을 가린 상태에서 사람이 먼저 확인해 커밋한 뒤 판정한다(경민 1명, 360응답 전부)
 - `src/triage_eval/pipeline/final_v15.py`(`triage-final run`·`verdict`) — guard(계획·기준·도구·채점 코드·봉인 기록이 커밋·무변경)·봉인 SHA-256 확인·STARTED 마커(seed별 상태, 완료 seed는 다시 실행하지 않음, 기록 없이 멈춘 seed만 `--redo-incomplete`로 재실행하고 마커에 기록)·구성 동일성 확인(옵션·프롬프트·안전장치·재시도·폐기 점검·방법·모델 digest가 개발용 기준선과 같음, 환경 경고 없음)·날조 확인 잠금 확인·판정(순수 함수, 비율은 정수 비율)

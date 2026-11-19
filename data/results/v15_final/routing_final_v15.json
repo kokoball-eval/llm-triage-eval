@@ -1,0 +1,7991 @@
+{
+  "criteria": {
+    "meta": {
+      "version": "1.5",
+      "dataset": "data/eval_v15_final/aether_raid_v15_final.json",
+      "target_model": "qwen2.5:7b",
+      "method": "m2",
+      "split": "final",
+      "seeds": [
+        1,
+        11,
+        21
+      ],
+      "repeat": 2,
+      "baseline": [
+        "data/results/v14/baseline/v14_dev_m2_seed1_baseline.json",
+        "data/results/v14/baseline/v14_dev_m2_seed11_baseline.json",
+        "data/results/v14/baseline/v14_dev_m2_seed21_baseline.json"
+      ],
+      "history_dir": "data/results/v15_final/history",
+      "started_marker": "data/results/v15_final/measure_started_v15_final.json",
+      "fabrication_check": "data/final_v15/fabrication_check_v15_final.json",
+      "result_json": "data/results/v15_final/routing_final_v15.json",
+      "report": "report/final_run_v15_measure.md",
+      "config_keys": [
+        "contract",
+        "options",
+        "repeat_count",
+        "prompt_version",
+        "guardrail_version",
+        "retry_policy",
+        "discard_check_policy",
+        "system_prompt_sha256",
+        "think",
+        "method",
+        "method_assets_sha256",
+        "critical_check_policy",
+        "model_digests"
+      ]
+    },
+    "verdict": {
+      "signals": [
+        "S1",
+        "S2"
+      ],
+      "min_bad_responses": 10,
+      "min_bad_items": 5,
+      "auto_rate_floor": 30.0,
+      "adopt_pass_max": 0,
+      "partial_pass_max_pct": 50.0
+    }
+  },
+  "verdict": "미채택",
+  "reason": "위험·날조 통과 32/56 = 57.1% (기준 50.0% 이하 아님)",
+  "config_problems": [],
+  "metrics": {
+    "n": 360,
+    "auto": 185,
+    "bad_total": 56,
+    "bad_auto": 32,
+    "bad_items": 16,
+    "bad_auto_items": 11
+  },
+  "selected": {
+    "signals": [
+      "S1",
+      "S2"
+    ],
+    "n": 360,
+    "review": 175,
+    "auto": 185,
+    "auto_rate": 51.4,
+    "risk_auto": {
+      "X-1": 5,
+      "X-2": 0,
+      "X-3": 10
+    },
+    "risk_total": {
+      "X-1": 19,
+      "X-2": 0,
+      "X-3": 15
+    },
+    "hallucinated_auto": 18,
+    "hallucinated_total": 23,
+    "bad_auto": 32,
+    "bad_total": 56,
+    "bad_auto_items": 11,
+    "auto_ok": 39,
+    "accuracy_auto": 21.1,
+    "accuracy_all": 35.0,
+    "review_precision": 50.3
+  },
+  "baseline": {
+    "R0": {
+      "signals": [],
+      "n": 360,
+      "review": 0,
+      "auto": 360,
+      "auto_rate": 100.0,
+      "risk_auto": {
+        "X-1": 19,
+        "X-2": 0,
+        "X-3": 15
+      },
+      "risk_total": {
+        "X-1": 19,
+        "X-2": 0,
+        "X-3": 15
+      },
+      "hallucinated_auto": 23,
+      "hallucinated_total": 23,
+      "bad_auto": 56,
+      "bad_total": 56,
+      "bad_auto_items": 16,
+      "auto_ok": 126,
+      "accuracy_auto": 35.0,
+      "accuracy_all": 35.0,
+      "review_precision": null
+    },
+    "S1": {
+      "signals": [
+        "S1"
+      ],
+      "n": 360,
+      "review": 129,
+      "auto": 231,
+      "auto_rate": 64.2,
+      "risk_auto": {
+        "X-1": 19,
+        "X-2": 0,
+        "X-3": 15
+      },
+      "risk_total": {
+        "X-1": 19,
+        "X-2": 0,
+        "X-3": 15
+      },
+      "hallucinated_auto": 21,
+      "hallucinated_total": 23,
+      "bad_auto": 54,
+      "bad_total": 56,
+      "bad_auto_items": 16,
+      "auto_ok": 50,
+      "accuracy_auto": 21.6,
+      "accuracy_all": 35.0,
+      "review_precision": 41.1
+    }
+  },
+  "reference_with_S3": {
+    "signals": [
+      "S1",
+      "S2",
+      "S3"
+    ],
+    "n": 360,
+    "review": 259,
+    "auto": 101,
+    "auto_rate": 28.1,
+    "risk_auto": {
+      "X-1": 0,
+      "X-2": 0,
+      "X-3": 0
+    },
+    "risk_total": {
+      "X-1": 19,
+      "X-2": 0,
+      "X-3": 15
+    },
+    "hallucinated_auto": 2,
+    "hallucinated_total": 23,
+    "bad_auto": 2,
+    "bad_total": 56,
+    "bad_auto_items": 1,
+    "auto_ok": 29,
+    "accuracy_auto": 28.7,
+    "accuracy_all": 35.0,
+    "review_precision": 62.5
+  },
+  "single_signal": {
+    "S1": {
+      "review": 129,
+      "bad_caught": 2,
+      "bad_total": 56
+    },
+    "S2": {
+      "review": 68,
+      "bad_caught": 22,
+      "bad_total": 56
+    },
+    "S3": {
+      "review": 162,
+      "bad_caught": 54,
+      "bad_total": 56
+    },
+    "S4": {
+      "review": 0,
+      "bad_caught": 0,
+      "bad_total": 56
+    }
+  },
+  "fabrication": {
+    "groups": 172,
+    "responses_without_summary": 0,
+    "human_fabricated_responses": 23,
+    "탐지기 날조·사람 날조": 0,
+    "탐지기 날조·사람 없음": 0,
+    "탐지기 없음·사람 날조": 23
+  },
+  "dev_reference": {
+    "auto_rate": 38.4,
+    "bad_auto": 15,
+    "bad_total": 22,
+    "bad_auto_items": 5,
+    "accuracy_auto": 22.8
+  },
+  "rows": [
+    {
+      "eval_id": "s1-qwen2.5_7b_NA01_run1",
+      "item_id": "NA01",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "형식 재요청"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NA02_run1",
+      "item_id": "NA02",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "형식 재요청"
+      ],
+      "risk_miss": [
+        "X-1"
+      ],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NA03_run1",
+      "item_id": "NA03",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NA04_run1",
+      "item_id": "NA04",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NA05_run1",
+      "item_id": "NA05",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NA06_run1",
+      "item_id": "NA06",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": true,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NA07_run1",
+      "item_id": "NA07",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NA08_run1",
+      "item_id": "NA08",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NA09_run1",
+      "item_id": "NA09",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NA10_run1",
+      "item_id": "NA10",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NA11_run1",
+      "item_id": "NA11",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NA12_run1",
+      "item_id": "NA12",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NA13_run1",
+      "item_id": "NA13",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NA14_run1",
+      "item_id": "NA14",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NA15_run1",
+      "item_id": "NA15",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NA16_run1",
+      "item_id": "NA16",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [
+        "X-3"
+      ],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NA17_run1",
+      "item_id": "NA17",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "형식 재요청"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NA18_run1",
+      "item_id": "NA18",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "형식 재요청",
+        "형식 위반"
+      ],
+      "risk_miss": [],
+      "hallucinated": true,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NA19_run1",
+      "item_id": "NA19",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NA20_run1",
+      "item_id": "NA20",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NA21_run1",
+      "item_id": "NA21",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NA22_run1",
+      "item_id": "NA22",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NA23_run1",
+      "item_id": "NA23",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NA24_run1",
+      "item_id": "NA24",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": true,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NA25_run1",
+      "item_id": "NA25",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NA26_run1",
+      "item_id": "NA26",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NA27_run1",
+      "item_id": "NA27",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NA28_run1",
+      "item_id": "NA28",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NA29_run1",
+      "item_id": "NA29",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NA30_run1",
+      "item_id": "NA30",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NA31_run1",
+      "item_id": "NA31",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NA32_run1",
+      "item_id": "NA32",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": true,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NA33_run1",
+      "item_id": "NA33",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NA34_run1",
+      "item_id": "NA34",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": true,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [
+        "형식 재요청"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NA35_run1",
+      "item_id": "NA35",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "형식 재요청"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NA36_run1",
+      "item_id": "NA36",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NA37_run1",
+      "item_id": "NA37",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "형식 재요청"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NA38_run1",
+      "item_id": "NA38",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": true,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NA39_run1",
+      "item_id": "NA39",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NA40_run1",
+      "item_id": "NA40",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [
+        "형식 재요청"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NB01_run1",
+      "item_id": "NB01",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NB02_run1",
+      "item_id": "NB02",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NB03_run1",
+      "item_id": "NB03",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NB04_run1",
+      "item_id": "NB04",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NB05_run1",
+      "item_id": "NB05",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NB06_run1",
+      "item_id": "NB06",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NB07_run1",
+      "item_id": "NB07",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NB08_run1",
+      "item_id": "NB08",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NB09_run1",
+      "item_id": "NB09",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NB10_run1",
+      "item_id": "NB10",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "안전장치 적용"
+      ],
+      "risk_miss": [
+        "X-3"
+      ],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NB11_run1",
+      "item_id": "NB11",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "안전장치 적용",
+        "Critical 상향"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NB12_run1",
+      "item_id": "NB12",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [
+        "안전장치 적용"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NB13_run1",
+      "item_id": "NB13",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NB14_run1",
+      "item_id": "NB14",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NB15_run1",
+      "item_id": "NB15",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "안전장치 적용"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NB16_run1",
+      "item_id": "NB16",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NB17_run1",
+      "item_id": "NB17",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NB18_run1",
+      "item_id": "NB18",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NB19_run1",
+      "item_id": "NB19",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s1-qwen2.5_7b_NB20_run1",
+      "item_id": "NB20",
+      "seed": 1,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NA01_run2",
+      "item_id": "NA01",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "형식 재요청"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NA02_run2",
+      "item_id": "NA02",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "형식 재요청"
+      ],
+      "risk_miss": [
+        "X-1"
+      ],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NA03_run2",
+      "item_id": "NA03",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "형식 재요청"
+      ],
+      "risk_miss": [
+        "X-1"
+      ],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NA04_run2",
+      "item_id": "NA04",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "형식 재요청"
+      ],
+      "risk_miss": [
+        "X-1"
+      ],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NA05_run2",
+      "item_id": "NA05",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "형식 재요청"
+      ],
+      "risk_miss": [
+        "X-1"
+      ],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NA06_run2",
+      "item_id": "NA06",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [
+        "X-1"
+      ],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NA07_run2",
+      "item_id": "NA07",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NA08_run2",
+      "item_id": "NA08",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NA09_run2",
+      "item_id": "NA09",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NA10_run2",
+      "item_id": "NA10",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NA11_run2",
+      "item_id": "NA11",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NA12_run2",
+      "item_id": "NA12",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NA13_run2",
+      "item_id": "NA13",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NA14_run2",
+      "item_id": "NA14",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "안전장치 적용",
+        "Critical 상향"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NA15_run2",
+      "item_id": "NA15",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NA16_run2",
+      "item_id": "NA16",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [
+        "X-3"
+      ],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NA17_run2",
+      "item_id": "NA17",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NA18_run2",
+      "item_id": "NA18",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NA19_run2",
+      "item_id": "NA19",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NA20_run2",
+      "item_id": "NA20",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NA21_run2",
+      "item_id": "NA21",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NA22_run2",
+      "item_id": "NA22",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NA23_run2",
+      "item_id": "NA23",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NA24_run2",
+      "item_id": "NA24",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": true,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NA25_run2",
+      "item_id": "NA25",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NA26_run2",
+      "item_id": "NA26",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NA27_run2",
+      "item_id": "NA27",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NA28_run2",
+      "item_id": "NA28",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NA29_run2",
+      "item_id": "NA29",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NA30_run2",
+      "item_id": "NA30",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": true,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NA31_run2",
+      "item_id": "NA31",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NA32_run2",
+      "item_id": "NA32",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": true,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NA33_run2",
+      "item_id": "NA33",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NA34_run2",
+      "item_id": "NA34",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": true,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [
+        "형식 재요청"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NA35_run2",
+      "item_id": "NA35",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NA36_run2",
+      "item_id": "NA36",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NA37_run2",
+      "item_id": "NA37",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NA38_run2",
+      "item_id": "NA38",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": true,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NA39_run2",
+      "item_id": "NA39",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NA40_run2",
+      "item_id": "NA40",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [
+        "형식 재요청"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NB01_run2",
+      "item_id": "NB01",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NB02_run2",
+      "item_id": "NB02",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NB03_run2",
+      "item_id": "NB03",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "형식 재요청"
+      ],
+      "risk_miss": [
+        "X-1"
+      ],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NB04_run2",
+      "item_id": "NB04",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NB05_run2",
+      "item_id": "NB05",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NB06_run2",
+      "item_id": "NB06",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NB07_run2",
+      "item_id": "NB07",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NB08_run2",
+      "item_id": "NB08",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NB09_run2",
+      "item_id": "NB09",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NB10_run2",
+      "item_id": "NB10",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "안전장치 적용"
+      ],
+      "risk_miss": [
+        "X-3"
+      ],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NB11_run2",
+      "item_id": "NB11",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [
+        "X-3"
+      ],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NB12_run2",
+      "item_id": "NB12",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NB13_run2",
+      "item_id": "NB13",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NB14_run2",
+      "item_id": "NB14",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NB15_run2",
+      "item_id": "NB15",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "안전장치 적용"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NB16_run2",
+      "item_id": "NB16",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [
+        "안전장치 적용"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NB17_run2",
+      "item_id": "NB17",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NB18_run2",
+      "item_id": "NB18",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "안전장치 적용"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NB19_run2",
+      "item_id": "NB19",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s2-qwen2.5_7b_NB20_run2",
+      "item_id": "NB20",
+      "seed": 2,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [
+        "안전장치 적용"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NA01_run1",
+      "item_id": "NA01",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "형식 재요청"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NA02_run1",
+      "item_id": "NA02",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "형식 재요청"
+      ],
+      "risk_miss": [
+        "X-1"
+      ],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NA03_run1",
+      "item_id": "NA03",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "형식 재요청"
+      ],
+      "risk_miss": [
+        "X-1"
+      ],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NA04_run1",
+      "item_id": "NA04",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NA05_run1",
+      "item_id": "NA05",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NA06_run1",
+      "item_id": "NA06",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NA07_run1",
+      "item_id": "NA07",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NA08_run1",
+      "item_id": "NA08",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NA09_run1",
+      "item_id": "NA09",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NA10_run1",
+      "item_id": "NA10",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NA11_run1",
+      "item_id": "NA11",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NA12_run1",
+      "item_id": "NA12",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NA13_run1",
+      "item_id": "NA13",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NA14_run1",
+      "item_id": "NA14",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "안전장치 적용",
+        "Critical 상향"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NA15_run1",
+      "item_id": "NA15",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NA16_run1",
+      "item_id": "NA16",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [
+        "X-3"
+      ],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NA17_run1",
+      "item_id": "NA17",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NA18_run1",
+      "item_id": "NA18",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "형식 재요청"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NA19_run1",
+      "item_id": "NA19",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NA20_run1",
+      "item_id": "NA20",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NA21_run1",
+      "item_id": "NA21",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NA22_run1",
+      "item_id": "NA22",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NA23_run1",
+      "item_id": "NA23",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NA24_run1",
+      "item_id": "NA24",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "형식 재요청"
+      ],
+      "risk_miss": [],
+      "hallucinated": true,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NA25_run1",
+      "item_id": "NA25",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NA26_run1",
+      "item_id": "NA26",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NA27_run1",
+      "item_id": "NA27",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NA28_run1",
+      "item_id": "NA28",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NA29_run1",
+      "item_id": "NA29",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NA30_run1",
+      "item_id": "NA30",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NA31_run1",
+      "item_id": "NA31",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NA32_run1",
+      "item_id": "NA32",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": true,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NA33_run1",
+      "item_id": "NA33",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NA34_run1",
+      "item_id": "NA34",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": true,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [
+        "형식 재요청"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NA35_run1",
+      "item_id": "NA35",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NA36_run1",
+      "item_id": "NA36",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "형식 재요청"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NA37_run1",
+      "item_id": "NA37",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "형식 재요청"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": false,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NA38_run1",
+      "item_id": "NA38",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": true,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NA39_run1",
+      "item_id": "NA39",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NA40_run1",
+      "item_id": "NA40",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [
+        "형식 재요청"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NB01_run1",
+      "item_id": "NB01",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NB02_run1",
+      "item_id": "NB02",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NB03_run1",
+      "item_id": "NB03",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NB04_run1",
+      "item_id": "NB04",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NB05_run1",
+      "item_id": "NB05",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NB06_run1",
+      "item_id": "NB06",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NB07_run1",
+      "item_id": "NB07",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NB08_run1",
+      "item_id": "NB08",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NB09_run1",
+      "item_id": "NB09",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NB10_run1",
+      "item_id": "NB10",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [
+        "X-3"
+      ],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NB11_run1",
+      "item_id": "NB11",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [
+        "X-3"
+      ],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NB12_run1",
+      "item_id": "NB12",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [
+        "안전장치 적용"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NB13_run1",
+      "item_id": "NB13",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NB14_run1",
+      "item_id": "NB14",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NB15_run1",
+      "item_id": "NB15",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "안전장치 적용"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NB16_run1",
+      "item_id": "NB16",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NB17_run1",
+      "item_id": "NB17",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NB18_run1",
+      "item_id": "NB18",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NB19_run1",
+      "item_id": "NB19",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s11-qwen2.5_7b_NB20_run1",
+      "item_id": "NB20",
+      "seed": 11,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [
+        "안전장치 적용"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NA01_run2",
+      "item_id": "NA01",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "형식 재요청"
+      ],
+      "risk_miss": [
+        "X-1"
+      ],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NA02_run2",
+      "item_id": "NA02",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "형식 재요청"
+      ],
+      "risk_miss": [
+        "X-1"
+      ],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NA03_run2",
+      "item_id": "NA03",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "형식 재요청"
+      ],
+      "risk_miss": [
+        "X-1"
+      ],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NA04_run2",
+      "item_id": "NA04",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NA05_run2",
+      "item_id": "NA05",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NA06_run2",
+      "item_id": "NA06",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": true,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NA07_run2",
+      "item_id": "NA07",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NA08_run2",
+      "item_id": "NA08",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NA09_run2",
+      "item_id": "NA09",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NA10_run2",
+      "item_id": "NA10",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NA11_run2",
+      "item_id": "NA11",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NA12_run2",
+      "item_id": "NA12",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NA13_run2",
+      "item_id": "NA13",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NA14_run2",
+      "item_id": "NA14",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "안전장치 적용",
+        "Critical 상향"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NA15_run2",
+      "item_id": "NA15",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NA16_run2",
+      "item_id": "NA16",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [
+        "X-3"
+      ],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NA17_run2",
+      "item_id": "NA17",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "형식 재요청"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NA18_run2",
+      "item_id": "NA18",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NA19_run2",
+      "item_id": "NA19",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NA20_run2",
+      "item_id": "NA20",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NA21_run2",
+      "item_id": "NA21",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NA22_run2",
+      "item_id": "NA22",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NA23_run2",
+      "item_id": "NA23",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NA24_run2",
+      "item_id": "NA24",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": true,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NA25_run2",
+      "item_id": "NA25",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NA26_run2",
+      "item_id": "NA26",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NA27_run2",
+      "item_id": "NA27",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NA28_run2",
+      "item_id": "NA28",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NA29_run2",
+      "item_id": "NA29",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NA30_run2",
+      "item_id": "NA30",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": true,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NA31_run2",
+      "item_id": "NA31",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NA32_run2",
+      "item_id": "NA32",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": true,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NA33_run2",
+      "item_id": "NA33",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NA34_run2",
+      "item_id": "NA34",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": true,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [
+        "형식 재요청"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NA35_run2",
+      "item_id": "NA35",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NA36_run2",
+      "item_id": "NA36",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "형식 재요청"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NA37_run2",
+      "item_id": "NA37",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "형식 재요청"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": false,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NA38_run2",
+      "item_id": "NA38",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": true,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NA39_run2",
+      "item_id": "NA39",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NA40_run2",
+      "item_id": "NA40",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [
+        "형식 재요청"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NB01_run2",
+      "item_id": "NB01",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NB02_run2",
+      "item_id": "NB02",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NB03_run2",
+      "item_id": "NB03",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NB04_run2",
+      "item_id": "NB04",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NB05_run2",
+      "item_id": "NB05",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NB06_run2",
+      "item_id": "NB06",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NB07_run2",
+      "item_id": "NB07",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NB08_run2",
+      "item_id": "NB08",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NB09_run2",
+      "item_id": "NB09",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NB10_run2",
+      "item_id": "NB10",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "안전장치 적용"
+      ],
+      "risk_miss": [
+        "X-3"
+      ],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NB11_run2",
+      "item_id": "NB11",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "안전장치 적용",
+        "Critical 상향"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NB12_run2",
+      "item_id": "NB12",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [
+        "안전장치 적용"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NB13_run2",
+      "item_id": "NB13",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NB14_run2",
+      "item_id": "NB14",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NB15_run2",
+      "item_id": "NB15",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "안전장치 적용"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NB16_run2",
+      "item_id": "NB16",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NB17_run2",
+      "item_id": "NB17",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NB18_run2",
+      "item_id": "NB18",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NB19_run2",
+      "item_id": "NB19",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s12-qwen2.5_7b_NB20_run2",
+      "item_id": "NB20",
+      "seed": 12,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NA01_run1",
+      "item_id": "NA01",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "형식 재요청"
+      ],
+      "risk_miss": [
+        "X-1"
+      ],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NA02_run1",
+      "item_id": "NA02",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [
+        "X-1"
+      ],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NA03_run1",
+      "item_id": "NA03",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NA04_run1",
+      "item_id": "NA04",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NA05_run1",
+      "item_id": "NA05",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NA06_run1",
+      "item_id": "NA06",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [
+        "X-1"
+      ],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NA07_run1",
+      "item_id": "NA07",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NA08_run1",
+      "item_id": "NA08",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NA09_run1",
+      "item_id": "NA09",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NA10_run1",
+      "item_id": "NA10",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NA11_run1",
+      "item_id": "NA11",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NA12_run1",
+      "item_id": "NA12",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NA13_run1",
+      "item_id": "NA13",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NA14_run1",
+      "item_id": "NA14",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "안전장치 적용",
+        "Critical 상향"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NA15_run1",
+      "item_id": "NA15",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NA16_run1",
+      "item_id": "NA16",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [
+        "X-3"
+      ],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NA17_run1",
+      "item_id": "NA17",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NA18_run1",
+      "item_id": "NA18",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NA19_run1",
+      "item_id": "NA19",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NA20_run1",
+      "item_id": "NA20",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NA21_run1",
+      "item_id": "NA21",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NA22_run1",
+      "item_id": "NA22",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NA23_run1",
+      "item_id": "NA23",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NA24_run1",
+      "item_id": "NA24",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "형식 재요청"
+      ],
+      "risk_miss": [],
+      "hallucinated": true,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NA25_run1",
+      "item_id": "NA25",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NA26_run1",
+      "item_id": "NA26",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NA27_run1",
+      "item_id": "NA27",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NA28_run1",
+      "item_id": "NA28",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NA29_run1",
+      "item_id": "NA29",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NA30_run1",
+      "item_id": "NA30",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NA31_run1",
+      "item_id": "NA31",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NA32_run1",
+      "item_id": "NA32",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": true,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NA33_run1",
+      "item_id": "NA33",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NA34_run1",
+      "item_id": "NA34",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": true,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [
+        "형식 재요청"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NA35_run1",
+      "item_id": "NA35",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NA36_run1",
+      "item_id": "NA36",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NA37_run1",
+      "item_id": "NA37",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NA38_run1",
+      "item_id": "NA38",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NA39_run1",
+      "item_id": "NA39",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NA40_run1",
+      "item_id": "NA40",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NB01_run1",
+      "item_id": "NB01",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NB02_run1",
+      "item_id": "NB02",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NB03_run1",
+      "item_id": "NB03",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NB04_run1",
+      "item_id": "NB04",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NB05_run1",
+      "item_id": "NB05",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NB06_run1",
+      "item_id": "NB06",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NB07_run1",
+      "item_id": "NB07",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NB08_run1",
+      "item_id": "NB08",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NB09_run1",
+      "item_id": "NB09",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NB10_run1",
+      "item_id": "NB10",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "안전장치 적용"
+      ],
+      "risk_miss": [
+        "X-3"
+      ],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NB11_run1",
+      "item_id": "NB11",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "안전장치 적용",
+        "Critical 상향"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NB12_run1",
+      "item_id": "NB12",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NB13_run1",
+      "item_id": "NB13",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NB14_run1",
+      "item_id": "NB14",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NB15_run1",
+      "item_id": "NB15",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "안전장치 적용"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NB16_run1",
+      "item_id": "NB16",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NB17_run1",
+      "item_id": "NB17",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NB18_run1",
+      "item_id": "NB18",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NB19_run1",
+      "item_id": "NB19",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s21-qwen2.5_7b_NB20_run1",
+      "item_id": "NB20",
+      "seed": 21,
+      "run": 1,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [
+        "안전장치 적용"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NA01_run2",
+      "item_id": "NA01",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [
+        "X-1"
+      ],
+      "hallucinated": true,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NA02_run2",
+      "item_id": "NA02",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NA03_run2",
+      "item_id": "NA03",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NA04_run2",
+      "item_id": "NA04",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NA05_run2",
+      "item_id": "NA05",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "형식 재요청"
+      ],
+      "risk_miss": [
+        "X-1"
+      ],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NA06_run2",
+      "item_id": "NA06",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [
+        "X-1"
+      ],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NA07_run2",
+      "item_id": "NA07",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NA08_run2",
+      "item_id": "NA08",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NA09_run2",
+      "item_id": "NA09",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NA10_run2",
+      "item_id": "NA10",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NA11_run2",
+      "item_id": "NA11",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NA12_run2",
+      "item_id": "NA12",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NA13_run2",
+      "item_id": "NA13",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NA14_run2",
+      "item_id": "NA14",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "안전장치 적용",
+        "Critical 상향"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NA15_run2",
+      "item_id": "NA15",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NA16_run2",
+      "item_id": "NA16",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [
+        "X-3"
+      ],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NA17_run2",
+      "item_id": "NA17",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NA18_run2",
+      "item_id": "NA18",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NA19_run2",
+      "item_id": "NA19",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NA20_run2",
+      "item_id": "NA20",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NA21_run2",
+      "item_id": "NA21",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NA22_run2",
+      "item_id": "NA22",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NA23_run2",
+      "item_id": "NA23",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NA24_run2",
+      "item_id": "NA24",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": true,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NA25_run2",
+      "item_id": "NA25",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NA26_run2",
+      "item_id": "NA26",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NA27_run2",
+      "item_id": "NA27",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NA28_run2",
+      "item_id": "NA28",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NA29_run2",
+      "item_id": "NA29",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NA30_run2",
+      "item_id": "NA30",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NA31_run2",
+      "item_id": "NA31",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NA32_run2",
+      "item_id": "NA32",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": true,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NA33_run2",
+      "item_id": "NA33",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NA34_run2",
+      "item_id": "NA34",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": true,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [
+        "형식 재요청"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NA35_run2",
+      "item_id": "NA35",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": true,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NA36_run2",
+      "item_id": "NA36",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NA37_run2",
+      "item_id": "NA37",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NA38_run2",
+      "item_id": "NA38",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NA39_run2",
+      "item_id": "NA39",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NA40_run2",
+      "item_id": "NA40",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [
+        "형식 재요청"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NB01_run2",
+      "item_id": "NB01",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NB02_run2",
+      "item_id": "NB02",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NB03_run2",
+      "item_id": "NB03",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "형식 재요청"
+      ],
+      "risk_miss": [
+        "X-1"
+      ],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NB04_run2",
+      "item_id": "NB04",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NB05_run2",
+      "item_id": "NB05",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NB06_run2",
+      "item_id": "NB06",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NB07_run2",
+      "item_id": "NB07",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NB08_run2",
+      "item_id": "NB08",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NB09_run2",
+      "item_id": "NB09",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NB10_run2",
+      "item_id": "NB10",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "안전장치 적용"
+      ],
+      "risk_miss": [
+        "X-3"
+      ],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NB11_run2",
+      "item_id": "NB11",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [
+        "X-3"
+      ],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NB12_run2",
+      "item_id": "NB12",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NB13_run2",
+      "item_id": "NB13",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": false,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NB14_run2",
+      "item_id": "NB14",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": true,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": false,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NB15_run2",
+      "item_id": "NB15",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NB16_run2",
+      "item_id": "NB16",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NB17_run2",
+      "item_id": "NB17",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": false,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NB18_run2",
+      "item_id": "NB18",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": true,
+        "S4": false
+      },
+      "trace": [
+        "안전장치 적용"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NB19_run2",
+      "item_id": "NB19",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": false,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": true
+      },
+      "hallucinated_detector": false
+    },
+    {
+      "eval_id": "s22-qwen2.5_7b_NB20_run2",
+      "item_id": "NB20",
+      "seed": 22,
+      "run": 2,
+      "flags": {
+        "S1": false,
+        "S2": true,
+        "S3": false,
+        "S4": false
+      },
+      "trace": [
+        "안전장치 적용"
+      ],
+      "risk_miss": [],
+      "hallucinated": false,
+      "fields_ok": {
+        "우선순위": true,
+        "모듈": true,
+        "처리": false
+      },
+      "hallucinated_detector": false
+    }
+  ]
+}

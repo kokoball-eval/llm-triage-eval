@@ -8,6 +8,13 @@
 
 ## [Unreleased]
 
+### 추가 (v1.5 9단계: 새 최종 평가용 세트 라우팅 판정 — 결과)
+- `data/results/v15_final/history/` — 채택 구성(qwen2.5:7b·M2)의 새 60문항 실행 기록 360응답(seed 1·11·21 × 2회). seed 1은 첫 시도가 기록 파일 없이 멈춰 그 seed만 다시 실행(OBS-006)
+- `data/final_v15/fabrication_check_v15_final.json` — 날조 사람 확인(172묶음, 날조 있음 12묶음·23응답, 고친 이력 0건)
+- `data/results/v15_final/routing_final_v15.json`·`report/final_run_v15_measure.md` — `triage-final verdict` 결과. **판정 미채택**: 위험·날조 통과 32/56 = 57.1%(기준 50% 이하 아님), 자동 처리율 51.4%
+- [`report/final_run_v15_results.md`](report/final_run_v15_results.md) — 결과 보고서. 개발용(68.2%)과 비교, 놓친 유형(X-1 5/19·X-3 10/15·날조 18/23), 문항 집중, V16-2 문항 제외 사후 재계산(23/46, 판정에는 쓰지 않음), v1.6 후보
+- 독립 검토 반영 — 날조 신호 집계 3건으로 정정, seed 1 재실행 기록, 근거 인용 위치 정정
+
 ### 추가 (v1.5 9단계: 새 최종 평가용 세트 라우팅 판정 — 계획·도구, 모델 실행 전)
 - [`report/final_run_v15_plan.md`](report/final_run_v15_plan.md)·`final_run_v15.toml` — 사전 등록. 봉인본 60문항에 채택 구성(qwen2.5:7b·M2)을 seed 1·11·21 × 2회(문항당 6응답, 360응답)로 한 번 실행하고 라우터 S1+S2를 `routing_v15_results.md` §6 기준(표본 부족 → 처리율 30% → 통과 0건 채택 → 50% 이하 부분 채택 → 미채택)으로 판정한다. 날조는 라우팅·정답을 가린 상태에서 사람이 먼저 확인해 커밋한 뒤 판정한다(경민 1명, 360응답 전부)
 - `src/triage_eval/pipeline/final_v15.py`(`triage-final run`·`verdict`) — guard(계획·기준·도구·채점 코드·봉인 기록이 커밋·무변경)·봉인 SHA-256 확인·STARTED 마커(seed별 상태, 완료 seed는 다시 실행하지 않음, 기록 없이 멈춘 seed만 `--redo-incomplete`로 재실행하고 마커에 기록)·구성 동일성 확인(옵션·프롬프트·안전장치·재시도·폐기 점검·방법·모델 digest가 개발용 기준선과 같음, 환경 경고 없음)·날조 확인 잠금 확인·판정(순수 함수, 비율은 정수 비율)

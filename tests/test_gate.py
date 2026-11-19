@@ -6,11 +6,12 @@ from pathlib import Path
 
 import pytest
 
-from triage_eval.config import GATE_CRITERIA, ROOT
+from triage_eval.config import GATE_CRITERIA, LOGS, REFERENCE_DIR, ROOT
 from triage_eval.evaluation import gate as g
 
-COMMITTED = json.loads((ROOT / "data/results/v15/gate_result_v15.json").read_text(encoding="utf-8"))
-CANDIDATES = [ROOT / p for p in COMMITTED["candidate"]]
+COMMITTED = json.loads((REFERENCE_DIR / "게이트_판정_v15.json").read_text(encoding="utf-8"))
+# 커밋된 판정에는 구조 정리 전 경로가 적혀 있다 — 같은 파일을 새 위치에서 이름으로 찾는다(판정 파일은 고치지 않는다).
+CANDIDATES = [LOGS / "게이트_재현" / Path(p).name for p in COMMITTED["candidate"]]
 
 
 @pytest.fixture(scope="module")
@@ -133,13 +134,16 @@ def test_older_labels_file_is_refused(crit, tmp_path):
 
 
 def test_result_records_labels_fingerprint(crit):
+    """정답표 판·지문이 구조 정리 전 판정과 같다 (경로는 폴더 한글화로 바뀌었다)."""
     result = g.evaluate(CANDIDATES, crit)
-    assert result["labels"] == COMMITTED["labels"]
+    assert result["labels"]["version"] == COMMITTED["labels"]["version"] == "v1.5"
+    assert result["labels"]["sha256"] == COMMITTED["labels"]["sha256"]
 
 
 def test_real_method_change_fails_and_is_reported(crit):
     """체크리스트 없이(M0) 실행한 실제 기록 3건 — 방법 변경으로 알리고, Critical 을 더 놓쳐 FAIL 이다."""
-    m0 = sorted((ROOT / "data/results/v14/history").glob("v14_dev_m0_*.json"))
+    m0 = sorted((LOGS / "게이트_재현").glob("v14_dev_m0_*.json"))
+    assert len(m0) == 3
     result = g.evaluate(m0, crit)
     assert result["verdict"] == "FAIL"
     assert any("방법 변경됨" in n for n in result["notes"])

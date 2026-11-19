@@ -37,30 +37,49 @@ def test_every_json_parses(path):
     json.loads(path.read_text(encoding="utf-8"))
 
 
+CRITERIA_DIR = ROOT / "기준"
+
+
 def loaders():
-    """저장소 루트의 기준 파일 → 그 파일을 읽는 함수. 새 기준 파일을 추가하면 여기에 등록해야 테스트가 통과한다."""
+    """기준/ 폴더의 기준 파일 → 그 파일을 읽는 함수. 새 기준 파일을 추가하면 여기에 등록해야 테스트가 통과한다.
+    측정이 끝난 옛 기준 파일과 읽던 코드는 태그 v1.5-archive 에 있다."""
     from triage_eval.evaluation import gate
 
-    return {"gate_criteria_v15.toml": gate.load_criteria}
+    return {"회귀_게이트_기준.toml": gate.load_criteria}
 
 
-# 측정이 끝나 읽는 코드를 지운 기준 파일 — 보고서가 가리키는 기록이라 파일은 남기고 문법 검사만 한다.
-# 읽던 코드는 태그 v1.5-archive 에 있다.
-ARCHIVED = {"gate_criteria.toml", "gate_criteria_v13.toml", "gate_criteria_v14.toml", "model_selection_v14.toml",
-            "method_selection_v14.toml", "routing_v15.toml", "final_run_v15.toml",
-            "label_agreement_v15.toml", "judge_v15.toml", "quality_v15.toml"}
-
-
-def test_every_root_criteria_file_has_a_loader():
-    """루트의 기준 파일은 모두 읽는 함수가 등록되어 있다 — 읽는 코드 없이 커밋된 기준 파일을 막는다."""
-    root_tomls = {p.name for p in ROOT.glob("*.toml")} - {"pyproject.toml"}
-    assert root_tomls == set(loaders()) | ARCHIVED
+def test_every_criteria_file_has_a_loader():
+    """기준 파일은 모두 기준/ 에 있고 읽는 함수가 등록되어 있다 — 읽는 코드 없이 커밋된 기준 파일을 막는다."""
+    assert {p.name for p in CRITERIA_DIR.glob("*.toml")} == set(loaders())
+    assert {p.name for p in ROOT.glob("*.toml")} == {"pyproject.toml"}
 
 
 @pytest.mark.parametrize("name", sorted(loaders()))
 def test_every_criteria_file_passes_its_loader(name):
     """문법뿐 아니라 각 도구의 키 검사(모르는 섹션·키, 빠진 키)까지 통과한다."""
-    loaders()[name](ROOT / name)
+    loaders()[name](CRITERIA_DIR / name)
+
+
+def test_criteria_baselines_exist():
+    """기준 파일이 가리키는 기준선 실행 기록이 실제로 있다 — 폴더를 옮긴 뒤 경로가 끊기지 않게."""
+    crit = tomllib.loads((CRITERIA_DIR / "회귀_게이트_기준.toml").read_text(encoding="utf-8"))
+    from triage_eval.config import BASELINE_DIR
+    paths = [ROOT / p for p in crit["meta"]["baseline"]]
+    assert all(p.is_file() and p.parent == BASELINE_DIR for p in paths)
+
+
+# 구조 정리(B3) 전의 폴더 이름 — 코드·시험·기준 파일이 이 경로를 다시 가리키면 파일을 못 찾는다.
+OLD_PATHS = ("data/", "docs/", "report/", "tools/", "gate_criteria_v15.toml")
+
+
+def test_no_reference_to_removed_folders():
+    for path in [*repo_files(".py"), *repo_files(".toml")]:
+        text = path.read_text(encoding="utf-8")
+        hits = [o for o in OLD_PATHS if o in text and path.name != "test_repo_integrity.py"]
+        # 기준 파일 머리말은 원본 이름을 기록으로 남긴다
+        if path.name == "회귀_게이트_기준.toml":
+            hits = [o for o in hits if o not in ("gate_criteria_v15.toml", "report/")]
+        assert not hits, (path.relative_to(ROOT).as_posix(), hits)
 
 
 def test_every_console_script_resolves():

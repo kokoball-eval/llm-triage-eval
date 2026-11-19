@@ -1,14 +1,13 @@
 """출력 형식 v2 (contract.py) 테스트."""
 
 import json
-from pathlib import Path
 
 import pytest
 
 from triage_eval.contracts import ENUMS, FIELDS, MODULES, NO_MODULE, parse_response, check_format, split_modules
 
-ROOT = Path(__file__).resolve().parent.parent
-LABEL_SETS = ["data/eval_v15/aether_raid_v15.json", "data/eval_v15_final/aether_raid_v15_final.json"]
+from triage_eval.config import DEV_LABELS, FINAL_SET, TEST_V13
+LABEL_SETS = [DEV_LABELS, FINAL_SET]
 
 GOOD = "\n".join([
     "[요약]: 패키지 결제 후 다이아 미지급",
@@ -22,10 +21,10 @@ GOOD = "\n".join([
 ])
 
 
-@pytest.mark.parametrize("path", LABEL_SETS)
+@pytest.mark.parametrize("path", LABEL_SETS, ids=lambda p: p.name)
 def test_labels_use_only_contract_values(path):
     """정답 라벨은 출력 형식의 허용 값만 쓴다 — 라벨과 형식이 갈라지면 맞는 응답도 오답이 된다 (설계 의도 2)."""
-    items = json.loads((ROOT / path).read_text(encoding="utf-8"))["items"]
+    items = json.loads(path.read_text(encoding="utf-8"))["items"]
     for item in items:
         for field, values in item["labels"].items():
             allowed = [*MODULES, NO_MODULE] if field == "모듈" else ENUMS.get(field)
@@ -108,8 +107,7 @@ def test_r7_allowlist_catches_any_foreign_script():
 def test_r7_allowlist_has_no_false_positive_on_inputs():
     """평가셋 입력 원문에 쓰인 문자는 모두 허용 목록 안에 있다 (모델이 입력을 인용해도 오탐하지 않는다)."""
     import json
-    from pathlib import Path
     from triage_eval.contracts import FORBIDDEN_SCRIPTS
-    data = json.loads((Path(__file__).resolve().parent.parent / "data/eval_v13/aether_raid_v13.json").read_text(encoding="utf-8"))
+    data = json.loads(TEST_V13.read_text(encoding="utf-8"))
     for item in data["items"]:
         assert not FORBIDDEN_SCRIPTS["ko"].search(json.dumps(item["input"], ensure_ascii=False)), item["id"]

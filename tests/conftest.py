@@ -9,8 +9,8 @@ from pathlib import Path
 
 import pytest
 
-ROOT = Path(__file__).resolve().parent.parent
-DEV = json.loads((ROOT / "data/eval_v14/aether_raid_v14.json").read_text(encoding="utf-8"))
+from triage_eval.config import DEV_INPUTS
+DEV = json.loads(DEV_INPUTS.read_text(encoding="utf-8"))
 NO_ALL = {f"q{i}": "아니오" for i in range(1, 7)}
 
 

@@ -16,7 +16,7 @@ def test_clean_environment_has_no_warning():
 
 
 def test_other_program_using_gpu_is_warned():
-    """9/30 재실행처럼 게임 등이 VRAM을 쓰고 있으면 경고 (docs/issue_log.md OBS-001)."""
+    """9/30 재실행처럼 게임 등이 VRAM을 쓰고 있으면 경고 (문서/결함_기록.md OBS-001)."""
     env = evaluate(gpu_used=OTHER_VRAM_WARN_MIB + 500, loaded=[], ac_power=True)
     assert any("VRAM" in w for w in env["warnings"])
 

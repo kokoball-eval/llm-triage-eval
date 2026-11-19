@@ -1,14 +1,13 @@
 """한 건 처리 파이프라인(triage/pipeline.py)과 프롬프트 조립 시험 — 모델은 호출하지 않는다."""
 
 import json
-from pathlib import Path
 
 from triage_eval.contracts import ENUMS, MODULES, NO_MODULE, enum_errors, parse_response
 from triage_eval.triage.prompt import SYSTEM_PROMPT, build_input, build_prompt, build_retry_prompt
 from triage_eval.triage.pipeline import discard_check, first_answer, retry_schema
 
-ROOT = Path(__file__).resolve().parent.parent
-DATA = json.loads((ROOT / "data/eval_v14/aether_raid_v14.json").read_text(encoding="utf-8"))
+from triage_eval.config import DEV_INPUTS
+DATA = json.loads(DEV_INPUTS.read_text(encoding="utf-8"))
 
 
 def test_no_dataset_text_leaks_into_system_prompt():

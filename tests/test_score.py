@@ -1,12 +1,11 @@
 """채점(evaluation/score.py) 시험 — 정답 라벨로 만든 응답과 일부러 틀린 응답으로 확인한다."""
 
 import json
-from pathlib import Path
 
 from triage_eval.evaluation.score import field_correct, score_one, summarize
 
-ROOT = Path(__file__).resolve().parent.parent
-ITEMS = {i["id"]: i for i in json.loads((ROOT / "data/eval_v15/aether_raid_v15.json").read_text(encoding="utf-8"))["items"]}
+from triage_eval.config import DEV_LABELS
+ITEMS = {i["id"]: i for i in json.loads(DEV_LABELS.read_text(encoding="utf-8"))["items"]}
 
 
 def ideal(item, **override):

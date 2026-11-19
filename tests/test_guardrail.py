@@ -2,13 +2,12 @@
 
 import copy
 import json
-from pathlib import Path
 
 from triage_eval.contracts import parse_response, check_format
 from triage_eval.triage.guardrail import GUARDRAIL_VERSION, apply, apply_record
 
-ROOT = Path(__file__).resolve().parent.parent
-DATA = {i["id"]: i for i in json.loads((ROOT / "data/eval_v13/aether_raid_v13.json").read_text(encoding="utf-8"))["items"]}
+from triage_eval.config import TEST_V13
+DATA = {i["id"]: i for i in json.loads(TEST_V13.read_text(encoding="utf-8"))["items"]}
 
 
 def resp(cls="결함", pri="Major", rep="충분", act="등록(재현 대기)", blank=False):

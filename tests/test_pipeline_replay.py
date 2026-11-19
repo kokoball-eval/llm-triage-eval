@@ -20,11 +20,11 @@ import pytest
 
 from triage_eval.triage.pipeline import OPTIONS, triage
 
-ROOT = Path(__file__).resolve().parent.parent
+from triage_eval.config import BASELINE_DIR, DEV_INPUTS, FINAL_RUNS_DIR, FINAL_SET
 SOURCES = [   # (실행 기록, 그 기록이 본 평가셋)
-    *[(f"data/results/v14/baseline/v14_dev_m2_seed{s}_baseline.json", "data/eval_v14/aether_raid_v14.json")
+    *[(BASELINE_DIR / f"v14_dev_m2_seed{s}_baseline.json", DEV_INPUTS)
       for s in (1, 11, 21)],
-    *[(f"data/results/v15_final/history/v15final_final_m2_{t}.json", "data/eval_v15_final/aether_raid_v15_final.json")
+    *[(FINAL_RUNS_DIR / f"v15final_final_m2_{t}.json", FINAL_SET)
       for t in ("20261117_194656", "20261117_195200", "20261117_195652")],
 ]
 PROMPTS_SHA256 = "c4bdbe821395e295fb19329ac4e880f104d0a544ddaf328a5615cb3e3ae82971"
@@ -49,8 +49,8 @@ class ReplayClient:
 
 def _records():
     for log_path, ds_path in SOURCES:
-        items = {i["id"]: i for i in json.loads((ROOT / ds_path).read_text(encoding="utf-8"))["items"]}
-        for rec in json.loads((ROOT / log_path).read_text(encoding="utf-8"))["results"]:
+        items = {i["id"]: i for i in json.loads(Path(ds_path).read_text(encoding="utf-8"))["items"]}
+        for rec in json.loads(Path(log_path).read_text(encoding="utf-8"))["results"]:
             yield log_path, rec, items[rec["item_id"]]
 
 
@@ -87,6 +87,6 @@ def test_replay_notices_a_changed_reply():
 
 
 def test_replay_fails_when_a_source_file_is_missing(monkeypatch):
-    monkeypatch.setattr(sys.modules[__name__], "SOURCES", [("data/없는_기록.json", SOURCES[0][1])])
+    monkeypatch.setattr(sys.modules[__name__], "SOURCES", [(BASELINE_DIR / "없는_기록.json", SOURCES[0][1])])
     with pytest.raises(FileNotFoundError):
         list(_records())

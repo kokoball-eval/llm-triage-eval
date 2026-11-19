@@ -5,7 +5,8 @@ import json
 
 import pytest
 
-from conftest import ROOT, FakeClient
+from conftest import FakeClient
+from triage_eval.config import BASELINE_DIR, DEV_INPUTS, FINAL_RUNS_DIR, FINAL_SET, REFERENCE_DIR
 from triage_eval.evaluation import gate as g
 from triage_eval.evaluation import performance, runner
 
@@ -50,7 +51,7 @@ def test_run_writes_log_comparable_with_gate_baseline(run_fake):
     """새 실행기가 남기는 실행 조건이 게이트 기준선과 같은 값이어야 기준선과 비교할 수 있다 (설계 의도 5)."""
     log, _ = run_fake()
     cfg = log["metadata"]["run_config"]
-    base = json.loads((ROOT / "data/results/v14/baseline/v14_dev_m2_seed1_baseline.json").read_text(encoding="utf-8"))
+    base = json.loads((BASELINE_DIR / "v14_dev_m2_seed1_baseline.json").read_text(encoding="utf-8"))
     base_cfg = base["metadata"]["run_config"]
     for key, _label in g.SAME_DATA + g.CHANGE_NOTES:
         assert cfg[key] == base_cfg[key], key
@@ -69,17 +70,17 @@ def test_run_unloads_model_before_and_after(run_fake):
 def test_run_then_score_end_to_end(run_fake):
     """가짜 모델이 v1.4 정답 라벨로 답하면, 같은 라벨로 채점한 성능표가 만점이고 위험 누락이 없다."""
     _, path = run_fake()
-    rows, s = performance.score_logs([path], ROOT / "data/eval_v14/aether_raid_v14.json")
+    rows, s = performance.score_logs([path], DEV_INPUTS)
     assert s["n"] == 126 and s["all_fields_ok"] == 126
     assert s["risk_miss"] == {"X-1": 0, "X-2": 0, "X-3": 0}
 
 
 def test_performance_reproduces_final_run_scoring():
     """새 최종 평가용 세트 실행(360응답)의 응답별 채점이 9단계 판정 때와 같다 — 위험 누락·칸 정답·날조 탐지."""
-    logs = sorted(glob.glob(str(ROOT / "data/results/v15_final/history/*.json")))
-    rows, s = performance.score_logs(logs, ROOT / "data/eval_v15_final/aether_raid_v15_final.json")
+    logs = sorted(glob.glob(str(FINAL_RUNS_DIR / "*.json")))
+    rows, s = performance.score_logs(logs, FINAL_SET)
     old = {(r["seed"], r["item_id"], r["run"]): r
-           for r in json.loads((ROOT / "data/results/v15_final/routing_final_v15.json").read_text(encoding="utf-8"))["rows"]}
+           for r in json.loads((REFERENCE_DIR / "최종용_채점_v15.json").read_text(encoding="utf-8"))["rows"]}
     assert len(rows) == len(old) == 360
     for r in rows:
         o = old[(r["seed"], r["item_id"], r["run_index"])]
@@ -92,8 +93,8 @@ def test_performance_reproduces_final_run_scoring():
 def test_performance_refuses_labels_without_the_item():
     """설계 의도 3 — 다른 평가셋의 정답표로 채점하지 않는다."""
     with pytest.raises(SystemExit):
-        performance.score_logs([ROOT / "data/results/v14/baseline/v14_dev_m2_seed1_baseline.json"],
-                               ROOT / "data/eval_v15_final/aether_raid_v15_final.json")
+        performance.score_logs([BASELINE_DIR / "v14_dev_m2_seed1_baseline.json"],
+                               FINAL_SET)
 
 
 def test_missing_dataset_file_is_reported(capsys):

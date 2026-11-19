@@ -21,11 +21,20 @@ OUTPUT_LANG = "ko"          # 응답 언어 — BTS를 쓰는 팀이 읽는 언�
 
 # ── 평가 ──────────────────────────────────────────────
 REPEAT = 2                  # seed 하나당 반복 횟수 (1회차 seed N, 2회차 N+1)
-DEV_INPUTS = ROOT / "data" / "eval_v14" / "aether_raid_v14.json"     # 개발용 63건 — 모델이 보는 입력
-DEV_LABELS = ROOT / "data" / "eval_v15" / "aether_raid_v15.json"     # 같은 63건의 정답표(기준서 v1.5)
-GATE_CRITERIA = ROOT / "gate_criteria_v15.toml"
-RUNS_DIR = ROOT / "data" / "results" / "runs"                          # triage-run 실행 기록
-GATE_DIR = ROOT / "data" / "results" / "gate"                          # triage-gate 판정 결과
+DATA = ROOT / "데이터"
+SETS = DATA / "평가셋"
+DEV_INPUTS = SETS / "개발용_63건_입력.json"      # 개발용 63건 — 모델이 보는 입력 (v1.4 평가셋)
+DEV_LABELS = SETS / "개발용_63건_정답표.json"    # 같은 63건의 정답표 (기준서 v1.5)
+FINAL_SET = SETS / "최종용_60건.json"            # 최종 평가용 60건 — 이미 한 번 사용함, 성능표 근거로만 쓴다
+TEST_V13 = SETS / "시험용_v13.json"              # v1.3 평가셋 — 안전장치·형식 규칙 시험만 읽는다
+GATE_CRITERIA = ROOT / "기준" / "회귀_게이트_기준.toml"
+
+LOGS = DATA / "실행기록"
+BASELINE_DIR = LOGS / "기준선"                   # 게이트 기준선 (seed 1·11·21)
+FINAL_RUNS_DIR = LOGS / "최종용"                 # 최종 평가용 세트 실행 360응답
+REFERENCE_DIR = DATA / "기준결과"                # 구조 정리 전 도구가 낸 판정·채점 (재현 시험의 정답)
+RUNS_DIR = DATA / "새실행"                       # triage-run 실행 기록
+GATE_DIR = DATA / "게이트결과"                   # triage-gate 판정 결과
 
 
 def rel(path: Path) -> str:

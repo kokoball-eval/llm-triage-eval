@@ -1,7 +1,6 @@
 """Critical 체크리스트(triage/checklist.py)와 파이프라인 연결 시험 — 모델은 호출하지 않는다."""
 
 import json
-from pathlib import Path
 
 import pytest
 
@@ -10,8 +9,8 @@ from triage_eval.contracts import parse_response
 from triage_eval.triage import checklist as m
 from triage_eval.triage.pipeline import triage
 
-ROOT = Path(__file__).resolve().parent.parent
-ITEMS = {i["id"]: i for i in json.loads((ROOT / "data/eval_v14/aether_raid_v14.json").read_text(encoding="utf-8"))["items"]}
+from triage_eval.config import BASELINE_DIR, DEV_INPUTS
+ITEMS = {i["id"]: i for i in json.loads(DEV_INPUTS.read_text(encoding="utf-8"))["items"]}
 
 
 # ── M2 Critical 체크리스트 ───────────────────────────────────
@@ -53,7 +52,7 @@ def test_apply_upgrade_changes_priority_line_only():
 
 def test_assets_fingerprint_matches_baseline_runs():
     """기준선 실행 기록에 남은 방법 구성 지문과 같아야 회귀 게이트가 "방법 변경"으로 오인하지 않는다 (checklist.py 설계 의도 4)."""
-    log = json.loads((ROOT / "data/results/v14/baseline/v14_dev_m2_seed1_baseline.json").read_text(encoding="utf-8"))
+    log = json.loads((BASELINE_DIR / "v14_dev_m2_seed1_baseline.json").read_text(encoding="utf-8"))
     assert m.assets_sha256() == log["metadata"]["run_config"]["method_assets_sha256"]
 
 

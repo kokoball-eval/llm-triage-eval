@@ -4,7 +4,11 @@ version = "0.1.0"
 description = "LLM에게 1차 트리아지를 맡길 때, 그 판단을 평가셋·회귀 게이트·사전 등록 비교로 검증하는 평가 체계 (검증 사례: 게임 버그 리포트)"
 requires-python = ">=3.12"
 dependencies = [
+    "fastapi>=0.165.0",
+    "jinja2>=3.1.6",
     "ollama>=0.6.2",
+    "python-multipart>=0.0.34",
+    "uvicorn>=0.54.0",
 ]
 
 # 실행 명령 — `uv run <명령>`
@@ -12,6 +16,7 @@ dependencies = [
 triage-run = "triage_eval.evaluation.runner:main"         # 평가셋 실행 → 실행 기록
 triage-eval = "triage_eval.evaluation.performance:main"   # 실행 기록 채점 → 성능표
 triage-gate = "triage_eval.evaluation.gate:main"          # 후보 3건 vs 기준선 → 회귀 판정
+triage-serve = "triage_service.web.app:main"              # 작업 페이지 (http://127.0.0.1:8000)
 
 # src/triage_eval 을 패키지로 설치한다. uv 가 편집 가능 모드로 설치하므로 코드를 고치면 바로 반영되고,
 # 폴더 깊이와 관계없이 `triage_eval.<하위 패키지>` 로 import 된다.
@@ -20,10 +25,11 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/triage_eval"]
+packages = ["src/triage_eval", "src/triage_service"]
 
 [dependency-groups]
 dev = [
+    "httpx>=0.28.1",
     "pytest>=9.1.1",
 ]
 

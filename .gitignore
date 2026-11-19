@@ -22,3 +22,5 @@ CLAUDE.local.md
 .claude/settings.local.json
 # 로컬 생성물 (채점 화면·배포용 시트 등, 커밋하지 않음)
 dist/
+# 서비스 DB (리포트 원문에 유저 정보가 들어갈 수 있어 올리지 않음)
+데이터/서비스/

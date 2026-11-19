@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% set r = rec.report %}
+{% block head %}{% if rec.state in PENDING %}<meta http-equiv="refresh" content="{{ REFRESH }}">{% endif %}{% endblock %}
+{% block title %}#{{ rec.id }} {{ r.title }}{% endblock %}
+{% block body %}
+<p><span class="state {{ rec.state }}">{{ rec.state }}</span>
+   {% if rec.ticket_key %} · 티켓 <a href="{{ rec.ticket_url }}">{{ rec.ticket_key }}</a>{% endif %}
+   <span class="muted"> · 접수 {{ rec.created_at }} · 마지막 변경 {{ rec.updated_at }}</span></p>
+<h1>#{{ rec.id }} {{ r.title }}</h1>
+
+{% if problems %}<div class="box error"><strong>처리할 수 없습니다</strong><ul>{% for p in problems %}<li>{{ p }}</li>{% endfor %}</ul></div>{% endif %}
+
+{% if rec.state in PENDING %}
+<div class="box">트리아지 중입니다. 이 화면은 {{ REFRESH }}초마다 다시 읽습니다.</div>
+{% endif %}
+
+{% if rec.state == FAILED %}
+<div class="box error">
+  <strong>실패</strong> — {{ rec.error }}
+  <form method="post" action="/reports/{{ rec.id }}/retry" class="row"><button type="submit">다시 시도 (처음부터 트리아지)</button></form>
+</div>
+{% endif %}
+
+<h2>원문</h2>
+<div class="box">
+  <p class="muted">{{ TRACKS[r.track] }} ·
+    {% if r.track == "A" %}{{ r.board }} · {{ r.posted_at }}{% else %}{{ r.reporter }}{% endif %} · 출처 {{ r.source }}</p>
+  <pre>{{ r.body }}</pre>
+  {% if r.update_note or r.known_issues %}
+  <p class="muted">업데이트 공지: {{ r.update_note or "없음" }}<br>기존 이슈: {{ r.known_issues | join(" / ") or "없음" }}</p>
+  {% endif %}
+</div>
+
+{% if rec.state == REVIEW %}
+<h2>검토 — 확인하고 고친 뒤 등록</h2>
+{% if rec.routing %}<p class="muted">{{ rec.routing.reason }}</p>{% endif %}
+{% if rec.result and rec.result.format and not rec.result.format.strict_pass %}
+<div class="box error">모델 응답이 형식 규칙을 지키지 못했습니다({{ rec.result.format.failed_rules | join(", ") }}). 빈 칸이나 허용 값 밖의 값을 고쳐야 등록할 수 있습니다.</div>
+{% endif %}
+<form method="post" action="/reports/{{ rec.id }}/register">
+  {% for f in FIELDS %}
+    <label for="f{{ loop.index }}">{{ f }}
+      {% if rec.model_fields and rec.model_fields.get(f) != values.get(f) %}<span class="muted">(모델: {{ rec.model_fields.get(f) or "없음" }})</span>{% endif %}</label>
+    {% if f in ENUMS %}
+      <select id="f{{ loop.index }}" name="{{ f }}">
+        {% if values.get(f) not in ENUMS[f] %}<option value="{{ values.get(f) or '' }}" selected>{{ values.get(f) or "(선택)" }} — 허용 값 아님</option>{% endif %}
+        {% for v in ENUMS[f] %}<option {% if values.get(f) == v %}selected{% endif %}>{{ v }}</option>{% endfor %}
+      </select>
+    {% elif f == "모듈" %}
+      {% set chosen = split_modules(values.get(f) or "") %}
+      <div class="checks">
+        {% for m in MODULES + [NO_MODULE] %}<label><input type="checkbox" name="모듈" value="{{ m }}" {% if m in chosen %}checked{% endif %}> {{ m }}</label>{% endfor %}
+      </div>
+    {% else %}
+      <input type="text" id="f{{ loop.index }}" name="{{ f }}" value="{{ values.get(f) or '' }}">
+    {% endif %}
+  {% endfor %}
+  <div class="row">
+    <button class="primary" type="submit">BTS 등록</button>
+    <button type="submit" formaction="/reports/{{ rec.id }}/discard" formnovalidate onclick="return confirm('폐기하면 되돌릴 수 없습니다. 폐기할까요?')">폐기 (등록하지 않음)</button>
+  </div>
+</form>
+{% elif rec.final_fields %}
+<h2>확정한 8칸</h2>
+<table>{% for f in FIELDS %}<tr><th>{{ f }}</th><td>{{ rec.final_fields.get(f) }}</td></tr>{% endfor %}</table>
+{% if rec.edits %}<p class="muted">사람이 고친 칸: {% for e in rec.edits %}{{ e.field }}({{ e.before or "없음" }} → {{ e.after }}){% if not loop.last %}, {% endif %}{% endfor %}</p>{% endif %}
+{% endif %}
+
+{% if rec.result %}
+<h2>처리 기록</h2>
+<div class="box">
+  {% if rec.pipeline %}<p class="muted">프롬프트 {{ rec.pipeline.prompt_version }} · 방법 {{ rec.pipeline.method }} · 안전장치 {{ rec.pipeline.guardrail_version }} · 응답 시간 {{ rec.result.elapsed_sec }}초</p>{% endif %}
+  {% if rec.result.guardrail and rec.result.guardrail.applied %}<p class="muted">안전장치가 고친 것: {{ rec.result.guardrail.applied | map(attribute="rule") | join(", ") }}</p>{% endif %}
+  <p class="muted">모델 원본 응답</p>
+  <pre>{{ rec.result.raw_response_text or rec.result.response_text }}</pre>
+</div>
+{% endif %}
+{% endblock %}

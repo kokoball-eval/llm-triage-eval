@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>리포트</h1>
+<nav class="filter">
+  <a href="/">전체</a>
+  {% for s in STATES %}<a href="/?state={{ s }}">{{ s }} {{ counts[s] }}</a>{% endfor %}
+</nav>
+{% if reports %}
+<table>
+  <thead><tr><th>#</th><th>상태</th><th>제목</th><th>입력 종류</th><th>접수</th><th>티켓</th></tr></thead>
+  <tbody>
+  {% for r in reports %}
+    <tr>
+      <td>{{ r.id }}</td>
+      <td><span class="state {{ r.state }}">{{ r.state }}</span></td>
+      <td><a href="/reports/{{ r.id }}">{{ r.report.title }}</a></td>
+      <td>{{ TRACKS[r.report.track] }}</td>
+      <td class="muted">{{ r.created_at }}</td>
+      <td>{% if r.ticket_key %}<a href="{{ r.ticket_url }}">{{ r.ticket_key }}</a>{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="muted">{% if state %}'{{ state }}' 상태인 리포트가 없습니다.{% else %}아직 리포트가 없습니다. <a href="/new">새 리포트</a>를 넣어 보세요.{% endif %}</p>
+{% endif %}
+{% endblock %}

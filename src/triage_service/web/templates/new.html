@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}새 리포트{% endblock %}
+{% block body %}
+<h1>새 리포트</h1>
+<p class="muted">리포트 본문을 붙여 넣으면 트리아지한 뒤 검토 대기로 넘어갑니다. 입력 칸은 측정한 프롬프트가 받는 칸과 같습니다.</p>
+{% if error %}<div class="box error">{{ error }}</div>{% endif %}
+<form method="post" action="/reports">
+  <label>입력 종류</label>
+  <div class="checks">
+    {% for k, name in TRACKS.items() %}
+    <label><input type="radio" name="track" value="{{ k }}" {% if form.track == k %}checked{% endif %}> {{ k }} · {{ name }}</label>
+    {% endfor %}
+  </div>
+  <label for="board">게시판 <span class="muted">(A · 커뮤니티 제보)</span></label>
+  <input type="text" id="board" name="board" value="{{ form.board or '' }}" list="boards" placeholder="예: 공식 홈페이지 > 버그 제보">
+  <datalist id="boards"><option value="공식 홈페이지 > 버그 제보"><option value="자유게시판"><option value="건의게시판"><option value="공략게시판"></datalist>
+  <label for="posted_at">게시 일시 <span class="muted">(A · 비우면 지금)</span></label>
+  <input type="text" id="posted_at" name="posted_at" value="{{ form.posted_at or '' }}" placeholder="예: 2026-11-19 22:47">
+  <label for="reporter">작성자 <span class="muted">(B · QA 이슈)</span></label>
+  <select id="reporter" name="reporter">
+    <option value="">(선택)</option>
+    {% for p in REPORTERS %}<option {% if form.reporter == p %}selected{% endif %}>{{ p }}</option>{% endfor %}
+  </select>
+  <label for="title">제목</label>
+  <input type="text" id="title" name="title" value="{{ form.title or '' }}" required>
+  <label for="body">본문</label>
+  <textarea id="body" name="body" required>{{ form.body or '' }}</textarea>
+  <label for="update_note">참고: 최근 업데이트 공지 <span class="muted">(선택)</span></label>
+  <input type="text" id="update_note" name="update_note" value="{{ form.update_note or '' }}">
+  <label for="known_issues">참고: 기존 등록 이슈 <span class="muted">(선택, 한 줄에 하나)</span></label>
+  <textarea id="known_issues" name="known_issues" style="min-height:80px">{{ form.known_issues or '' }}</textarea>
+  <div class="row"><button class="primary" type="submit">트리아지</button></div>
+</form>
+{% endblock %}

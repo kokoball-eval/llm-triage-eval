@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}{{ ticket.key }}{% endblock %}
+{% block body %}
+<p class="muted">가짜 BTS — 실제 BTS 연결 전, 등록된 내용을 확인하는 화면입니다.</p>
+<h1>{{ ticket.key }} {{ ticket.fields["요약"] }}</h1>
+<p><span class="state">{{ ticket.status }}</span> <span class="muted">등록 {{ ticket.created_at }}</span></p>
+<table>{% for f in FIELDS %}<tr><th>{{ f }}</th><td>{{ ticket.fields.get(f) }}</td></tr>{% endfor %}</table>
+<h2>원문</h2>
+<div class="box"><p class="muted">{{ ticket.report.title }}</p><pre>{{ ticket.report.body }}</pre></div>
+{% endblock %}

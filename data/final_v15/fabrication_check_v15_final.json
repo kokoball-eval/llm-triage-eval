@@ -1,0 +1,1743 @@
+{
+  "version": "v15-final",
+  "method": "날조 사람 확인 화면 (계획 §3)",
+  "answers": {
+    "d1563796ac8b": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NA07_run1"
+      ],
+      "summary_sha": "1e4a90bbe7bdf521bbb12db9d6fb71d8a7bc3ebebafe3ee74a496d767a7a33b4",
+      "recorded_at": "2026-11-17T19:59:41"
+    },
+    "5e63717d66c4": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s21-qwen2.5_7b_NA19_run1"
+      ],
+      "summary_sha": "81846e6e260850340d498eae38564b52c739d1b6e8a96eb53538544c5f4f0f07",
+      "recorded_at": "2026-11-17T20:01:40"
+    },
+    "0b2788fe2496": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s12-qwen2.5_7b_NA03_run2",
+        "s2-qwen2.5_7b_NA03_run2",
+        "s22-qwen2.5_7b_NA03_run2"
+      ],
+      "summary_sha": "5c9a0f4701f0f0ea5ae8d609a6db3bc5d6252f85274473b270dd88aa42838171",
+      "recorded_at": "2026-11-17T20:01:46"
+    },
+    "d5ae93a03aa4": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s2-qwen2.5_7b_NB03_run2"
+      ],
+      "summary_sha": "0bf3a5587d82ec4ed1f3f255ca05f1d2952e6418a6efb31698ac8a0776ea7331",
+      "recorded_at": "2026-11-17T20:02:42"
+    },
+    "23f8d5c2bdea": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s22-qwen2.5_7b_NB11_run2"
+      ],
+      "summary_sha": "eb4328df75ccadc13b29362888d115de25d4cc699998037c3d7f0fd5e619b831",
+      "recorded_at": "2026-11-17T20:07:05"
+    },
+    "296a85751a2b": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NA36_run1",
+        "s2-qwen2.5_7b_NA36_run2"
+      ],
+      "summary_sha": "f9eb111c1f53022bac3ac5d82de97ecbfb2a7075d764b0ae67e7bc93cdf3b695",
+      "recorded_at": "2026-11-17T20:07:14"
+    },
+    "06dbadcee05f": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s21-qwen2.5_7b_NA38_run1"
+      ],
+      "summary_sha": "36561f960227513abf0190bec1e56ee2d7d880228fea150d14eeb84fbb65bf5a",
+      "recorded_at": "2026-11-17T20:07:23"
+    },
+    "612d0893de1d": {
+      "결정": "날조 있음",
+      "메모": "",
+      "members": [
+        "s2-qwen2.5_7b_NA30_run2"
+      ],
+      "summary_sha": "869cd181277b3c8b1bc70ca848f40738dc63872099923594f00aecd3910d2d40",
+      "recorded_at": "2026-11-17T20:07:41"
+    },
+    "7adee9863e55": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s22-qwen2.5_7b_NA38_run2"
+      ],
+      "summary_sha": "8e8c0bf39acb6fd27c2a611bd462426cb179947cbbb599a8d6555e2b97526f5c",
+      "recorded_at": "2026-11-17T20:08:03"
+    },
+    "18b16c9b077c": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s11-qwen2.5_7b_NA09_run1",
+        "s2-qwen2.5_7b_NA09_run2",
+        "s21-qwen2.5_7b_NA09_run1",
+        "s22-qwen2.5_7b_NA09_run2"
+      ],
+      "summary_sha": "56b15e67b12762cbd0da5c1a2fffaf61102f18fb3086477b9f806ee3eaece80c",
+      "recorded_at": "2026-11-17T20:08:16"
+    },
+    "d5acfe568fa2": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s2-qwen2.5_7b_NA11_run2"
+      ],
+      "summary_sha": "c5b39fed604f404a97e4f04128752534affc909c00cc96cb19a07cb8d679b475",
+      "recorded_at": "2026-11-17T20:08:28"
+    },
+    "43cfe606cfb7": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NA37_run1",
+        "s11-qwen2.5_7b_NA37_run1",
+        "s12-qwen2.5_7b_NA37_run2",
+        "s22-qwen2.5_7b_NA37_run2"
+      ],
+      "summary_sha": "19297087f061ed8748af3fa7943f3109e7d038d446e6905b08e63c1ce49ba149",
+      "recorded_at": "2026-11-17T20:08:34"
+    },
+    "ae27da1a8729": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s11-qwen2.5_7b_NB18_run1",
+        "s2-qwen2.5_7b_NB18_run2"
+      ],
+      "summary_sha": "1eb44049df450c399cd82038747c5762e0941f7c6f90db80e7317f9d3edc21df",
+      "recorded_at": "2026-11-17T20:08:43"
+    },
+    "cd23cb16c0c2": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NB08_run1",
+        "s11-qwen2.5_7b_NB08_run1",
+        "s12-qwen2.5_7b_NB08_run2",
+        "s2-qwen2.5_7b_NB08_run2",
+        "s21-qwen2.5_7b_NB08_run1",
+        "s22-qwen2.5_7b_NB08_run2"
+      ],
+      "summary_sha": "4ac44310ef0decc2554b6f9c9b71c9255dee952843d30a4c1d29191b42226b18",
+      "recorded_at": "2026-11-17T20:08:55"
+    },
+    "161e81b29a34": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s12-qwen2.5_7b_NA18_run2"
+      ],
+      "summary_sha": "9c9b7681bb68468abcf1676158079a937af7a5356126864bd86aae4cf1086aae",
+      "recorded_at": "2026-11-17T20:09:08"
+    },
+    "c73d74b4964e": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NA29_run1",
+        "s21-qwen2.5_7b_NA29_run1"
+      ],
+      "summary_sha": "f609e9e812a1f7a75e56d1d8042038eb598369e2180550a3b06810417806b4e0",
+      "recorded_at": "2026-11-17T20:15:21"
+    },
+    "71be66b4511b": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NA16_run1",
+        "s11-qwen2.5_7b_NA16_run1",
+        "s21-qwen2.5_7b_NA16_run1"
+      ],
+      "summary_sha": "efda0ba66501d3c645046fe6bc69b0888ff24f0599ee84c3e9240a79f407ebfd",
+      "recorded_at": "2026-11-17T20:15:25"
+    },
+    "07266cf1cdeb": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NB06_run1",
+        "s22-qwen2.5_7b_NB06_run2"
+      ],
+      "summary_sha": "b43b677f8e44f57c76df5e8230f5309ebfdbe752bdcb128f4ac6ca35c3fd4702",
+      "recorded_at": "2026-11-17T20:15:32"
+    },
+    "8f078d869f81": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NB16_run1",
+        "s11-qwen2.5_7b_NB16_run1",
+        "s12-qwen2.5_7b_NB16_run2",
+        "s2-qwen2.5_7b_NB16_run2",
+        "s21-qwen2.5_7b_NB16_run1",
+        "s22-qwen2.5_7b_NB16_run2"
+      ],
+      "summary_sha": "6ac00c8663372c204deb84d3a3c818b25b8de0b6a8810e346ded0211ad9ba02f",
+      "recorded_at": "2026-11-17T20:15:43"
+    },
+    "a62c46b04768": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s2-qwen2.5_7b_NB06_run2"
+      ],
+      "summary_sha": "b95dc0704bae28d00e3912e2908de7d466b483041942f3e0c8397cd2de65ee7e",
+      "recorded_at": "2026-11-17T20:15:50"
+    },
+    "9642a10caee3": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s11-qwen2.5_7b_NB12_run1",
+        "s2-qwen2.5_7b_NB12_run2"
+      ],
+      "summary_sha": "94c32c72c1f3cbfe06aa4c78b5c8403701e804eba741e393e2cd12d5903d6557",
+      "recorded_at": "2026-11-17T20:16:05"
+    },
+    "44193199e80d": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NA11_run1",
+        "s21-qwen2.5_7b_NA11_run1",
+        "s22-qwen2.5_7b_NA11_run2"
+      ],
+      "summary_sha": "0eaa5b696d0a7ce3cdd7b803bdb7a6b704214a017e63993932bcf3e17a3e7740",
+      "recorded_at": "2026-11-17T20:16:09"
+    },
+    "4bdbf6dcaa4d": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NA09_run1",
+        "s12-qwen2.5_7b_NA09_run2"
+      ],
+      "summary_sha": "e566f5a1070d7a6d0023b27fbc252cd61721e6106bbad1aa53a927e9aa2a9a54",
+      "recorded_at": "2026-11-17T20:16:11"
+    },
+    "8f1435395e72": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s22-qwen2.5_7b_NA18_run2"
+      ],
+      "summary_sha": "206f6b480b8f689dc27325e1ce12bab832389474de97afe2c3c976136d72f42b",
+      "recorded_at": "2026-11-17T20:16:23"
+    },
+    "e4bb787d736d": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s12-qwen2.5_7b_NA39_run2"
+      ],
+      "summary_sha": "bc4d086af1d129dde7231cb9a8e236222773614f1adbcff0bad88a7a80ef5249",
+      "recorded_at": "2026-11-17T20:16:30"
+    },
+    "d8e3ec0d7b20": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s2-qwen2.5_7b_NA40_run2"
+      ],
+      "summary_sha": "e3c643ff5007a041d6e95e449023710045111383c3881efbbe17d077d65960e4",
+      "recorded_at": "2026-11-17T20:16:39"
+    },
+    "4a1693b0b002": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s21-qwen2.5_7b_NB19_run1"
+      ],
+      "summary_sha": "1b157f38968a0d42f2b4fd03d9c043c748d11cde325e7f87929c86a03b5793d6",
+      "recorded_at": "2026-11-17T20:16:48"
+    },
+    "e83f9f1323cc": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s2-qwen2.5_7b_NA37_run2",
+        "s21-qwen2.5_7b_NA37_run1"
+      ],
+      "summary_sha": "69c3acb3fdf087cf5160de96259da514b2f6b4b992ef7118a72e146a47cb3b2a",
+      "recorded_at": "2026-11-17T20:16:51"
+    },
+    "fbd987a79bf1": {
+      "결정": "날조 있음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NA38_run1"
+      ],
+      "summary_sha": "069fce97bdb9b5e35c385ea42aacdbff0f7d85130e6978ece5c1349a4e45aa71",
+      "recorded_at": "2026-11-17T20:16:57"
+    },
+    "ef09d2823e8d": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s12-qwen2.5_7b_NA34_run2"
+      ],
+      "summary_sha": "c79b24de000a7d730f84064a7a0af76b567740a86b9154d49df4a190dc2b7f6b",
+      "recorded_at": "2026-11-17T20:17:18"
+    },
+    "f041b2fef6e4": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s22-qwen2.5_7b_NA06_run2"
+      ],
+      "summary_sha": "838db247707d6a0f3a337c9489fc44d610d3f6743ea9cabb3eb7e9acd7aa4b0a",
+      "recorded_at": "2026-11-17T20:32:29"
+    },
+    "32fc4a2eaf8a": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NB04_run1",
+        "s11-qwen2.5_7b_NB04_run1",
+        "s12-qwen2.5_7b_NB04_run2",
+        "s2-qwen2.5_7b_NB04_run2",
+        "s21-qwen2.5_7b_NB04_run1",
+        "s22-qwen2.5_7b_NB04_run2"
+      ],
+      "summary_sha": "feb330bf16d5df96180c7e321f031d9645d29169351bd2da7b1b08f2f041a7b5",
+      "recorded_at": "2026-11-17T20:32:36"
+    },
+    "1a3ee18ba2c0": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s2-qwen2.5_7b_NA01_run2"
+      ],
+      "summary_sha": "5e9dbcb3944d53b238bde348b6e95a97983052c2785e030913ad4574fdf771b8",
+      "recorded_at": "2026-11-17T20:43:32"
+    },
+    "da806c2bc39b": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s22-qwen2.5_7b_NA16_run2"
+      ],
+      "summary_sha": "a781e64fbb780df6d5f36116143530ebf9bc4e7673d233c450ef81751323ffb2",
+      "recorded_at": "2026-11-17T20:48:04"
+    },
+    "6931aed23d1a": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s21-qwen2.5_7b_NA13_run1"
+      ],
+      "summary_sha": "f8bf9529d2b136caf0975859c6fdde368e7436de1a6f2dcef04adc61b4d16b28",
+      "recorded_at": "2026-11-17T20:48:12"
+    },
+    "755730832ae9": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NB14_run1",
+        "s11-qwen2.5_7b_NB14_run1",
+        "s12-qwen2.5_7b_NB14_run2",
+        "s22-qwen2.5_7b_NB14_run2"
+      ],
+      "summary_sha": "a033653df34bb44edc32a459c73bc0a442f664a2413bf9c862187d9a80e3980e",
+      "recorded_at": "2026-11-17T20:48:25"
+    },
+    "e6283d5be6d9": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NA40_run1",
+        "s12-qwen2.5_7b_NA40_run2",
+        "s22-qwen2.5_7b_NA40_run2"
+      ],
+      "summary_sha": "89b786191f989c72c5958db7aa8a3ece69e330e8556ffeb429a132131357e7c4",
+      "recorded_at": "2026-11-18T09:12:21"
+    },
+    "8ab4148e229b": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NB03_run1",
+        "s22-qwen2.5_7b_NB03_run2"
+      ],
+      "summary_sha": "3374ad9b6e6b2246d8c2c86db814c8058104df789f34191f1cd85d15587bcc5b",
+      "recorded_at": "2026-11-18T12:37:35"
+    },
+    "3132d999629d": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s22-qwen2.5_7b_NB20_run2"
+      ],
+      "summary_sha": "0f8672732465cba735141f39bec26a1ffc53ee932489bdf174d6b2cfe947de90",
+      "recorded_at": "2026-11-18T12:44:26"
+    },
+    "43fef1c2d876": {
+      "결정": "날조 있음",
+      "메모": "크래시는 앱 자체가 유저 의도와는 상관 없이 갑자기 강제로 종료되는 것.\n프리징은 화면이 멈춰 조작 자체가 지속적으로 불가능한 것.\n해당 리포트 상황은 프리징 현상으로 정의할 수 있고, 유저가 수동으로 재실행을 해야 하는 상황이므로 크래시와는 연관 없음.",
+      "members": [
+        "s1-qwen2.5_7b_NA06_run1",
+        "s12-qwen2.5_7b_NA06_run2"
+      ],
+      "summary_sha": "81731ce54acd58a022897a54a163278fb8433c644d179f49fd4a807a749c97ff",
+      "recorded_at": "2026-11-18T12:46:37"
+    },
+    "ca1eecf7b52e": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s22-qwen2.5_7b_NA19_run2"
+      ],
+      "summary_sha": "bb9d0761b3d241acc0903c8639390d9096ae6d770c69f5ca4ae070035ab53340",
+      "recorded_at": "2026-11-18T17:54:13"
+    },
+    "4cb0bb0029bf": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s22-qwen2.5_7b_NB12_run2"
+      ],
+      "summary_sha": "95905e57790d96ad840f369cc535cabd527d5bc96d5878f3c95ad6b19b028471",
+      "recorded_at": "2026-11-18T17:54:25"
+    },
+    "f0a7765ee6ab": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s11-qwen2.5_7b_NA18_run1"
+      ],
+      "summary_sha": "1c55e852382cfc438c91b656ef698c47925264326c26a2edfc2fcbf8279d4f69",
+      "recorded_at": "2026-11-18T17:54:31"
+    },
+    "d7507315191a": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NB17_run1",
+        "s12-qwen2.5_7b_NB17_run2",
+        "s2-qwen2.5_7b_NB17_run2",
+        "s21-qwen2.5_7b_NB17_run1",
+        "s22-qwen2.5_7b_NB17_run2"
+      ],
+      "summary_sha": "e3fb1205659768c2a2efa0a7c774b80493f3d9c7c9395c4de44c1512ddd85c08",
+      "recorded_at": "2026-11-19T08:58:14"
+    },
+    "6a5cfe81a3ee": {
+      "결정": "날조 있음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NA18_run1"
+      ],
+      "summary_sha": "9c25f21fd7661713aef18c9f170b19c63eadf3ce57b289a1285222f245406b17",
+      "recorded_at": "2026-11-19T08:59:23"
+    },
+    "9d42e879eda1": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NA35_run1",
+        "s11-qwen2.5_7b_NA35_run1",
+        "s12-qwen2.5_7b_NA35_run2",
+        "s21-qwen2.5_7b_NA35_run1"
+      ],
+      "summary_sha": "0dfcc141cc42c0f7318ca9a169f41071a143ba9290c6c15d1bdb7a1ea8bf92a1",
+      "recorded_at": "2026-11-19T08:59:42"
+    },
+    "34dceaf0ccdd": {
+      "결정": "날조 있음",
+      "메모": "",
+      "members": [
+        "s11-qwen2.5_7b_NA24_run1",
+        "s21-qwen2.5_7b_NA24_run1"
+      ],
+      "summary_sha": "5ec4fe3e463e45f3975fb8d2076b9e15502c54ae07db95da2a1c57c4fd2d9683",
+      "recorded_at": "2026-11-19T09:01:40"
+    },
+    "11c7c332c842": {
+      "결정": "날조 있음",
+      "메모": "",
+      "members": [
+        "s11-qwen2.5_7b_NA38_run1"
+      ],
+      "summary_sha": "7c2d965b5e3ac210129c3f4e2a78c15f041c6bdab37c169af7a96c89bce6eba8",
+      "recorded_at": "2026-11-19T09:01:47"
+    },
+    "c2e2aa264bcb": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s11-qwen2.5_7b_NA13_run1",
+        "s2-qwen2.5_7b_NA13_run2"
+      ],
+      "summary_sha": "79d89fa6aabb921fb40c5579db3d2d47ef7c728cbd6110fa0b8237823a8ecf5d",
+      "recorded_at": "2026-11-19T09:01:54"
+    },
+    "e53ec064a848": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s11-qwen2.5_7b_NA11_run1"
+      ],
+      "summary_sha": "98c4f100257f6f5f2419c8cc12760d350e1fafad642643ec909cfb9a2d5282a0",
+      "recorded_at": "2026-11-19T09:01:57"
+    },
+    "be266d1744bc": {
+      "결정": "날조 있음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NA24_run1",
+        "s12-qwen2.5_7b_NA24_run2",
+        "s2-qwen2.5_7b_NA24_run2",
+        "s22-qwen2.5_7b_NA24_run2"
+      ],
+      "summary_sha": "afc858408252961eb45a47a45fdcf1a932ec40193a0d3441dd3c46d092d12619",
+      "recorded_at": "2026-11-19T09:01:59"
+    },
+    "866b2d832db9": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s22-qwen2.5_7b_NA07_run2"
+      ],
+      "summary_sha": "127cde2db270d31de71f53eaee6e81ffccce71532224acc9476236c1425bd5aa",
+      "recorded_at": "2026-11-19T09:02:09"
+    },
+    "1b7e48ec4fed": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s12-qwen2.5_7b_NA07_run2"
+      ],
+      "summary_sha": "d7f3c27155542b8b7e1b242fe207aafc921a2d7d85d527bb169516945c49a7c4",
+      "recorded_at": "2026-11-19T09:02:13"
+    },
+    "9dddd73c520d": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NB10_run1",
+        "s11-qwen2.5_7b_NB10_run1",
+        "s12-qwen2.5_7b_NB10_run2",
+        "s2-qwen2.5_7b_NB10_run2",
+        "s21-qwen2.5_7b_NB10_run1",
+        "s22-qwen2.5_7b_NB10_run2"
+      ],
+      "summary_sha": "2918975c320dbc214c6f0b08ef233c75849e0ea36c8f6e78c00b6a88cd992e04",
+      "recorded_at": "2026-11-19T09:02:25"
+    },
+    "f6e28d2ff4bd": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s2-qwen2.5_7b_NA20_run2"
+      ],
+      "summary_sha": "fb6022623dcfdd09d35924b3731890735c4478db024540502905471719607da7",
+      "recorded_at": "2026-11-19T09:25:42"
+    },
+    "5b3be81806ca": {
+      "결정": "날조 있음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NA32_run1",
+        "s11-qwen2.5_7b_NA32_run1",
+        "s12-qwen2.5_7b_NA32_run2",
+        "s2-qwen2.5_7b_NA32_run2",
+        "s21-qwen2.5_7b_NA32_run1",
+        "s22-qwen2.5_7b_NA32_run2"
+      ],
+      "summary_sha": "3f17384fa981576d889a7ee6bab0f1b5235096d1628f01917b6a30f5001872fa",
+      "recorded_at": "2026-11-19T09:25:53"
+    },
+    "64309ee4c167": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s11-qwen2.5_7b_NA22_run1"
+      ],
+      "summary_sha": "ca0d294dbe805b0bdebaa35868abd2cab5d7c127b4e6612dc128564d3d3e4e3b",
+      "recorded_at": "2026-11-19T09:26:17"
+    },
+    "a5906e8c09eb": {
+      "결정": "날조 있음",
+      "메모": "",
+      "members": [
+        "s22-qwen2.5_7b_NA01_run2"
+      ],
+      "summary_sha": "5f9f459ec00ac9460163fd0aca3082f143a192717effe8f8698b39837217a6cf",
+      "recorded_at": "2026-11-19T09:26:29"
+    },
+    "3bfd6417830b": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s12-qwen2.5_7b_NB05_run2"
+      ],
+      "summary_sha": "22661f3c554ddc04fe0e49849e582f8a7c3ffaf151f287d4e6b0cbf8dda4e906",
+      "recorded_at": "2026-11-19T09:28:28"
+    },
+    "6d6b2ac0207b": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s12-qwen2.5_7b_NA36_run2",
+        "s22-qwen2.5_7b_NA36_run2"
+      ],
+      "summary_sha": "82f5928db1c99f5f6b5aee09b29c333a7319577d4a355fed173c97a99b1cb9c8",
+      "recorded_at": "2026-11-19T09:28:35"
+    },
+    "f1c1bb784b2f": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NB13_run1",
+        "s11-qwen2.5_7b_NB13_run1",
+        "s12-qwen2.5_7b_NB13_run2",
+        "s2-qwen2.5_7b_NB13_run2",
+        "s21-qwen2.5_7b_NB13_run1"
+      ],
+      "summary_sha": "1356a73c243e377f01098f53e93b7afaa5a94f6946a3b9ada651959fe3a91828",
+      "recorded_at": "2026-11-19T09:32:57"
+    },
+    "687a35faf3d7": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s2-qwen2.5_7b_NA35_run2"
+      ],
+      "summary_sha": "28b3f3d879a8732420f0efd93ab6b44a6b5ece24b29adddbd9d83cbefab7163a",
+      "recorded_at": "2026-11-19T09:33:00"
+    },
+    "5e8dc14f9112": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s2-qwen2.5_7b_NA16_run2"
+      ],
+      "summary_sha": "f6ac96a234749b1c6c9afdb0fe3ddaf295c38f2d3ad87206b8fd0b213e7f6f21",
+      "recorded_at": "2026-11-19T09:33:11"
+    },
+    "0597d55572ce": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s11-qwen2.5_7b_NB03_run1"
+      ],
+      "summary_sha": "28670261bcd6e9031058550d789c091b5c7844d0edda9953547e46de005bc94e",
+      "recorded_at": "2026-11-19T09:33:32"
+    },
+    "9ae32604c599": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s21-qwen2.5_7b_NA36_run1"
+      ],
+      "summary_sha": "2cb11f5411c41ec497da4d143c8eff3e2623e08d278f4aa6bf7e813da68b7fe2",
+      "recorded_at": "2026-11-19T09:33:35"
+    },
+    "ba2c14bc07b6": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s12-qwen2.5_7b_NA05_run2",
+        "s2-qwen2.5_7b_NA05_run2",
+        "s21-qwen2.5_7b_NA05_run1",
+        "s22-qwen2.5_7b_NA05_run2"
+      ],
+      "summary_sha": "49227c14b17bfc560177743541c1041a2d2b9ab438b87f49fd38955a4ee185bd",
+      "recorded_at": "2026-11-19T09:33:45"
+    },
+    "ce2cd97e2dcd": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s12-qwen2.5_7b_NA16_run2"
+      ],
+      "summary_sha": "063dca6cfce0e7c8d9a47c03a6203c424e2658a67cd756f3dda493d11e4e070f",
+      "recorded_at": "2026-11-19T09:34:24"
+    },
+    "3a439da6612c": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s12-qwen2.5_7b_NA31_run2"
+      ],
+      "summary_sha": "44ca64432c67a35362f44b3d4044dca656a3d7d5366f493f3539b7d58a040290",
+      "recorded_at": "2026-11-19T09:34:30"
+    },
+    "199098f0a63f": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NB01_run1",
+        "s22-qwen2.5_7b_NB01_run2"
+      ],
+      "summary_sha": "1eefe7886f033aa50d3d961ee11d68c70c40afc1c03828bbcd9c9c32aec9fda6",
+      "recorded_at": "2026-11-19T09:35:26"
+    },
+    "4ef8aa8eca66": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NA14_run1"
+      ],
+      "summary_sha": "ed7da1ab20873eec52b5813df71367130bee7765481dbdfb21fcc707630ceb62",
+      "recorded_at": "2026-11-19T09:35:34"
+    },
+    "6e8957ca8fda": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s11-qwen2.5_7b_NA39_run1"
+      ],
+      "summary_sha": "e927570b0af53a50b268d16128208ad8f27ce3ff62d9761ee26960d22b82ac8b",
+      "recorded_at": "2026-11-19T09:35:38"
+    },
+    "cc598917f41e": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s11-qwen2.5_7b_NB09_run1"
+      ],
+      "summary_sha": "7705e6b6850a0c284a06da4623169750994504d8e0c34d21d06721e61f7529b8",
+      "recorded_at": "2026-11-19T09:38:06"
+    },
+    "431b1803318f": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s12-qwen2.5_7b_NA01_run2",
+        "s21-qwen2.5_7b_NA01_run1"
+      ],
+      "summary_sha": "8d8bd16bb7734dc2272a37a5da3f954f670ea6a5efd542699a3b84c5ad9d1e52",
+      "recorded_at": "2026-11-19T09:38:11"
+    },
+    "c09dbca938bd": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NB11_run1",
+        "s11-qwen2.5_7b_NB11_run1",
+        "s12-qwen2.5_7b_NB11_run2",
+        "s2-qwen2.5_7b_NB11_run2",
+        "s21-qwen2.5_7b_NB11_run1"
+      ],
+      "summary_sha": "dba20e22a03ead4c7b6a0541d09d935a7c62a47668fc94f0c77f7380748e4533",
+      "recorded_at": "2026-11-19T09:38:27"
+    },
+    "9d7802c3785f": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s21-qwen2.5_7b_NA34_run1",
+        "s22-qwen2.5_7b_NA34_run2"
+      ],
+      "summary_sha": "f0692566d9ca7167f731531aaaeb7a3a5a577a89c0f56d6c737fc0f7a17b64da",
+      "recorded_at": "2026-11-19T09:42:11"
+    },
+    "cf90ebb0b613": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s11-qwen2.5_7b_NB01_run1"
+      ],
+      "summary_sha": "64da5758fff9b352ff705cf71728fdab458dadf85d4f6677931be39cb540b6be",
+      "recorded_at": "2026-11-19T09:42:19"
+    },
+    "6f5ca9ae8de3": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s12-qwen2.5_7b_NA10_run2"
+      ],
+      "summary_sha": "f04670306cfba49010a9f0f5cbda35f05e7abef9a0c686a8c8134920c1a017ef",
+      "recorded_at": "2026-11-19T09:42:25"
+    },
+    "45dd6a31aa68": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NA33_run1",
+        "s11-qwen2.5_7b_NA33_run1",
+        "s2-qwen2.5_7b_NA33_run2",
+        "s21-qwen2.5_7b_NA33_run1",
+        "s22-qwen2.5_7b_NA33_run2"
+      ],
+      "summary_sha": "3f0be52ae7e1eb75665e29ea4b43101bcb6fb92bdbc24d02c29631a5f23c0aa7",
+      "recorded_at": "2026-11-19T09:42:28"
+    },
+    "ddd7e828f8af": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NA27_run1",
+        "s2-qwen2.5_7b_NA27_run2",
+        "s21-qwen2.5_7b_NA27_run1",
+        "s22-qwen2.5_7b_NA27_run2"
+      ],
+      "summary_sha": "ffc38abc3fb9cb73d530ebe8db027152758047c599f619878efebf1215ad7cfe",
+      "recorded_at": "2026-11-19T09:42:40"
+    },
+    "65fd24f39a6b": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NA25_run1",
+        "s21-qwen2.5_7b_NA25_run1"
+      ],
+      "summary_sha": "086d72c49931b41815e451365414a6c82cda1af0a6a62ec700656fa5e616503c",
+      "recorded_at": "2026-11-19T09:42:43"
+    },
+    "06a9a9898edf": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NA39_run1",
+        "s22-qwen2.5_7b_NA39_run2"
+      ],
+      "summary_sha": "bfdf0b19b1aca4c992d643b7286e91906c7a0dca72f0d1adbedebafc123991a9",
+      "recorded_at": "2026-11-19T09:42:45"
+    },
+    "d1f071eb8070": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s11-qwen2.5_7b_NB07_run1",
+        "s12-qwen2.5_7b_NB07_run2",
+        "s2-qwen2.5_7b_NB07_run2"
+      ],
+      "summary_sha": "7abc7366e0d6386aba6c109bba60fe22546c8f08a63e640358e112a94574f904",
+      "recorded_at": "2026-11-19T09:43:06"
+    },
+    "239226f06f93": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NA20_run1",
+        "s11-qwen2.5_7b_NA20_run1",
+        "s22-qwen2.5_7b_NA20_run2"
+      ],
+      "summary_sha": "faaaa9f8bca9aea81d603c4d0821218d2bc52c3aeac883888372409628f266a3",
+      "recorded_at": "2026-11-19T09:43:48"
+    },
+    "e5ffe0e283d3": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s11-qwen2.5_7b_NA31_run1"
+      ],
+      "summary_sha": "8801995709797138ed1311630835eef3b7b50e8b89dede2921748d3f901a7b6f",
+      "recorded_at": "2026-11-19T09:43:53"
+    },
+    "6da430a2b65d": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s21-qwen2.5_7b_NA07_run1"
+      ],
+      "summary_sha": "830e288aa6697e61f6dfea2b6a21eeb80f52b6f6e4da9a99e9125e2abd8f1e87",
+      "recorded_at": "2026-11-19T09:44:10"
+    },
+    "5ef7078f190e": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s11-qwen2.5_7b_NA19_run1"
+      ],
+      "summary_sha": "5cf52cba75bf920500e7c33da24cb1d1c8092d0f5b316dbd5eb7d18b1764470d",
+      "recorded_at": "2026-11-19T09:44:14"
+    },
+    "dca844583955": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NA01_run1",
+        "s11-qwen2.5_7b_NA01_run1"
+      ],
+      "summary_sha": "677bae61b7619ef17c2bf48c325d46d554ace2d7463e99ce80a376c2330ef40f",
+      "recorded_at": "2026-11-19T09:44:17"
+    },
+    "ac4bf3923fdc": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NA17_run1",
+        "s11-qwen2.5_7b_NA17_run1",
+        "s12-qwen2.5_7b_NA17_run2",
+        "s2-qwen2.5_7b_NA17_run2",
+        "s21-qwen2.5_7b_NA17_run1",
+        "s22-qwen2.5_7b_NA17_run2"
+      ],
+      "summary_sha": "4223606a047478bb5a69c42d30aa3b2b4f68389e5e9b676bb146a0dbbe764fe6",
+      "recorded_at": "2026-11-19T09:44:22"
+    },
+    "2a9158b38888": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s11-qwen2.5_7b_NA30_run1",
+        "s22-qwen2.5_7b_NA30_run2"
+      ],
+      "summary_sha": "9d89cdd0fac06a3d8b29156f100ea40c3c26d34f9a06468949e1ff898b3a93d9",
+      "recorded_at": "2026-11-19T09:44:35"
+    },
+    "3285cadffc87": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NB07_run1"
+      ],
+      "summary_sha": "3078340b5ec4a2a045d0abf1e077a267119ec584fc563a2d8748af4a0055d57b",
+      "recorded_at": "2026-11-19T10:10:22"
+    },
+    "b5d335c156c8": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NA22_run1",
+        "s12-qwen2.5_7b_NA22_run2",
+        "s21-qwen2.5_7b_NA22_run1",
+        "s22-qwen2.5_7b_NA22_run2"
+      ],
+      "summary_sha": "d249a3148cea08fccaa2802b1ffc21d0555089d57cd1ae15540dc84f8d6aea2d",
+      "recorded_at": "2026-11-19T10:10:25"
+    },
+    "09be0dda6d99": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NA10_run1",
+        "s11-qwen2.5_7b_NA10_run1",
+        "s2-qwen2.5_7b_NA10_run2",
+        "s21-qwen2.5_7b_NA10_run1"
+      ],
+      "summary_sha": "efc77950fd350ae2b440795197e305871ffb16ce7621718a11ecdfe52e85de80",
+      "recorded_at": "2026-11-19T10:10:27"
+    },
+    "8eb3dffbc50d": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NA05_run1",
+        "s11-qwen2.5_7b_NA05_run1"
+      ],
+      "summary_sha": "f69e7c494be594c9275ca95116e5fa0d02cd7a16bdd68f6dc43980a99d4b3d7d",
+      "recorded_at": "2026-11-19T10:11:52"
+    },
+    "a9e0b90249e5": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NA13_run1",
+        "s12-qwen2.5_7b_NA13_run2"
+      ],
+      "summary_sha": "fc3602b9f698e71c7bbec664bc61bf05b6ff456cd19c64ffa13033fdb7af56fb",
+      "recorded_at": "2026-11-19T10:11:57"
+    },
+    "8423cc9c9b13": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s2-qwen2.5_7b_NA18_run2"
+      ],
+      "summary_sha": "635d8f8fbc71453fcd95c29eb90ef3aa7b650cc2d37f0e672911883382bd9b17",
+      "recorded_at": "2026-11-19T10:12:05"
+    },
+    "15fe00b74282": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s11-qwen2.5_7b_NB19_run1",
+        "s12-qwen2.5_7b_NB19_run2",
+        "s2-qwen2.5_7b_NB19_run2",
+        "s22-qwen2.5_7b_NB19_run2"
+      ],
+      "summary_sha": "238d7ec1ffaa69510b544879a3e0d4ef0b35afc95b2d79d589f84593f5a178f2",
+      "recorded_at": "2026-11-19T10:12:09"
+    },
+    "043f2ca89499": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s21-qwen2.5_7b_NA40_run1"
+      ],
+      "summary_sha": "31b49e9c6670dff24beb01e41b13cdef64aa8844f54d811767f100f895b804e9",
+      "recorded_at": "2026-11-19T10:12:12"
+    },
+    "2e1ffd219762": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NA08_run1",
+        "s11-qwen2.5_7b_NA08_run1"
+      ],
+      "summary_sha": "cf2d009eac1995001d94f8425d02207fd5d917a88249969c58e648d0209e8c42",
+      "recorded_at": "2026-11-19T10:12:16"
+    },
+    "507cadfbee39": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s2-qwen2.5_7b_NA39_run2"
+      ],
+      "summary_sha": "d5c9984b1d8c06ddf665ca3abac26915064941455f5563d9f2e22294bfa21827",
+      "recorded_at": "2026-11-19T10:12:17"
+    },
+    "62569c8e2537": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NB20_run1",
+        "s11-qwen2.5_7b_NB20_run1",
+        "s12-qwen2.5_7b_NB20_run2",
+        "s2-qwen2.5_7b_NB20_run2",
+        "s21-qwen2.5_7b_NB20_run1"
+      ],
+      "summary_sha": "167f73b2ac983cc206f43df1adeee16a83a18b326938304791495d45e58f6cf6",
+      "recorded_at": "2026-11-19T10:13:28"
+    },
+    "40831d256cc6": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NA31_run1",
+        "s2-qwen2.5_7b_NA31_run2",
+        "s21-qwen2.5_7b_NA31_run1",
+        "s22-qwen2.5_7b_NA31_run2"
+      ],
+      "summary_sha": "72bb051514b4fde66b49764aac5e55849520247b18baabf9703edbef4ca69ed8",
+      "recorded_at": "2026-11-19T10:13:30"
+    },
+    "d05ebd8f5bd3": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s12-qwen2.5_7b_NA14_run2"
+      ],
+      "summary_sha": "05a6c174ec30177a2301b6504369d503a610d0a0060d49cd55fa3db624c11ad5",
+      "recorded_at": "2026-11-19T10:13:32"
+    },
+    "bdfc3f6eb802": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NB09_run1",
+        "s12-qwen2.5_7b_NB09_run2",
+        "s2-qwen2.5_7b_NB09_run2",
+        "s22-qwen2.5_7b_NB09_run2"
+      ],
+      "summary_sha": "57a9b3b8a50af38e9dc844f584e104c2de335f12d3d9a884742ada542f107f1a",
+      "recorded_at": "2026-11-19T10:13:38"
+    },
+    "bc7ec5415927": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s21-qwen2.5_7b_NA20_run1"
+      ],
+      "summary_sha": "4d68dd3b3cb8e89f54d62b85302ec97222afb4246c05d5273de17983fd554918",
+      "recorded_at": "2026-11-19T10:13:43"
+    },
+    "2a35470abab5": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s12-qwen2.5_7b_NA12_run2",
+        "s21-qwen2.5_7b_NA12_run1"
+      ],
+      "summary_sha": "43937a8227547179c9cdf07068e51c9bf023459611f0078d1201c07d54982d90",
+      "recorded_at": "2026-11-19T10:13:52"
+    },
+    "d6d402028858": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NB19_run1"
+      ],
+      "summary_sha": "4068acb5a03ac4b6971cd4328b5efccdd9e0f3073163fdeca898d1994af88222",
+      "recorded_at": "2026-11-19T10:13:57"
+    },
+    "95eca12cef1e": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s11-qwen2.5_7b_NB02_run1"
+      ],
+      "summary_sha": "710bc3a1814cd0d9bb74dd28f5b262e29b0cc12cbff56a9c02135f55828c80f9",
+      "recorded_at": "2026-11-19T10:14:15"
+    },
+    "88d5edbb24c7": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s11-qwen2.5_7b_NB17_run1"
+      ],
+      "summary_sha": "a0edccdfdccad6f66582db96d0e17126fdbecf6ac87c54f78df9780dd602366a",
+      "recorded_at": "2026-11-19T10:14:22"
+    },
+    "c9b9796458df": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s11-qwen2.5_7b_NA36_run1"
+      ],
+      "summary_sha": "851fb83ff0d6b14e37970f5febe569a2dd54819d46b91b3f0840c650134baf9a",
+      "recorded_at": "2026-11-19T10:14:24"
+    },
+    "bac46e4ad3ed": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s21-qwen2.5_7b_NA15_run1"
+      ],
+      "summary_sha": "0748be095475532f39d5901e7b220df3e3eae5c1ed5fd1b29330f4216b0c81af",
+      "recorded_at": "2026-11-19T10:14:33"
+    },
+    "1059b4625f1d": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s12-qwen2.5_7b_NB06_run2",
+        "s21-qwen2.5_7b_NB06_run1"
+      ],
+      "summary_sha": "578e01f26a919647fa2fbf7bda9cd4ba0bbfe9aeadf9db2c603f557e130747b1",
+      "recorded_at": "2026-11-19T10:19:06"
+    },
+    "95e740cc5ade": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s2-qwen2.5_7b_NA22_run2"
+      ],
+      "summary_sha": "3af1fa7e9f0d0c71b26a40361afaa48e8949ae44af713041a5aec4d5bccc99bd",
+      "recorded_at": "2026-11-19T10:19:07"
+    },
+    "f2db7bd064c2": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NB15_run1",
+        "s11-qwen2.5_7b_NB15_run1",
+        "s12-qwen2.5_7b_NB15_run2",
+        "s2-qwen2.5_7b_NB15_run2",
+        "s21-qwen2.5_7b_NB15_run1",
+        "s22-qwen2.5_7b_NB15_run2"
+      ],
+      "summary_sha": "0a15b03ef2d34117d1174b8446bbc63c9795331fca9a937159e965f931c6daed",
+      "recorded_at": "2026-11-19T10:19:18"
+    },
+    "af62cefb1c77": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s11-qwen2.5_7b_NA34_run1"
+      ],
+      "summary_sha": "96b0e3e68bf45284e94573bfc9c3111dc4d04a9d9542b7e6c8cb0d5f3146eb9e",
+      "recorded_at": "2026-11-19T10:19:20"
+    },
+    "b101eb970d97": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NA12_run1",
+        "s11-qwen2.5_7b_NA12_run1",
+        "s22-qwen2.5_7b_NA12_run2"
+      ],
+      "summary_sha": "5d2cea690c195a7a0aab7ddd8440ce121e442ec9546f651cc550fe104efd60f3",
+      "recorded_at": "2026-11-19T10:19:22"
+    },
+    "146a1ae1a42f": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s22-qwen2.5_7b_NA02_run2"
+      ],
+      "summary_sha": "bd86d33bb60bb1430e8d52079713769e1a4fb526b9d901af06611e4a0145fe5e",
+      "recorded_at": "2026-11-19T10:19:27"
+    },
+    "eab2223eff30": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NA19_run1",
+        "s2-qwen2.5_7b_NA19_run2"
+      ],
+      "summary_sha": "5ff457efdfb2112b9113602d859349318be8eb097ea23d1a97f3aa6f322c2f10",
+      "recorded_at": "2026-11-19T10:19:29"
+    },
+    "e4936f7a5995": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s12-qwen2.5_7b_NA26_run2"
+      ],
+      "summary_sha": "fe31dcff13c5951abe79407bd6350554fef3119d2827d3208cddff5e2f415224",
+      "recorded_at": "2026-11-19T10:19:33"
+    },
+    "f47c0650ffb8": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s12-qwen2.5_7b_NA20_run2"
+      ],
+      "summary_sha": "e3a217ff464c65b049ecf0aa439b47bbbb6883fe42b692a91225ec0ac1bd6343",
+      "recorded_at": "2026-11-19T10:19:38"
+    },
+    "905cfa913205": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NB02_run1",
+        "s12-qwen2.5_7b_NB02_run2",
+        "s2-qwen2.5_7b_NB02_run2",
+        "s21-qwen2.5_7b_NB02_run1",
+        "s22-qwen2.5_7b_NB02_run2"
+      ],
+      "summary_sha": "198f0ef1afa050832e65d98c38983fb539df82037d4a515d9a40b44cd16b8451",
+      "recorded_at": "2026-11-19T10:19:47"
+    },
+    "93df54e838b9": {
+      "결정": "날조 있음",
+      "메모": "터치가 잘 안 먹는다는걸 보니 불편함이 발생하지만 작동 자체는 가능한 것으로 보임",
+      "members": [
+        "s12-qwen2.5_7b_NA30_run2"
+      ],
+      "summary_sha": "e7ea2f9da8eff2b0d35ceb2507d0423937dd7d011d5725270b1a61ab37da27ef",
+      "recorded_at": "2026-11-19T10:20:45"
+    },
+    "6ce09d9403b2": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s2-qwen2.5_7b_NB14_run2",
+        "s21-qwen2.5_7b_NB14_run1"
+      ],
+      "summary_sha": "41774fa9830489c87b16d35b3c8c60a89493ae17d2113438ff065747ccafca52",
+      "recorded_at": "2026-11-19T10:21:21"
+    },
+    "5fcb5e65eaf2": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s11-qwen2.5_7b_NA27_run1",
+        "s12-qwen2.5_7b_NA27_run2"
+      ],
+      "summary_sha": "5f2efe84446764abd749fe4b21d3e2c65dff4ec40028e93cba8dc4e196302836",
+      "recorded_at": "2026-11-19T10:21:32"
+    },
+    "9f9812628413": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s2-qwen2.5_7b_NA14_run2"
+      ],
+      "summary_sha": "3dbabea1b538f6c498d82f53311c6461934137c8a57c859d50debe61bd8049e9",
+      "recorded_at": "2026-11-19T10:21:35"
+    },
+    "520219462e65": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NB18_run1",
+        "s12-qwen2.5_7b_NB18_run2",
+        "s21-qwen2.5_7b_NB18_run1",
+        "s22-qwen2.5_7b_NB18_run2"
+      ],
+      "summary_sha": "348380f4a7c429e1316fed970240935e263f0976e2f374e6df126748ae6e295b",
+      "recorded_at": "2026-11-19T10:21:45"
+    },
+    "db845c8ef534": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s11-qwen2.5_7b_NA29_run1",
+        "s12-qwen2.5_7b_NA29_run2",
+        "s2-qwen2.5_7b_NA29_run2",
+        "s22-qwen2.5_7b_NA29_run2"
+      ],
+      "summary_sha": "109164a2f6f810e9067a2f759bfa756c7a3047208e41e4439e7e1da060e14465",
+      "recorded_at": "2026-11-19T10:21:52"
+    },
+    "909d07538de1": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s11-qwen2.5_7b_NB06_run1"
+      ],
+      "summary_sha": "9f118ca89b9f52ff45be0a3285d8c803ae3fc6cb5d17ae97d2b59b20910cedf3",
+      "recorded_at": "2026-11-19T10:21:56"
+    },
+    "5520cfa286de": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NA03_run1",
+        "s11-qwen2.5_7b_NA03_run1",
+        "s21-qwen2.5_7b_NA03_run1"
+      ],
+      "summary_sha": "30100d8c26a4fdaeb996a7eafdbcb5ddccec5f6373a13688d9ff95275f9f5892",
+      "recorded_at": "2026-11-19T10:22:07"
+    },
+    "bfc6ef4ba2bd": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s2-qwen2.5_7b_NA07_run2"
+      ],
+      "summary_sha": "bd1c5d7b7a6d7ed640cb98737bacefb78f204045095054f38affe0ecf49cfeee",
+      "recorded_at": "2026-11-19T10:22:11"
+    },
+    "6f82fe0d0695": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s12-qwen2.5_7b_NB01_run2",
+        "s2-qwen2.5_7b_NB01_run2",
+        "s21-qwen2.5_7b_NB01_run1"
+      ],
+      "summary_sha": "dfc4985cfd1521b2d3ef28742efe8666c8a21770cfe6352374a10da3d7564e7b",
+      "recorded_at": "2026-11-19T10:22:21"
+    },
+    "fedb6abb2171": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s11-qwen2.5_7b_NA06_run1"
+      ],
+      "summary_sha": "5043e93c692d4c7b53794693eb997b1af710dbe809bc5eb63f6c81c82bda7d8d",
+      "recorded_at": "2026-11-19T10:22:28"
+    },
+    "e1c684d86297": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s22-qwen2.5_7b_NA13_run2"
+      ],
+      "summary_sha": "14a4170a4150647f01cec34ce757e9091092ffe4f4f0e879b6138e8b185dc45f",
+      "recorded_at": "2026-11-19T10:22:30"
+    },
+    "562207f036bb": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NA04_run1",
+        "s11-qwen2.5_7b_NA04_run1",
+        "s21-qwen2.5_7b_NA04_run1",
+        "s22-qwen2.5_7b_NA04_run2"
+      ],
+      "summary_sha": "72d65fdd9fd64210da703ca71538c99bcdaffe644767c4e95e3209427c46d9b9",
+      "recorded_at": "2026-11-19T10:22:40"
+    },
+    "3b3594a96b35": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NA26_run1",
+        "s11-qwen2.5_7b_NA26_run1",
+        "s2-qwen2.5_7b_NA26_run2",
+        "s21-qwen2.5_7b_NA26_run1",
+        "s22-qwen2.5_7b_NA26_run2"
+      ],
+      "summary_sha": "a5cc55c2a4d2c17dab85c6b4a4f4f26ffc435b11be533c8d0a4375c3685b8713",
+      "recorded_at": "2026-11-19T10:22:41"
+    },
+    "f97b5dad2d20": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s21-qwen2.5_7b_NB12_run1"
+      ],
+      "summary_sha": "871884fe9a42a989576b79540287cc422979f4736826d8e6fec6ea5ab7890548",
+      "recorded_at": "2026-11-19T10:24:35"
+    },
+    "3f748b955223": {
+      "결정": "날조 있음",
+      "메모": "",
+      "members": [
+        "s22-qwen2.5_7b_NA35_run2"
+      ],
+      "summary_sha": "93934b365c5d5c24ff7bcd4e542ba704a63702fdfc1f697607fa8159c031e873",
+      "recorded_at": "2026-11-19T10:24:43"
+    },
+    "34758f1df432": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NA28_run1",
+        "s11-qwen2.5_7b_NA28_run1",
+        "s12-qwen2.5_7b_NA28_run2",
+        "s2-qwen2.5_7b_NA28_run2",
+        "s21-qwen2.5_7b_NA28_run1",
+        "s22-qwen2.5_7b_NA28_run2"
+      ],
+      "summary_sha": "386f4a9d89a39f56a69e6183a50993974574e0134c7cbb70d34c53a84843c132",
+      "recorded_at": "2026-11-19T10:25:26"
+    },
+    "de522d1d61cb": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s12-qwen2.5_7b_NA19_run2"
+      ],
+      "summary_sha": "055bba5ba573760cf23483b009e8938d1bd4613331409341c0eefe6e5e40e528",
+      "recorded_at": "2026-11-19T10:25:28"
+    },
+    "57c7f1359552": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s2-qwen2.5_7b_NA12_run2"
+      ],
+      "summary_sha": "a4fd49840ac2e9a10df39050e85b27c0980d2222a0c9b7a4bc401d70f0cc34cb",
+      "recorded_at": "2026-11-19T10:25:30"
+    },
+    "e7c1904f54a3": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NA02_run1",
+        "s11-qwen2.5_7b_NA02_run1",
+        "s12-qwen2.5_7b_NA02_run2",
+        "s2-qwen2.5_7b_NA02_run2",
+        "s21-qwen2.5_7b_NA02_run1"
+      ],
+      "summary_sha": "b4ce09ee13d6dc2754431ff1fcd607bc2e2b4b00f209ad0716390de6eb556150",
+      "recorded_at": "2026-11-19T10:25:32"
+    },
+    "439315b8a2db": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s21-qwen2.5_7b_NA18_run1"
+      ],
+      "summary_sha": "7f7d7151d43e9cf752b937a1071ee0b135d85ebc420bde79c22141ff329e1dcc",
+      "recorded_at": "2026-11-19T10:25:34"
+    },
+    "ec8a2c67a09a": {
+      "결정": "날조 있음",
+      "메모": "",
+      "members": [
+        "s12-qwen2.5_7b_NA38_run2",
+        "s2-qwen2.5_7b_NA38_run2"
+      ],
+      "summary_sha": "e3a0c6e247d34e87222108c6c1c209020cbb1f3d058b798fc024cc19eb362745",
+      "recorded_at": "2026-11-19T10:25:57"
+    },
+    "973034e0fc8b": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s21-qwen2.5_7b_NA08_run1"
+      ],
+      "summary_sha": "f0fec2257f9970e6e0f536e37205ebe46751cd799b4a182a3e35ed3128621241",
+      "recorded_at": "2026-11-19T10:25:59"
+    },
+    "3dbcb77ed52b": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s2-qwen2.5_7b_NB05_run2"
+      ],
+      "summary_sha": "e660f16af67c9ee9bfece31007a39954929012d38efa111461d460c8bc24fee0",
+      "recorded_at": "2026-11-19T10:26:04"
+    },
+    "929c07ceddf1": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NB05_run1",
+        "s21-qwen2.5_7b_NB05_run1",
+        "s22-qwen2.5_7b_NB05_run2"
+      ],
+      "summary_sha": "12a1dc902cb570f70d937ea9e89478f787782f30806ba565fc9698af7a053a3e",
+      "recorded_at": "2026-11-19T10:26:05"
+    },
+    "d5973f58f598": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s2-qwen2.5_7b_NA04_run2"
+      ],
+      "summary_sha": "dc603f7ca055827ca2c5b02ad9e37289f8efca09c79a12a4725ee99f61e9b68c",
+      "recorded_at": "2026-11-19T10:26:09"
+    },
+    "c46467550004": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s12-qwen2.5_7b_NA11_run2"
+      ],
+      "summary_sha": "179417da54c6fc5cd0395d52f65316cb9016bf85b1629fb981de51e7588f0e8a",
+      "recorded_at": "2026-11-19T10:26:12"
+    },
+    "0092aac06783": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s11-qwen2.5_7b_NB05_run1"
+      ],
+      "summary_sha": "c8e0399f210bee28795e2711d5e5092d44b962bc7ab6dc02ad2bbb7e27443563",
+      "recorded_at": "2026-11-19T10:26:14"
+    },
+    "00935abeab49": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s12-qwen2.5_7b_NB03_run2",
+        "s21-qwen2.5_7b_NB03_run1"
+      ],
+      "summary_sha": "83c90df5a7599f7cec37aaf12502be37ac6007b069e9c0e2cecc7b99649fbecc",
+      "recorded_at": "2026-11-19T10:26:16"
+    },
+    "02d00275451c": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NB12_run1",
+        "s12-qwen2.5_7b_NB12_run2"
+      ],
+      "summary_sha": "5fbc5bd4b0297f72961b95321411c9eb5f6e235d50c276f4b2f4582d64baf288",
+      "recorded_at": "2026-11-19T10:26:18"
+    },
+    "6e72295247f5": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s21-qwen2.5_7b_NA39_run1"
+      ],
+      "summary_sha": "d42123800cc4b608736bd1405767edb043324ac260057fa28465659482bd5569",
+      "recorded_at": "2026-11-19T10:26:20"
+    },
+    "d0317d3df7aa": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s12-qwen2.5_7b_NA33_run2"
+      ],
+      "summary_sha": "a019e1f36e8291ba4b47e389c08b70b1265337cbd7cbd28ef7e0979ad46bafcd",
+      "recorded_at": "2026-11-19T10:26:21"
+    },
+    "8333ea8b8c3f": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s21-qwen2.5_7b_NA06_run1"
+      ],
+      "summary_sha": "7ed415adeee0f442aed25fdc6a45afd47038bc8d5fce6f8923056771bfdce451",
+      "recorded_at": "2026-11-19T10:26:24"
+    },
+    "e7d4cc3a8f2b": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s11-qwen2.5_7b_NA40_run1"
+      ],
+      "summary_sha": "e3c1db7ae14a56aaf63a9558e369665ea2151d6631f9d466b12b0a6f46ee55fa",
+      "recorded_at": "2026-11-19T10:26:25"
+    },
+    "3792ec3319c7": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s12-qwen2.5_7b_NA04_run2"
+      ],
+      "summary_sha": "cb8b15820598c6ea04eefbf7ccf6b9e02b73be6d259f9976ea6579c14223a50e",
+      "recorded_at": "2026-11-19T10:26:27"
+    },
+    "11c109c69887": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s11-qwen2.5_7b_NA25_run1",
+        "s12-qwen2.5_7b_NA25_run2",
+        "s2-qwen2.5_7b_NA25_run2",
+        "s22-qwen2.5_7b_NA25_run2"
+      ],
+      "summary_sha": "41fa094270989ea3d490c0103c4f5330627f6387c90761e6c3a2062409cc7965",
+      "recorded_at": "2026-11-19T10:26:28"
+    },
+    "2820df134c32": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NA23_run1",
+        "s11-qwen2.5_7b_NA23_run1",
+        "s12-qwen2.5_7b_NA23_run2",
+        "s2-qwen2.5_7b_NA23_run2",
+        "s21-qwen2.5_7b_NA23_run1",
+        "s22-qwen2.5_7b_NA23_run2"
+      ],
+      "summary_sha": "d2f35242b1c45d5048b204ceabd5c2d42ed70bec3b92ff391e2b689c60eff284",
+      "recorded_at": "2026-11-19T10:26:32"
+    },
+    "925702b3be94": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s21-qwen2.5_7b_NB07_run1",
+        "s22-qwen2.5_7b_NB07_run2"
+      ],
+      "summary_sha": "5e12ef737c6d2685049b3f95bacc19d0c61030472783415ae6cca77e28b1a86e",
+      "recorded_at": "2026-11-19T10:26:34"
+    },
+    "319310738079": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s11-qwen2.5_7b_NA07_run1"
+      ],
+      "summary_sha": "6196170c47d4c9b4c9ff02408ac75fda5dc20830c2d2928a3cea85fa919e941d",
+      "recorded_at": "2026-11-19T10:26:36"
+    },
+    "a06d63cee04c": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s22-qwen2.5_7b_NB13_run2"
+      ],
+      "summary_sha": "e678f70230c6d5975116b6bc46d253347ff6703f001f1c02132b55e63949612c",
+      "recorded_at": "2026-11-19T10:26:45"
+    },
+    "2bf89cb55277": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s11-qwen2.5_7b_NA14_run1"
+      ],
+      "summary_sha": "f8601319569d9569718c440106429aa1c722d46c2a1c7af2e961bc6a49ebab4b",
+      "recorded_at": "2026-11-19T10:26:47"
+    },
+    "b30c5d93397f": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s22-qwen2.5_7b_NA14_run2"
+      ],
+      "summary_sha": "660833ace0304066e8ce3e00660692d44d1401c777a2146179f0a2f3cdf48ade",
+      "recorded_at": "2026-11-19T10:26:49"
+    },
+    "be17ac732104": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NA34_run1",
+        "s2-qwen2.5_7b_NA34_run2"
+      ],
+      "summary_sha": "cc7130d0ea27fcee52d69978adb888320775cda4c1a062f0f2e730300c99a58f",
+      "recorded_at": "2026-11-19T10:26:50"
+    },
+    "d1887581f555": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NA30_run1"
+      ],
+      "summary_sha": "3883a5c319b531cc1980e75f17a3c34a3e662b1a29bffc6ae2ed262c5a5a0cd4",
+      "recorded_at": "2026-11-19T10:27:02"
+    },
+    "2f2a8d3fbea0": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s22-qwen2.5_7b_NA10_run2"
+      ],
+      "summary_sha": "5c7c7861d8c406fb120d84bbcdca21176d4b78842dbafa8d4928df85675d9267",
+      "recorded_at": "2026-11-19T10:27:04"
+    },
+    "f05dbbd05d50": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s21-qwen2.5_7b_NA30_run1"
+      ],
+      "summary_sha": "e757e306fb722a089a9a2a96d939ead1937fbb1ed20ef0802f67cc0faa354d31",
+      "recorded_at": "2026-11-19T10:27:05"
+    },
+    "bf6f6045009b": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s2-qwen2.5_7b_NA06_run2"
+      ],
+      "summary_sha": "8dcf134638e0d6e28f6bd711f09d64a54474652cf25aac7d0426444da5c197e2",
+      "recorded_at": "2026-11-19T10:27:09"
+    },
+    "9ddc30b2276c": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s12-qwen2.5_7b_NA08_run2",
+        "s2-qwen2.5_7b_NA08_run2",
+        "s22-qwen2.5_7b_NA08_run2"
+      ],
+      "summary_sha": "984ca477184a8a261f5c4fef801c7fd73d6f0e6170f6d8e479d8408f0df693fd",
+      "recorded_at": "2026-11-19T10:27:12"
+    },
+    "395199bebaa3": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s21-qwen2.5_7b_NA14_run1"
+      ],
+      "summary_sha": "64b83eb136350ad9ffa1c558f8629528a07d1d67768389f19c9814520cbd7fde",
+      "recorded_at": "2026-11-19T10:27:13"
+    },
+    "e27d98de89bf": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NA21_run1",
+        "s11-qwen2.5_7b_NA21_run1",
+        "s12-qwen2.5_7b_NA21_run2",
+        "s2-qwen2.5_7b_NA21_run2",
+        "s21-qwen2.5_7b_NA21_run1",
+        "s22-qwen2.5_7b_NA21_run2"
+      ],
+      "summary_sha": "b7490f42c9c800a663846f96aac0d617b4f123147e5dab84f9b6c065438df668",
+      "recorded_at": "2026-11-19T10:27:17"
+    },
+    "c9f0386962f4": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s1-qwen2.5_7b_NA15_run1",
+        "s11-qwen2.5_7b_NA15_run1",
+        "s12-qwen2.5_7b_NA15_run2",
+        "s2-qwen2.5_7b_NA15_run2",
+        "s22-qwen2.5_7b_NA15_run2"
+      ],
+      "summary_sha": "15c054d98bffe3a3a720d9490c9bbed34f8472aed2cab33778f10bd0ea07bf28",
+      "recorded_at": "2026-11-19T10:27:20"
+    },
+    "f4241e0c4009": {
+      "결정": "날조 없음",
+      "메모": "",
+      "members": [
+        "s21-qwen2.5_7b_NB09_run1"
+      ],
+      "summary_sha": "f9af9705528577a406031338fa49f0009f7d289045d1b9d043c4cc3618d86754",
+      "recorded_at": "2026-11-19T10:27:23"
+    }
+  },
+  "changes": []
+}

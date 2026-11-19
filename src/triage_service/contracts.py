@@ -60,6 +60,8 @@ class Source(Protocol):
 
     def matches(self, url: str) -> bool: ...
 
+    def canonical(self, url: str) -> str: ...   # 같은 원문을 가리키는 링크를 하나로 맞춘 모양
+
     def fetch(self, url: str) -> Report: ...
 
 

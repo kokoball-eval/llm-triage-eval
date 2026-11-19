@@ -26,3 +26,4 @@ dist/
 데이터/서비스/
 # 실제 BTS 사이트 설정 (주소·프로젝트 — 토큰은 .env)
 설정/bts_매핑.local.toml
+설정/출처.local.toml

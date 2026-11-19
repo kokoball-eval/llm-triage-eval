@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "LLM에게 1차 트리아지를 맡길 때, 그 판단을 평가셋·회귀 게이트·사전 등록 비교로 검증하는 평가 체계 (검증 사례: 게임 버그 리포트)"
 requires-python = ">=3.12"
 dependencies = [
+    "beautifulsoup4>=4.15.0",
     "fastapi>=0.165.0",
     "httpx2>=2.16.2",
     "jinja2>=3.1.6",

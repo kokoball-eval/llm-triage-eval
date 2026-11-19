@@ -8,6 +8,20 @@
 
 ## [Unreleased]
 
+### 변경 (코드 정리 B단계 1·2: 완성품 구조로 재배치 — 동작 변경 없음)
+- 완성품 기준으로 코드를 관심사별로 다시 배치했다. 옛 구동 구조와의 호환은 버리고, 동작과 공개한 성능 수치가 같은지만 시험으로 확인한다.
+  - `src/triage_eval/config.py`(모델·생성 옵션·파일 위치 한 곳), `contracts.py`(8칸 형식·허용 값·형식 규칙 R1~R7), `llm.py`(Ollama 호출 입구 하나)
+  - `triage/` — 리포트 1건 처리: `prompt.py`(프롬프트 v2.3), `checklist.py`(Critical 체크리스트 M2), `guardrail.py`(안전장치 g2), `pipeline.py`(`triage()` 하나로 첫 응답 → 칸 재요청 → 체크리스트 → 폐기 확인 → 안전장치)
+  - `evaluation/` — 평가: `runner.py`(`triage-run`), `performance.py`(`triage-eval`, 새 성능표 명령), `gate.py`(`triage-gate`, v1.5 게이트 하나로 합침), `score.py`, `hallucination.py`, `environment.py`
+- 지운 것(태그 `v1.5-archive`에 있음): `pipeline/`·`common/` 옛 모듈, v1.3·v1.4 게이트, 방법·모델 선택, 재채점, 라우팅, 9단계 판정 도구, `tools/`, 채택되지 않은 방법 M0·M1 실행 경로, 명령 `triage-score`·`select`·`compare`·`rescore`·`routing`·`final`, 확인 화면 실행 설정(`.claude/launch.json`), 개발 의존성 `openpyxl`
+- 명령 사용법이 바뀌었다: `triage-run --seed N --strict-env`(개발용 63건 · M2 고정, `--dataset`은 평가셋 파일 경로), `triage-gate --candidate <seed1> --candidate <seed11> --candidate <seed21>`(`--dataset v15` 없음). 사전 등록 기준 파일(`gate_criteria_v15.toml` 등)의 머리말에 적힌 옛 경로·명령은 기록이라 고치지 않았다
+- 동작이 같다는 근거(시험으로 고정)
+  - `tests/test_pipeline_replay.py`(B1) — 채택 구성 실행 기록 738건을 가짜 모델로 재생해 최종 응답·안전장치·호출 순서가 같고, 모델에 보낸 프롬프트·옵션·스키마의 해시가 정리 전 코드와 같다
+  - `tests/test_gate.py` — 커밋된 v1.5 게이트 판정(`data/results/v15/gate_result_v15.json`)의 seed별 기준 값·문항 단위 변화를 그대로 재현하고, 체크리스트 없는 실제 실행(M0) 3건은 FAIL 로 판정한다
+  - `tests/test_runner.py` — 9단계 새 최종 세트 360응답의 응답별 채점(위험 누락·칸 정답·날조 탐지)이 판정 때와 같고, 새 실행기의 실행 조건이 게이트 기준선과 비교 가능한 같은 값이다
+- 독립 검토 반영 — 게이트가 정답표의 판(v1.5)을 확인하고 결과에 정답표 판·지문을 남김, 없는 평가셋 파일을 주면 안내 후 종료, 빈 실행 기록 성능표, 문서 문자열 정정
+- `src/` 약 4,400줄 → 1,600줄. 테스트 534 → 280개 통과(지운 모듈 전용 시험 삭제, 남긴 시험은 새 구조로 옮김)
+
 ### 추가 (서비스 설계 — 구현 전)
 - [`docs/service_design.md`](docs/service_design.md) — 링크 접수부터 BTS 등록까지의 서비스 설계. 출처(`Source`)와 BTS(`Tracker`)를 계약으로 분리해 파일 하나 단위로 바꿔 끼우는 구조, 영역 분리, FastAPI + HTMX 화면, 안전장치, 진행 순서
 

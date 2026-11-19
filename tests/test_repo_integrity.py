@@ -39,22 +39,16 @@ def test_every_json_parses(path):
 
 def loaders():
     """저장소 루트의 기준 파일 → 그 파일을 읽는 함수. 새 기준 파일을 추가하면 여기에 등록해야 테스트가 통과한다."""
-    from triage_eval.pipeline import compare, gate, final_v15, gate_v14, gate_v15, routing, selection
+    from triage_eval.evaluation import gate
 
-    return {
-        "gate_criteria_v13.toml": gate.load_criteria,
-        "gate_criteria_v14.toml": gate_v14.load_criteria,
-        "gate_criteria_v15.toml": gate_v15.load_criteria,
-        "model_selection_v14.toml": selection.load_select_criteria,
-        "method_selection_v14.toml": compare.load_criteria,
-        "routing_v15.toml": routing.load_criteria,
-        "final_run_v15.toml": final_v15.load_criteria,
-    }
+    return {"gate_criteria_v15.toml": gate.load_criteria}
 
 
 # 측정이 끝나 읽는 코드를 지운 기준 파일 — 보고서가 가리키는 기록이라 파일은 남기고 문법 검사만 한다.
 # 읽던 코드는 태그 v1.5-archive 에 있다.
-ARCHIVED = {"gate_criteria.toml", "label_agreement_v15.toml", "judge_v15.toml", "quality_v15.toml"}
+ARCHIVED = {"gate_criteria.toml", "gate_criteria_v13.toml", "gate_criteria_v14.toml", "model_selection_v14.toml",
+            "method_selection_v14.toml", "routing_v15.toml", "final_run_v15.toml",
+            "label_agreement_v15.toml", "judge_v15.toml", "quality_v15.toml"}
 
 
 def test_every_root_criteria_file_has_a_loader():
@@ -63,8 +57,7 @@ def test_every_root_criteria_file_has_a_loader():
     assert root_tomls == set(loaders()) | ARCHIVED
 
 
-@pytest.mark.parametrize("name", ["gate_criteria_v13.toml", "gate_criteria_v14.toml", "gate_criteria_v15.toml",
-                                  "model_selection_v14.toml", "method_selection_v14.toml", "routing_v15.toml", "final_run_v15.toml"])
+@pytest.mark.parametrize("name", sorted(loaders()))
 def test_every_criteria_file_passes_its_loader(name):
     """문법뿐 아니라 각 도구의 키 검사(모르는 섹션·키, 빠진 키)까지 통과한다."""
     loaders()[name](ROOT / name)

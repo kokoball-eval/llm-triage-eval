@@ -7,17 +7,11 @@ dependencies = [
     "ollama>=0.6.2",
 ]
 
-# 실행 명령 — `uv run <명령>` 으로 실행한다 (v1.3 구조 정리). `uv run python -m <모듈>` 로도 실행할 수 있다.
+# 실행 명령 — `uv run <명령>`
 [project.scripts]
-# 트리아지 파이프라인 — v1.5 이전 측정 전용 명령(bench-*, triage-screen·agreement·judge)은 태그 v1.5-archive 에 있다
-triage-run = "triage_eval.pipeline.run:main"
-triage-score = "triage_eval.pipeline.score:main"
-triage-gate = "triage_eval.pipeline.gate:main"
-triage-select = "triage_eval.pipeline.selection:main"
-triage-compare = "triage_eval.pipeline.compare:main"
-triage-rescore = "triage_eval.pipeline.rescore:main"
-triage-routing = "triage_eval.pipeline.routing:main"
-triage-final = "triage_eval.pipeline.final_v15:main"
+triage-run = "triage_eval.evaluation.runner:main"         # 평가셋 실행 → 실행 기록
+triage-eval = "triage_eval.evaluation.performance:main"   # 실행 기록 채점 → 성능표
+triage-gate = "triage_eval.evaluation.gate:main"          # 후보 3건 vs 기준선 → 회귀 판정
 
 # src/triage_eval 을 패키지로 설치한다. uv 가 편집 가능 모드로 설치하므로 코드를 고치면 바로 반영되고,
 # 폴더 깊이와 관계없이 `triage_eval.<하위 패키지>` 로 import 된다.
@@ -30,7 +24,6 @@ packages = ["src/triage_eval"]
 
 [dependency-groups]
 dev = [
-    "openpyxl>=3.1",
     "pytest>=9.1.1",
 ]
 

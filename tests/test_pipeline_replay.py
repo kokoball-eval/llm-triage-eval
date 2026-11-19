@@ -5,7 +5,8 @@
    돌려준 원문이 순서대로 남아 있다. 가짜 모델이 그 원문을 같은 순서로 돌려주면, 파이프라인(프롬프트 → 칸 재시도 →
    M2 Critical 체크리스트 → 폐기 점검 → 안전장치 g2)은 기록과 같은 최종 응답을 내야 한다.
 2. 최종 응답만 같고 모델에 보낸 내용이 달라지면 실제 모델에서는 결과가 바뀐다. 그래서 호출마다 보낸 프롬프트·옵션·
-   스키마를 모두 이어 SHA-256 하나로 고정한다(PROMPTS_SHA256). 이 값은 구조 정리 전 코드(87c94a1)에서 계산했다.
+   스키마를 모두 이어 SHA-256 하나로 고정한다(PROMPTS_SHA256). 이 값은 구조 정리 전 코드(87c94a1)에서 계산했고,
+   새 구조(triage/pipeline.py)에서도 같은 값이 나온다.
 3. 대상은 채택 구성(qwen2.5:7b + M2)의 기록 전부다: 게이트 기준선 3건(v1.4 개발용 378응답)과 9단계 최종 실행
    3건(봉인 세트 360응답). 경로가 틀리면 파일을 못 읽어 실패한다(건너뛰지 않는다).
 """
@@ -17,8 +18,7 @@ from pathlib import Path
 
 import pytest
 
-from triage_eval.pipeline import run
-from triage_eval.pipeline.guardrail import apply_record
+from triage_eval.triage.pipeline import OPTIONS, triage
 
 ROOT = Path(__file__).resolve().parent.parent
 SOURCES = [   # (실행 기록, 그 기록이 본 평가셋)
@@ -56,10 +56,9 @@ def _records():
 
 def _replay(rec, item, digest):
     client = ReplayClient([a["response_text"] for a in rec["attempts"]], digest)
-    opts = {**run.OPTIONS_V2, "seed": rec["seed"]}
-    res = run.generate_triage(client, rec["model"], item, opts, method="m2")
+    res = triage(client, item, {**OPTIONS, "seed": rec["seed"]}, model=rec["model"])
     assert client.replies == [], "기록보다 모델 호출이 적다"
-    return apply_record(res, item)
+    return res
 
 
 def test_replay_reproduces_every_recorded_final_answer():

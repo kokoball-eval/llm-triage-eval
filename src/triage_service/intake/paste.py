@@ -14,9 +14,7 @@
 from datetime import datetime
 
 from triage_service.config import BODY_MAX, TITLE_MAX
-from triage_service.contracts import REPORTERS, TRACKS, Report
-
-SOURCE_NAMES = ("paste", "jira", "redmine", "board", "discord")
+from triage_service.contracts import REPORTERS, SOURCE_NAMES, TRACKS, Report
 
 
 class InputError(ValueError):

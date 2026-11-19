@@ -5,13 +5,14 @@
     discord.py  디스코드 메시지 링크 (입력 종류 A, 회사 봇이 들어간 서버만)
     fetching.py 허용한 곳만·정해 둔 크기 안에서 받기(리다이렉트 안 따라감)
     settings.py 설정/출처.toml 읽기·검사
+    reception.py 링크 미리보기·접수 확인(같은 원문 한 번만, 숨은 칸 검증) — 화면은 이 결과를 보여 주기만 한다
 """
 
 from triage_service.intake.board import BoardSource
 from triage_service.intake.bts import JiraSource, RedmineSource
 from triage_service.intake.discord import DiscordSource
 from triage_service.intake.fetching import IntakeError, clean_link
-from triage_service.intake.paste import SOURCE_NAMES
+from triage_service.contracts import SOURCE_NAMES
 
 
 def make_sources(loaded: dict, http: dict | None = None) -> list:

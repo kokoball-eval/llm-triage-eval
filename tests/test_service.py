@@ -393,3 +393,17 @@ def test_web_ignores_file_fields(web):
 def test_web_unknown_report_is_404(web):
     assert web.get("/reports/999").status_code == 404
     assert web.get("/fake-bts/FAKE-999").status_code == 404
+
+
+def test_cli_exit_codes(tmp_path, monkeypatch, capsys):
+    """설정이 잘못되면 서버를 시작하지 않고 2, --check 는 설정·연결이 맞으면 0 (cli 설계 의도 1·2)."""
+    from triage_service import cli, config
+    bad = tmp_path / "bad.toml"
+    bad.write_text('[bts]\nuse = "trello"\n', encoding="utf-8")
+    monkeypatch.setattr(config, "load_env", lambda *a, **k: None)
+    monkeypatch.setattr(config, "DB_PATH", tmp_path / "s.db")
+    monkeypatch.setattr(config, "mapping_path", lambda: bad)
+    assert cli.main(["--check"]) == 2 and "use 는" in capsys.readouterr().out
+    monkeypatch.setattr(config, "mapping_path", lambda: config.MAPPING_PATH)      # 저장소 예시 설정: fake BTS
+    monkeypatch.setattr(config, "sources_path", lambda: config.SOURCES_PATH)
+    assert cli.main(["--check"]) == 0 and "BTS 연결 확인 (fake)" in capsys.readouterr().out

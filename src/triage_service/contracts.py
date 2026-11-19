@@ -17,6 +17,7 @@ TRACKS = {"A": "커뮤니티 제보", "B": "QA 이슈"}
 # B 의 작성자는 측정한 평가셋에 쓰인 값만 받는다. 안전장치 H-2b 가 작성자(내부·퍼블리셔 QA)를 보고 처리를 고치므로,
 # 다른 표기("QA팀" 등)가 들어오면 측정 때와 다른 규칙이 적용된다.
 REPORTERS = ("내부 QA", "퍼블리셔 QA", "운영/CS")
+SOURCE_NAMES = ("paste", "jira", "redmine", "board", "discord")   # Report.source 로 올 수 있는 출처 이름
 
 
 @dataclass(frozen=True)

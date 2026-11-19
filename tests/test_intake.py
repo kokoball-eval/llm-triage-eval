@@ -20,6 +20,7 @@ from triage_service.bts.settings import SettingsError
 from triage_service.intake import settings
 from triage_service.intake.bts import adf_text
 from triage_service.intake.fetching import get, get_json
+from triage_service.intake.paste import InputError
 from triage_service.store import Store
 from triage_service.web.app import create_app
 from triage_service.worker import Worker
@@ -355,3 +356,29 @@ def test_received_link_report_flows_to_review(web):
     Worker(web.store, client_factory=lambda: client).process(rid)
     assert web.store.get(rid)["state"] == flow.REVIEW
     assert client.prompts[0].endswith(build_input(rep.to_item()))
+
+
+# ── 접수 흐름(화면 없이) ──────────────────────────────────────
+
+def test_reception_preview_and_accept_without_web(tmp_path):
+    """미리보기는 접수하지 않고 입력 칸 값만 돌려주고, 접수 확인은 같은 값으로 Report 를 만든다 (reception 설계 의도 1)."""
+    from triage_service.intake import reception
+    store = Store(tmp_path / "s.db")
+    prefill, notice = reception.preview(sources(), store, LINKS["board"] + "#comment")
+    assert prefill["url"] == LINKS["board"] and "board 에서 가져왔습니다" in notice and store.list() == []
+    form = {k: v for k, v in prefill.items() if k != "link"}
+    report = reception.accept(sources(), store, form)
+    assert (report.source, report.url, report.title) == ("board", LINKS["board"], prefill["title"])
+
+
+def test_reception_duplicate_and_forged_fields(tmp_path):
+    from triage_service.intake import reception
+    store = Store(tmp_path / "s.db")
+    prefill, _ = reception.preview(sources(), store, LINKS["board"])
+    store.add(reception.accept(sources(), store, {k: v for k, v in prefill.items() if k != "link"}))
+    with pytest.raises(reception.Duplicate) as e:
+        reception.preview(sources(), store, LINKS["board"] + "?")
+    assert e.value.existing["report"].url == LINKS["board"]
+    with pytest.raises(InputError, match="출처 정보"):
+        reception.accept(sources(), store, {"track": "B", "reporter": "내부 QA", "title": "t", "body": "b",
+                                            "source": "board", "url": LINKS["jira"]})

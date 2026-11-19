@@ -77,15 +77,16 @@ src/triage_eval/
 ```
 src/triage_service/          작업 페이지 서비스 — 위 triage() 를 그대로 호출
 ├─ contracts.py    Report · Issue · Ticket, 출처·BTS 계약(Source · Tracker)
-├─ intake/         출처 — 붙여넣기, Jira·Redmine 이슈·게시판 글·디스코드 메시지 링크
+├─ intake/         출처 — 붙여넣기, Jira·Redmine 이슈·게시판 글·디스코드 메시지 링크, 접수 흐름(reception.py)
 ├─ worker.py       작업자 하나가 차례대로 트리아지
 ├─ routing.py      자동 등록 / 검토 결정 (지금은 모든 건을 사람 검토로)
 ├─ flow.py         상태: 접수 → 트리아지 중 → 검토 대기 → 등록 완료 / 폐기 / 실패
 ├─ review.py       사람이 고친 8칸을 형식 규칙으로 검사해 등록
 ├─ store.py        SQLite (모델 8칸 · 확정 8칸 · 고친 칸 · 상태 변경 이력 저장)
 ├─ metrics.py      대시보드 지표 (상태별 건수, 유입, 분포, 사람 수정 비율, 처리 시간 p50·p95)
-├─ bts/            BTS 어댑터 — Jira Cloud · Redmine · 가짜 BTS, 설정 검사
-└─ web/            FastAPI + Jinja2 (uv run triage-serve)
+├─ bts/            BTS 어댑터 — Jira Cloud · Redmine · 가짜 BTS, 접속 함수(clients.py), 설정 검사
+├─ web/            화면 — FastAPI + Jinja2 (결과를 보여 주기만)
+└─ cli.py          실행 명령 (uv run triage-serve [--check])
 ```
 
 각 파일 맨 위 `[설계 의도]`에 "왜 이렇게 했는가"를 번호로 적어 두었습니다.

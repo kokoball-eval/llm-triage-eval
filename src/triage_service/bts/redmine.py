@@ -13,6 +13,7 @@
 
 import httpx2
 
+from triage_service.bts import clients
 from triage_service.bts.common import call, description_lines, marker_line
 from triage_service.contracts import Issue, Ticket
 
@@ -22,9 +23,7 @@ class RedmineTracker:
 
     def __init__(self, settings: dict, secrets: dict, http: httpx2.Client | None = None):
         self.s = settings
-        self.http = http or httpx2.Client(base_url=settings["base_url"], timeout=settings["timeout_sec"],
-                                         headers={"X-Redmine-API-Key": secrets["REDMINE_API_KEY"],
-                                                  "Accept": "application/json"})
+        self.http = http or clients.redmine(settings["base_url"], secrets, settings["timeout_sec"])
 
     def ticket(self, issue_id) -> Ticket:
         return Ticket(key=str(issue_id), url=f"{self.s['base_url']}/issues/{issue_id}")

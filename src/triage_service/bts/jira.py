@@ -15,6 +15,7 @@
 import httpx2
 
 from triage_eval.contracts import NO_MODULE, split_modules
+from triage_service.bts import clients
 from triage_service.bts.common import call, description_lines
 from triage_service.contracts import Issue, Ticket
 
@@ -24,9 +25,7 @@ class JiraTracker:
 
     def __init__(self, settings: dict, secrets: dict, http: httpx2.Client | None = None):
         self.s = settings
-        self.http = http or httpx2.Client(base_url=settings["base_url"], timeout=settings["timeout_sec"],
-                                         auth=(secrets["JIRA_EMAIL"], secrets["JIRA_API_TOKEN"]),
-                                         headers={"Accept": "application/json"})
+        self.http = http or clients.jira(settings["base_url"], secrets, settings["timeout_sec"])
 
     def ticket(self, key: str) -> Ticket:
         return Ticket(key=key, url=f"{self.s['base_url']}/browse/{key}")

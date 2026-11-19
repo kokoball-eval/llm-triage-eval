@@ -18,7 +18,7 @@ dependencies = [
 triage-run = "triage_eval.evaluation.runner:main"         # 평가셋 실행 → 실행 기록
 triage-eval = "triage_eval.evaluation.performance:main"   # 실행 기록 채점 → 성능표
 triage-gate = "triage_eval.evaluation.gate:main"          # 후보 3건 vs 기준선 → 회귀 판정
-triage-serve = "triage_service.web.app:main"              # 작업 페이지 (http://127.0.0.1:8000)
+triage-serve = "triage_service.cli:main"                  # 작업 페이지 (http://127.0.0.1:8000)
 
 # src/triage_eval 을 패키지로 설치한다. uv 가 편집 가능 모드로 설치하므로 코드를 고치면 바로 반영되고,
 # 폴더 깊이와 관계없이 `triage_eval.<하위 패키지>` 로 import 된다.

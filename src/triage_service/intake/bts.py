@@ -3,7 +3,7 @@
 [설계 의도]
 1. QA 가 BTS 에 써 둔 이슈의 우선순위·처리가 맞는지 다시 점검하는 용도다. 측정 때의 입력 종류 B(QA 가 쓴 BTS 이슈)와
    같은 상황이므로 track B 로 넣고, 작성자는 설정의 reporter(측정한 평가셋 값 중 하나)로 둔다.
-2. 주소·토큰은 BTS 연결 설정의 것을 쓴다(S2). 이 PC 의 설정에 없는 BTS 주소의 링크는 맡지 않는다(SSRF 방지).
+2. 주소·토큰은 BTS 연결 설정의 것을 쓰고, 접속은 등록 어댑터와 같은 함수(bts/clients.py)로 만든다. 이 PC 의 설정에 없는 BTS 주소의 링크는 맡지 않는다(SSRF 방지).
    요청은 설정의 주소에 링크에서 뽑은 키·번호만 붙여 보내므로, 링크의 나머지(쿼리 등)는 요청에 쓰이지 않는다.
 3. 링크 모양은 각 BTS 의 기본 주소 형식만 받는다: Jira <주소>/browse/<키>, Redmine <주소>/issues/<번호>. 주소에 하위
    경로가 있어도(예: https://host/redmine) 그 아래의 링크를 맡는다. 접수할 때는 하나로 맞춘 링크(canonical)를 쓴다.
@@ -15,6 +15,7 @@ from urllib.parse import urlsplit
 
 import httpx2
 
+from triage_service.bts import clients
 from triage_service.contracts import Report
 from triage_service.intake.fetching import IntakeError, get_json
 
@@ -39,9 +40,7 @@ class JiraSource:
 
     def __init__(self, base_url: str, secrets: dict, reporter: str, fetch: dict, http: httpx2.Client | None = None):
         self.base_url, self.reporter, self.max_bytes = base_url.rstrip("/"), reporter, fetch["max_bytes"]
-        self.http = http or httpx2.Client(base_url=self.base_url, timeout=fetch["timeout_sec"],
-                                          auth=(secrets["JIRA_EMAIL"], secrets["JIRA_API_TOKEN"]),
-                                          headers={"Accept": "application/json"})
+        self.http = http or clients.jira(self.base_url, secrets, fetch["timeout_sec"])
 
     def matches(self, url: str) -> bool:
         return _key(url, self.base_url, JIRA_PATH) is not None
@@ -64,9 +63,7 @@ class RedmineSource:
 
     def __init__(self, base_url: str, secrets: dict, reporter: str, fetch: dict, http: httpx2.Client | None = None):
         self.base_url, self.reporter, self.max_bytes = base_url.rstrip("/"), reporter, fetch["max_bytes"]
-        self.http = http or httpx2.Client(base_url=self.base_url, timeout=fetch["timeout_sec"],
-                                          headers={"X-Redmine-API-Key": secrets["REDMINE_API_KEY"],
-                                                   "Accept": "application/json"})
+        self.http = http or clients.redmine(self.base_url, secrets, fetch["timeout_sec"])
 
     def matches(self, url: str) -> bool:
         return _key(url, self.base_url, REDMINE_PATH) is not None

@@ -23,6 +23,9 @@
 10. 같은 원문 링크는 한 번만 접수한다(store 설계 의도 7). 가져오기 전과 접수할 때 두 번, 하나로 맞춘 링크로 확인한다.
     접수할 때 숨은 칸의 출처·링크가 그 링크를 맡는 실제 출처·맞춘 링크와 같은지도 확인한다(손으로 만든 요청 차단).
     폐기·실패한 리포트의 링크도 다시 접수하지 않는다. 같은 원문을 두 번 판단하지 않고 기존 리포트에서 다시 시도한다.
+11. 대시보드는 숫자 계산을 metrics.py 에 맡기고 보여 주기만 한다. 그래프는 서버가 HTML·CSS 막대로 그려 차트 라이브러리나
+    외부 CDN 없이 사내망에서 그대로 동작한다. 기간을 바꾸면 페이지를 다시 읽는다 — 부분 갱신(HTMX)이 필요한 곳이 없어
+    넣지 않았다(서비스_설계 §3).
 """
 
 import sys
@@ -38,7 +41,7 @@ from starlette.concurrency import run_in_threadpool
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from triage_eval.contracts import ENUMS, FIELDS, MODULES, NO_MODULE, split_modules
-from triage_service import config, flow, review
+from triage_service import config, flow, metrics, review
 from triage_service.bts import make_tracker, settings
 from triage_service.contracts import REPORTERS, TRACKS
 from triage_service import intake
@@ -104,6 +107,10 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
         on = sorted({s.name for s in sources})
         return page(request, "new.html", status_code=status_code, form=form, error=error, notice=notice,
                     existing=existing, sources_on=on, sources_off=sources_off)
+
+    @app.get("/dashboard", response_class=HTMLResponse)
+    def dashboard(request: Request, period: str = "30"):   # 설계 의도 11
+        return page(request, "dashboard.html", m=metrics.compute(store.list(), store.history(), period))
 
     @app.get("/new", response_class=HTMLResponse)
     def new(request: Request):

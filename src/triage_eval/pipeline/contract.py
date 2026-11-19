@@ -20,8 +20,8 @@ v1.3 판정 체계(docs/dataset/triage_guideline.md)에 맞춘 8필드 형식을
 [설계 의도]
 1. 줄 파서(parse_lines)는 score_format.py 것을 그대로 쓴다. "필드 한 줄"의 정의가 두 곳에 있으면
    v1과 v2 채점이 서로 다른 기준으로 갈라진다.
-2. 허용 값은 tools/dataset_v13/merge_dataset.py 의 ENUMS(정답 라벨 검증용)와 같아야 한다.
-   tests/test_contract_v2.py 가 두 정의의 일치를 확인한다.
+2. 허용 값은 여기(ENUMS_V2) 한 곳에서만 정의한다. 정답 라벨을 만들던 도구(tools/dataset_v13/)의 사본은
+   평가셋이 확정된 뒤 도구와 함께 지웠다(태그 v1.5-archive).
 3. 값 비교 전에 앞뒤 공백, 끝의 마침표, 감싼 따옴표·백틱만 정리한다. 그 이상(동의어 매핑 등)은 하지 않는다.
    "Major급" 같은 값을 Major로 고쳐 주면 형식 위반이 점수에서 사라져, 파서가 실제 운영에서
    읽지 못할 응답을 정상으로 오판하게 된다.

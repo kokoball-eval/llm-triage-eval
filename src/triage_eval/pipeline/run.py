@@ -20,7 +20,7 @@
    프롬프트를 고치면서 test 점수를 보면, test에 맞춰 프롬프트를 고치게 되어 최종 수치를 믿을 수 없게 된다.
    "실수로 test를 돌리는 일"을 사람의 주의가 아니라 실행 조건으로 막는다.
 2. 모델 호출 방식(generate + 문자열 결합, 워밍업 분리, 실패 시 다음 문항 진행)과
-   실행 조건 기록(run_config), 측정 환경 점검은 v1 run_eval.py 와 같다.
+   실행 조건 기록(run_config), 측정 환경 점검은 v1 run_eval.py(태그 v1.5-archive)와 같다.
    지문·digest·VRAM 측정 같은 공용 함수는 run_eval.py 에서 가져오되, run_eval.py 자체는 수정하지 않는다.
    v1 로그 형식이 바뀌면 v1 기준선과의 회귀 비교가 흔들리기 때문이다. v2에서 추가로 필요한
    입력 토큰 수(prompt_eval_count) 기록은 이 파일의 generate_once() 에서 한다.

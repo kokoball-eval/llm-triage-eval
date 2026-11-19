@@ -7,7 +7,6 @@
     guardrail  후처리 안전장치 — [처리] 규칙 보정
     score      정답 대조 채점
     gate       회귀 게이트 판정 (v1.3 평가셋)
-    screen     (v1.4) 후보 모델 사전 점검
     selection  (v1.4) 모델 교체 판정
     compare    (v1.4) 방법·모델 비교 판정 (사전 등록 기준)
 """

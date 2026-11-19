@@ -8,6 +8,20 @@
 
 ## [Unreleased]
 
+### 추가 (서비스 설계 — 구현 전)
+- [`docs/service_design.md`](docs/service_design.md) — 링크 접수부터 BTS 등록까지의 서비스 설계. 출처(`Source`)와 BTS(`Tracker`)를 계약으로 분리해 파일 하나 단위로 바꿔 끼우는 구조, 영역 분리, FastAPI + HTMX 화면, 안전장치, 진행 순서
+
+### 삭제 (코드 정리 A단계: 측정이 끝난 단계의 코드 — 동작 변경 없음)
+- 개인 프로젝트로 전환하며 코드에는 지금 쓰는 것만 남기고, 이력은 보고서(`report/`)·데이터(`data/`)·기준 파일(`*.toml`)과 태그 `v1.5-archive`에 둔다. 남은 코드가 import 하지 않는 것만 지웠다
+- `src/triage_eval/bench_v1/`(v1.0 벤치마크 `bench-run`·`bench-gate`·`bench-summarize`·`bench-capture-env`), `pipeline/screen.py`(`triage-screen`), `pipeline/agreement.py`(`triage-agreement`), `pipeline/judge.py`(`triage-judge`), `pipeline/quality.py`, `pyproject.toml`의 `bench-score-format`·`bench-hallucination` 명령(모듈은 채점기가 쓰므로 남김)
+- `tools/dataset_v13`·`dataset_v14`·`dataset_v15`·`label_agreement`·`judge_v15`·`quality_v15`, `scripts/legacy/`, 위 코드 전용 테스트 18개, `.claude/launch.json`의 요약 품질 채점 화면 항목
+- 의존성 `openai` 제거(v1.0 클라우드 대조군·벤치마크만 썼다)
+- `tests/test_repo_integrity.py` — 읽는 코드를 지운 기준 파일 4개(`gate_criteria.toml`·`label_agreement_v15.toml`·`judge_v15.toml`·`quality_v15.toml`)는 보고서가 가리키는 기록이라 남기고 문법 검사만 한다
+- `tests/test_pipeline_contract.py` — 지운 라벨 생성 도구의 허용 값 사본과 비교하던 시험을, v1.5 평가셋·봉인본의 정답 라벨이 출력 형식의 허용 값만 쓰는지 확인하는 시험으로 바꿨다
+- v1.5 게이트가 아직 import 하는 v1.3·v1.4 게이트·방법 비교·모델 선택·재채점 코드와 9단계 도구는 남겼다(B단계에서 게이트를 단독 코드로 정리할 때 판정 재현을 확인하고 지운다)
+- 테스트 789 → 526개 통과(지운 코드 전용 시험 263개)
+- 알려진 영향: CI의 참고용 단계 `uv run bench-gate --no-write || true`(`.github/workflows/tests.yml`)는 명령이 없어져 매번 오류를 찍는다. `|| true`라 CI 성패에는 영향이 없고, 워크플로 파일은 이 저장소 규칙상 고치지 않는다
+
 ### 추가 (v1.5 9단계: 새 최종 평가용 세트 라우팅 판정 — 결과)
 - `data/results/v15_final/history/` — 채택 구성(qwen2.5:7b·M2)의 새 60문항 실행 기록 360응답(seed 1·11·21 × 2회). seed 1은 첫 시도가 기록 파일 없이 멈춰 그 seed만 다시 실행(OBS-006)
 - `data/final_v15/fabrication_check_v15_final.json` — 날조 사람 확인(172묶음, 날조 있음 12묶음·23응답, 고친 이력 0건)

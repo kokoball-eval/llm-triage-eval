@@ -7,6 +7,7 @@ v1.5 라벨 일치율 기준 파일(label_agreement_v15.toml)은 그 파일을 �
 
 import importlib
 import json
+import re
 import subprocess
 import tomllib
 from pathlib import Path
@@ -88,3 +89,17 @@ def test_every_console_script_resolves():
     for name, target in scripts.items():
         module, func = target.split(":")
         assert callable(getattr(importlib.import_module(module), func)), name
+
+
+MD_LINK = re.compile(r"\]\(([^)\s]+)\)")
+
+
+@pytest.mark.parametrize("path", repo_files(".md"), ids=lambda p: p.relative_to(ROOT).as_posix())
+def test_markdown_links_point_to_existing_files(path):
+    """문서 안의 상대 링크는 실제 파일·폴더를 가리킨다 — 폴더를 옮기거나 지운 뒤 끊긴 링크를 막는다.
+    지운 파일은 태그 v1.5-archive 주소(http 링크)로 가리키므로 이 검사에서 빠진다."""
+    text = path.read_text(encoding="utf-8")
+    broken = [t for t in MD_LINK.findall(text)
+              if not t.startswith(("http://", "https://", "#", "mailto:"))
+              and not (path.parent / t.partition("#")[0]).exists()]
+    assert not broken, broken

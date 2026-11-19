@@ -7,12 +7,12 @@
    연결할 때 실패 지점이 하나 더 생긴다. 서비스 표식(triage-…)도 라벨로 붙여 JQL 로 찾는다. JQL 의 labels = 는
    라벨 전체가 같아야 맞으므로 triage-x-1 이 triage-x-12 에 걸리지 않는다.
 3. 본문은 Jira 문서 형식(ADF)이다. v3 는 일반 문자열 본문을 받지 않는다. 줄마다 문단 하나로 넣는다.
-4. 인증은 이메일 + API 토큰(기본 인증). 토큰은 httpx 클라이언트 안에만 있고 오류 메시지에는 나오지 않는다(common.py).
+4. 인증은 이메일 + API 토큰(기본 인증). 토큰은 httpx2 클라이언트 안에만 있고 오류 메시지에는 나오지 않는다(common.py).
 5. 한계: Jira 검색은 등록 직후 바로 반영되지 않을 수 있다(검색 색인 지연). 등록 요청이 끊긴 직후 곧바로 다시 등록하면
    방금 만들어진 티켓을 못 찾아 중복될 수 있으므로, "등록 여부 불확실" 안내대로 Jira 에서 먼저 확인한다.
 """
 
-import httpx
+import httpx2
 
 from triage_eval.contracts import NO_MODULE, split_modules
 from triage_service.bts.common import call, description_lines
@@ -22,9 +22,9 @@ from triage_service.contracts import Issue, Ticket
 class JiraTracker:
     name = "jira"
 
-    def __init__(self, settings: dict, secrets: dict, http: httpx.Client | None = None):
+    def __init__(self, settings: dict, secrets: dict, http: httpx2.Client | None = None):
         self.s = settings
-        self.http = http or httpx.Client(base_url=settings["base_url"], timeout=settings["timeout_sec"],
+        self.http = http or httpx2.Client(base_url=settings["base_url"], timeout=settings["timeout_sec"],
                                          auth=(secrets["JIRA_EMAIL"], secrets["JIRA_API_TOKEN"]),
                                          headers={"Accept": "application/json"})
 

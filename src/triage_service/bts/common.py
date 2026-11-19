@@ -9,7 +9,7 @@
    보내지 않는다. 다시 보내면 티켓이 두 개 생길 수 있다.
 """
 
-import httpx
+import httpx2
 
 from triage_eval.contracts import FIELDS
 from triage_service.contracts import TRACKS, Issue, TrackerError
@@ -34,20 +34,20 @@ def marker_line(ref: str) -> str:
     return f"트리아지 서비스 표식: {ref}"
 
 
-def call(http: httpx.Client, method: str, path: str, *, creating: bool = False, **kw) -> httpx.Response:
+def call(http: httpx2.Client, method: str, path: str, *, creating: bool = False, **kw) -> httpx2.Response:
     """설계 의도 2·3."""
     try:
         resp = http.request(method, path, **kw)
-    except httpx.TimeoutException:
+    except httpx2.TimeoutException:
         raise TrackerError(UNCERTAIN if creating else f"BTS 응답 없음 ({method} {path})")
-    except httpx.HTTPError as e:
+    except httpx2.HTTPError as e:
         raise TrackerError(f"BTS 에 연결할 수 없습니다 ({method} {path}): {type(e).__name__}")
     if resp.status_code >= 400:
         raise TrackerError(f"BTS 가 거절했습니다 ({method} {path} → {resp.status_code}): {brief(resp)}")
     return resp
 
 
-def brief(resp: httpx.Response) -> str:
+def brief(resp: httpx2.Response) -> str:
     """BTS 가 돌려준 오류 문구만 짧게 (Jira: errorMessages·errors, Redmine: errors)."""
     try:
         body = resp.json()

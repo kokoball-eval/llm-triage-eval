@@ -1,7 +1,7 @@
 """BTS 연결 시험 — 설정 검사, 어댑터 계약(가짜·Jira·Redmine), 중복 등록 방지, 검토로 되돌리기, 외부 요청 차단.
 
 실제 서버는 부르지 않는다. Jira·Redmine 은 tests/bts_responses/ 의 응답(출처는 각 파일의 "source")을 돌려주는
-httpx 가짜 전송(MockTransport)으로 시험한다.
+httpx2 가짜 전송(MockTransport)으로 시험한다.
 """
 
 import json
@@ -9,7 +9,7 @@ import sqlite3
 import tomllib
 from pathlib import Path
 
-import httpx
+import httpx2
 import pytest
 from fastapi.testclient import TestClient
 
@@ -112,18 +112,18 @@ class Recorder:
     def __init__(self, name: str, found: bool = False, fail: dict | None = None):
         self.name, self.found, self.fail = name, found, fail or {}
         self.data = json.loads((RESPONSES / f"{name}.json").read_text(encoding="utf-8"))
-        self.requests: list[httpx.Request] = []
+        self.requests: list[httpx2.Request] = []
         self.created: dict | None = None   # 이 시험에서 보낸 등록 요청 본문
 
-    def __call__(self, request: httpx.Request) -> httpx.Response:
+    def __call__(self, request: httpx2.Request) -> httpx2.Response:
         self.requests.append(request)
         routes = {(m, p.format(key=self.data["ticket_key"])): v for (m, p), v in ROUTES[self.name].items()}
         what = routes[(request.method, request.url.path)]
         mode = self.fail.get(what)
         if mode == "timeout":
-            raise httpx.ReadTimeout("timed out", request=request)
+            raise httpx2.ReadTimeout("timed out", request=request)
         if mode == "connect":
-            raise httpx.ConnectError("refused", request=request)
+            raise httpx2.ConnectError("refused", request=request)
         if what == "create" and mode is None:
             self.created = json.loads(request.content)
         key = "rejected" if mode == "reject" else ("find_hit" if self.found else "find_none") if what == "find" else what
@@ -131,7 +131,7 @@ class Recorder:
         if key == "find_hit" and self.name == "redmine" and self.created:
             # 녹화한 검색 응답의 모양 그대로, 설명만 이 시험에서 등록한 내용으로 (Redmine 은 설명의 표식 줄을 비교한다)
             body["issues"][0]["description"] = self.created["issue"]["description"].replace("\n", "\r\n")
-        return httpx.Response(self.data[key]["status"], json=body)
+        return httpx2.Response(self.data[key]["status"], json=body)
 
 
 def adapter(name: str, store: Store, **kw):
@@ -139,7 +139,7 @@ def adapter(name: str, store: Store, **kw):
         return FakeTracker(store.path), None
     rec = Recorder(name, **kw)
     s = {**MAPPING[name], "base_url": rec.data["base_url"]}
-    http = httpx.Client(base_url=s["base_url"], transport=httpx.MockTransport(rec),
+    http = httpx2.Client(base_url=s["base_url"], transport=httpx2.MockTransport(rec),
                         headers={"Authorization": "Bearer SECRET-TOKEN-123"})
     return make_tracker({"use": name, "settings": s, "secrets": SECRETS[name]}, store, http), rec
 

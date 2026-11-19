@@ -9,6 +9,12 @@
 
 ## [Unreleased]
 
+### 변경 (의존성: httpx → httpx2)
+- BTS 어댑터(`bts/common.py`·`jira.py`·`redmine.py`)와 시험(`tests/test_bts.py`)의 HTTP 라이브러리를 `httpx`에서 `httpx2`(2.16.2 이상)로 바꿨다. httpx2는 HTTPX를 이어받아 Pydantic이 배포하는 패키지로, Starlette 시험 도구(`starlette.testclient`)가 먼저 찾는 라이브러리다. 바꾸기 전에 배포 주체·출처 링크·배포 증명(provenance)을 확인했다
+- 효과: 화면 시험마다 나오던 경고(`Using httpx with starlette.testclient is deprecated`)가 사라졌다
+- `httpx`는 Ollama 클라이언트(`ollama`)가 쓰므로 간접 의존성으로 남는다. 이 저장소 코드는 직접 쓰지 않는다
+- 확인: 전체 시험 254개 통과(경고 없음), 실제 Jira Cloud·Redmine에 조회 요청(표식 검색·상태)이 httpx2로 정상 동작. 동작 변경 없음
+
 ### 추가 (서비스 S2: Jira Cloud·Redmine 연결)
 - BTS 어댑터 `bts/jira.py`(Jira Cloud REST API v3, 이메일 + API 토큰, 본문은 Jira 문서 형식, 모듈·표식은 라벨)와 `bts/redmine.py`(REST JSON, API 키 머리글, 8칸·원문·표식은 설명에). 공통 부분은 `bts/common.py`(티켓 본문, HTTP 오류를 토큰 없는 메시지로 정리, 등록 요청이 끊기면 "등록 여부 불확실"로 알리고 다시 보내지 않음)
 - 설정 파일 `설정/bts_매핑.toml`과 검사 `bts/settings.py` — 사용할 BTS, 주소, 프로젝트, 우선순위 대응. 모르는 키·빠진 키·우선순위 대응 누락·토큰 없음이면 서버가 시작하지 않는다. 실제 사이트 값은 `설정/bts_매핑.local.toml`, 토큰은 `.env`(둘 다 git 제외)

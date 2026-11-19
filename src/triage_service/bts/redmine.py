@@ -8,10 +8,10 @@
    "~"는 포함 검색이라 triage-x-1 로 찾으면 triage-x-12 도 걸린다. 그래서 돌려받은 티켓마다 설명의 표식 줄이 정확히
    같은지 다시 확인하고, 같은 것만 같은 리포트의 티켓으로 본다. 필터(f[])를 주면 Redmine 은 상태 조건을 붙이지 않아
    닫힌 티켓도 함께 찾는다.
-4. 인증은 API 키 머리글(X-Redmine-API-Key). 키는 httpx 클라이언트 안에만 있고 오류 메시지에는 나오지 않는다(common.py).
+4. 인증은 API 키 머리글(X-Redmine-API-Key). 키는 httpx2 클라이언트 안에만 있고 오류 메시지에는 나오지 않는다(common.py).
 """
 
-import httpx
+import httpx2
 
 from triage_service.bts.common import call, description_lines, marker_line
 from triage_service.contracts import Issue, Ticket
@@ -20,9 +20,9 @@ from triage_service.contracts import Issue, Ticket
 class RedmineTracker:
     name = "redmine"
 
-    def __init__(self, settings: dict, secrets: dict, http: httpx.Client | None = None):
+    def __init__(self, settings: dict, secrets: dict, http: httpx2.Client | None = None):
         self.s = settings
-        self.http = http or httpx.Client(base_url=settings["base_url"], timeout=settings["timeout_sec"],
+        self.http = http or httpx2.Client(base_url=settings["base_url"], timeout=settings["timeout_sec"],
                                          headers={"X-Redmine-API-Key": secrets["REDMINE_API_KEY"],
                                                   "Accept": "application/json"})
 

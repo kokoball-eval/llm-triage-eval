@@ -7,7 +7,7 @@ from triage_service.store import Store
 
 
 def make_tracker(loaded: dict, store: Store, http=None):
-    """loaded: settings.load() 결과. http 는 시험에서 녹화 응답을 돌려주는 httpx 클라이언트를 넣을 때 쓴다."""
+    """loaded: settings.load() 결과. http 는 시험에서 녹화 응답을 돌려주는 httpx2 클라이언트를 넣을 때 쓴다."""
     use = loaded["use"]
     if use == "fake":
         return FakeTracker(store.path)

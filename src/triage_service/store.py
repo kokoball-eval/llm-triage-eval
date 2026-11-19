@@ -12,6 +12,9 @@
    번호 티켓을 이 리포트의 티켓으로 잘못 연결한다. DB 고유값은 처음 만들 때 한 번 정해 meta 표에 둔다.
 6. 앞 단계에서 만든 DB 는 시작할 때 빠진 칸(failed_step)을 붙인다. 리포트 기록을 지우지 않고 이어 쓴다.
 7. 같은 원문 링크는 한 번만 접수한다. 같은 제보를 두 사람이 따로 넣어 BTS 에 티켓이 둘 생기는 일을 접수 단계에서 막는다.
+8. 상태가 바뀔 때마다 같은 트랜잭션 안에서 이력(transitions: 시각, 이전 → 다음 상태)을 한 줄 남긴다. 접수 시각과 마지막
+   변경 시각만으로는 "검토 대기에 얼마나 머물렀는지" 같은 처리 시간을 셀 수 없기 때문이다(대시보드, metrics.py).
+   허용되지 않은 전이는 되돌리므로 이력도 남지 않는다. 이 표가 생기기 전에 접수한 리포트는 이력이 없다.
 """
 
 import json
@@ -44,6 +47,12 @@ CREATE TABLE IF NOT EXISTS reports (
     failed_step TEXT
 );
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS transitions (
+    report_id INTEGER NOT NULL,
+    at TEXT NOT NULL,
+    src TEXT,
+    dst TEXT NOT NULL
+);
 """
 FAILED_STEPS = ("트리아지", "등록")
 JSON_COLUMNS = ("result", "pipeline", "routing", "model_fields", "final_fields", "edits")
@@ -83,9 +92,17 @@ class Store:
     def add(self, report: Report) -> int:
         t = now()
         with connect(self.path) as c:
-            cur = c.execute("INSERT INTO reports (created_at, updated_at, state, report) VALUES (?, ?, ?, ?)",
-                            (t, t, flow.RECEIVED, json.dumps(asdict(report), ensure_ascii=False)))
-            return cur.lastrowid
+            c.execute("BEGIN IMMEDIATE")
+            try:
+                rid = c.execute("INSERT INTO reports (created_at, updated_at, state, report) VALUES (?, ?, ?, ?)",
+                                (t, t, flow.RECEIVED, json.dumps(asdict(report), ensure_ascii=False))).lastrowid
+                c.execute("INSERT INTO transitions (report_id, at, src, dst) VALUES (?, ?, NULL, ?)",
+                          (rid, t, flow.RECEIVED))
+                c.execute("COMMIT")
+            except BaseException:
+                c.execute("ROLLBACK")
+                raise
+            return rid
 
     def get(self, rid: int) -> dict | None:
         with connect(self.path) as c:
@@ -101,6 +118,14 @@ class Store:
                             (url,)).fetchone()
         return _decode(row) if row else None
 
+    def history(self) -> dict[int, list[tuple[str, str | None, str]]]:
+        """리포트 번호 → [(시각, 이전 상태, 다음 상태)] 시간순 (설계 의도 8)."""
+        out: dict[int, list] = {}
+        with connect(self.path) as c:
+            for r in c.execute("SELECT report_id, at, src, dst FROM transitions ORDER BY rowid"):
+                out.setdefault(r["report_id"], []).append((r["at"], r["src"], r["dst"]))
+        return out
+
     def list(self, state: str | None = None) -> list[dict]:
         sql, args = "SELECT * FROM reports", ()
         if state:
@@ -115,6 +140,7 @@ class Store:
             raise ValueError(f"모르는 칸: {sorted(unknown)}")
         values = {k: json.dumps(v, ensure_ascii=False) if k in JSON_COLUMNS else v for k, v in columns.items()}
         sets = ", ".join(f"{k} = ?" for k in ["state", "updated_at", *values])
+        t = now()
         with connect(self.path) as c:
             c.execute("BEGIN IMMEDIATE")
             try:
@@ -122,7 +148,9 @@ class Store:
                 if row is None:
                     raise KeyError(rid)
                 flow.check(row["state"], dst)
-                c.execute(f"UPDATE reports SET {sets} WHERE id = ?", (dst, now(), *values.values(), rid))
+                c.execute(f"UPDATE reports SET {sets} WHERE id = ?", (dst, t, *values.values(), rid))
+                c.execute("INSERT INTO transitions (report_id, at, src, dst) VALUES (?, ?, ?, ?)",
+                          (rid, t, row["state"], dst))   # 설계 의도 8
                 c.execute("COMMIT")
             except BaseException:
                 c.execute("ROLLBACK")

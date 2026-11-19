@@ -2,9 +2,19 @@
 {% block title %}새 리포트{% endblock %}
 {% block body %}
 <h1>새 리포트</h1>
-<p class="muted">리포트 본문을 붙여 넣으면 트리아지한 뒤 검토 대기로 넘어갑니다. 입력 칸은 측정한 프롬프트가 받는 칸과 같습니다.</p>
-{% if error %}<div class="box error">{{ error }}</div>{% endif %}
+<form method="post" action="/fetch" class="box">
+  <label for="link" style="margin-top:0">링크로 가져오기</label>
+  <input type="text" id="link" name="link" value="{{ form.link or '' }}" placeholder="Jira·Redmine 이슈, 게시판 글, 디스코드 메시지 링크">
+  <p class="muted">켜진 출처: {{ sources_on | join(", ") if sources_on else "없음" }}{% for k, why in sources_off.items() %} · {{ k }} 꺼짐({{ why }}){% endfor %}</p>
+  <div class="row" style="margin-top:8px"><button type="submit">가져오기</button></div>
+</form>
+{% if error %}<div class="box error">{{ error }}{% if existing %} — <a href="/reports/{{ existing.id }}">#{{ existing.id }} {{ existing.report.title }}</a> ({{ existing.state }}){% endif %}</div>{% endif %}
+{% if notice %}<div class="box">{{ notice }}{% if form.url %}<br><span class="muted">원문: {{ form.url }}</span>{% endif %}</div>{% endif %}
+<p class="muted">본문을 붙여 넣거나 위에서 가져온 내용을 확인한 뒤 [트리아지]를 누르면 검토 대기로 넘어갑니다. 입력 칸은 측정한 프롬프트가 받는 칸과 같습니다(제목 {{ TITLE_MAX }}자, 본문 {{ BODY_MAX }}자까지).</p>
 <form method="post" action="/reports">
+  <input type="hidden" name="source" value="{{ form.source or 'paste' }}">
+  <input type="hidden" name="url" value="{{ form.url or '' }}">
+  <input type="hidden" name="link" value="{{ form.link or '' }}">
   <label>입력 종류</label>
   <div class="checks">
     {% for k, name in TRACKS.items() %}

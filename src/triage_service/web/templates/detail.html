@@ -30,7 +30,7 @@
 <h2>원문</h2>
 <div class="box">
   <p class="muted">{{ TRACKS[r.track] }} ·
-    {% if r.track == "A" %}{{ r.board }} · {{ r.posted_at }}{% else %}{{ r.reporter }}{% endif %} · 출처 {{ r.source }}</p>
+    {% if r.track == "A" %}{{ r.board }} · {{ r.posted_at }}{% else %}{{ r.reporter }}{% endif %} · 출처 {{ r.source }}{% if r.url %} · <a href="{{ r.url }}" target="_blank" rel="noopener">원문 링크</a>{% endif %}</p>
   <pre>{{ r.body }}</pre>
   {% if r.update_note or r.known_issues %}
   <p class="muted">업데이트 공지: {{ r.update_note or "없음" }}<br>기존 이슈: {{ r.known_issues | join(" / ") or "없음" }}</p>

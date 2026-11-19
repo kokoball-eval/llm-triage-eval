@@ -313,7 +313,7 @@ def test_tracker_failure_keeps_reviewed_values(store):
 @pytest.fixture
 def web(store, tracker):
     worker = Worker(store, client_factory=FakeClient)
-    with TestClient(create_app(store, worker, tracker, start_worker=False, allowed_hosts=("testserver",))) as c:
+    with TestClient(create_app(store, worker, tracker, start_worker=False, allowed_hosts=("testserver",), sources=[])) as c:
         c.worker = worker
         yield c
 

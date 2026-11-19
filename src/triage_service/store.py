@@ -11,6 +11,7 @@
 5. BTS 티켓에 남기는 서비스 표식은 "triage-<DB 고유값>-<번호>"다. 번호만 쓰면 DB 를 새로 만들었을 때 예전 DB 의 같은
    번호 티켓을 이 리포트의 티켓으로 잘못 연결한다. DB 고유값은 처음 만들 때 한 번 정해 meta 표에 둔다.
 6. 앞 단계에서 만든 DB 는 시작할 때 빠진 칸(failed_step)을 붙인다. 리포트 기록을 지우지 않고 이어 쓴다.
+7. 같은 원문 링크는 한 번만 접수한다. 같은 제보를 두 사람이 따로 넣어 BTS 에 티켓이 둘 생기는 일을 접수 단계에서 막는다.
 """
 
 import json
@@ -89,6 +90,15 @@ class Store:
     def get(self, rid: int) -> dict | None:
         with connect(self.path) as c:
             row = c.execute("SELECT * FROM reports WHERE id = ?", (rid,)).fetchone()
+        return _decode(row) if row else None
+
+    def find_by_url(self, url: str) -> dict | None:
+        """같은 원문 링크로 이미 접수한 리포트 (설계 의도 7)."""
+        if not url:
+            return None
+        with connect(self.path) as c:
+            row = c.execute("SELECT * FROM reports WHERE json_extract(report, '$.url') = ? ORDER BY id LIMIT 1",
+                            (url,)).fetchone()
         return _decode(row) if row else None
 
     def list(self, state: str | None = None) -> list[dict]:

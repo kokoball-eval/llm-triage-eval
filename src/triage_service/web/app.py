@@ -18,6 +18,11 @@
    로그인 쿠키를 쓰지 않으므로 토큰 방식보다 이 확인이 단순하고 충분하다. Host 머리글도 127.0.0.1·localhost 만 받는다
    (외부 도메인이 이 PC 를 가리키게 만드는 DNS 리바인딩 차단, config 설계 의도 7).
 8. BTS 설정이 잘못되면 서버를 시작하지 않고 문제를 출력한다(bts/settings.py).
+9. 링크로 가져온 리포트는 바로 트리아지하지 않고 미리보기(새 리포트와 같은 입력 칸)에 채워 보여 준다. 사람이 가져온
+   제목·본문을 확인하고 고친 뒤 [트리아지]를 눌러야 접수된다. 가져오기에 실패하면 이유를 보여 주고 붙여넣기로 이어 간다.
+10. 같은 원문 링크는 한 번만 접수한다(store 설계 의도 7). 가져오기 전과 접수할 때 두 번, 하나로 맞춘 링크로 확인한다.
+    접수할 때 숨은 칸의 출처·링크가 그 링크를 맡는 실제 출처·맞춘 링크와 같은지도 확인한다(손으로 만든 요청 차단).
+    폐기·실패한 리포트의 링크도 다시 접수하지 않는다. 같은 원문을 두 번 판단하지 않고 기존 리포트에서 다시 시도한다.
 """
 
 import sys
@@ -36,21 +41,28 @@ from triage_eval.contracts import ENUMS, FIELDS, MODULES, NO_MODULE, split_modul
 from triage_service import config, flow, review
 from triage_service.bts import make_tracker, settings
 from triage_service.contracts import REPORTERS, TRACKS
+from triage_service import intake
+from triage_service.intake import settings as intake_settings
 from triage_service.intake.paste import InputError, from_form
 from triage_service.store import Store
 from triage_service.worker import Worker
 
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
-templates.env.globals.update(split_modules=split_modules, FIELDS=FIELDS, ENUMS=ENUMS, MODULES=MODULES, NO_MODULE=NO_MODULE, TRACKS=TRACKS, REPORTERS=REPORTERS,
+templates.env.globals.update(TITLE_MAX=config.TITLE_MAX, BODY_MAX=config.BODY_MAX, split_modules=split_modules, FIELDS=FIELDS, ENUMS=ENUMS, MODULES=MODULES, NO_MODULE=NO_MODULE, TRACKS=TRACKS, REPORTERS=REPORTERS,
                              STATES=flow.STATES, PENDING=flow.PENDING, REVIEW=flow.REVIEW, FAILED=flow.FAILED,
                              REFRESH=config.STATUS_REFRESH_SEC)
 
 
 def create_app(store: Store | None = None, worker: Worker | None = None, tracker=None,
-               start_worker: bool = True, allowed_hosts=config.ALLOWED_HOSTS) -> FastAPI:
+               start_worker: bool = True, allowed_hosts=config.ALLOWED_HOSTS,
+               sources: list | None = None, sources_off: dict | None = None) -> FastAPI:
     store = store or Store(config.DB_PATH)
     worker = worker or Worker(store)
     tracker = tracker or make_tracker(settings.load(config.mapping_path()), store)
+    if sources is None:
+        loaded = intake_settings.load(config.sources_path(), config.mapping_path())
+        sources, sources_off = intake.make_sources(loaded), loaded["off"]
+    sources_off = sources_off or {}
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -88,17 +100,50 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
         counts = {s: len(store.list(s)) for s in flow.STATES}
         return page(request, "list.html", reports=store.list(state), state=state, counts=counts)
 
+    def new_page(request: Request, form: dict, status_code: int = 200, error=None, notice=None, existing=None):
+        on = sorted({s.name for s in sources})
+        return page(request, "new.html", status_code=status_code, form=form, error=error, notice=notice,
+                    existing=existing, sources_on=on, sources_off=sources_off)
+
     @app.get("/new", response_class=HTMLResponse)
     def new(request: Request):
-        return page(request, "new.html", form={"track": "A"}, error=None)
+        return new_page(request, {"track": "A"})
+
+    @app.post("/fetch")
+    async def fetch(request: Request):   # 설계 의도 9
+        form = await request.form()
+        url = (form.get("link") if isinstance(form.get("link"), str) else "").strip()
+        try:
+            source, canonical = intake.identify(sources, url)
+            existing = store.find_by_url(canonical)
+            if existing:   # 설계 의도 10
+                return new_page(request, {"track": "A", "link": url}, 409, error="이미 접수한 링크입니다",
+                                existing=existing)
+            report = await run_in_threadpool(source.fetch, canonical)
+        except intake.IntakeError as e:
+            return new_page(request, {"track": "A", "link": url}, 422, error=f"가져오지 못했습니다: {e}")
+        prefill = {"track": report.track, "title": report.title, "body": report.body, "board": report.board,
+                   "posted_at": report.posted_at, "reporter": report.reporter, "source": report.source,
+                   "url": report.url, "link": url}
+        notice = f"{source.name} 에서 가져왔습니다. 내용을 확인하고 고친 뒤 [트리아지]를 누르세요."
+        if len(report.title) > config.TITLE_MAX or len(report.body) > config.BODY_MAX:
+            notice += f" 제목은 {config.TITLE_MAX}자, 본문은 {config.BODY_MAX}자까지 받습니다(측정한 리포트 길이 범위). 요점만 남겨 줄여 주세요."
+        return new_page(request, prefill, notice=notice)
 
     @app.post("/reports")
     async def create(request: Request):
         form = dict(await request.form())
         try:
             report = from_form(form)
-        except InputError as e:
-            return page(request, "new.html", status_code=422, form=form, error=str(e))
+            if report.url:   # 숨은 칸의 출처·링크가 실제 출처와 맞는지 — 맞춘 링크가 아니면 받지 않는다
+                source, canonical = intake.identify(sources, report.url)
+                if (source.name, canonical) != (report.source, report.url):
+                    raise InputError("출처 정보가 맞지 않습니다. 링크로 다시 가져와 주세요")
+        except (InputError, intake.IntakeError) as e:
+            return new_page(request, form, 422, error=str(e))
+        existing = store.find_by_url(report.url)
+        if existing:   # 설계 의도 10
+            return new_page(request, form, 409, error="이미 접수한 링크입니다", existing=existing)
         rid = store.add(report)
         worker.submit(rid)
         return go(rid)
@@ -190,6 +235,11 @@ def main(argv: list[str] | None = None) -> int:
     except settings.SettingsError as e:
         print(e)
         return 2
+    try:
+        loaded_sources = intake_settings.load(config.sources_path(), config.mapping_path())
+    except settings.SettingsError as e:
+        print(e)
+        return 2
     store = Store(config.DB_PATH)
     if "--check" in argv:
         try:
@@ -198,9 +248,13 @@ def main(argv: list[str] | None = None) -> int:
             print(f"BTS 연결 실패 ({loaded['use']}): {e}")
             return 1
         print(f"BTS 연결 확인 ({loaded['use']}): 설정·토큰·검색 권한 정상")
+        on = [s.name for s in intake.make_sources(loaded_sources)]
+        print(f"링크 출처: 켜짐 {on or '없음'}" + "".join(f" · {k} 꺼짐({v})" for k, v in loaded_sources["off"].items()))
         return 0
     print(f"작업 페이지: http://{config.HOST}:{config.PORT}  · BTS: {loaded['use']} ({config.mapping_path().name})  (종료: Ctrl+C)")
-    uvicorn.run(create_app(store, tracker=make_tracker(loaded, store)), host=config.HOST, port=config.PORT)
+    app = create_app(store, tracker=make_tracker(loaded, store), sources=intake.make_sources(loaded_sources),
+                     sources_off=loaded_sources["off"])
+    uvicorn.run(app, host=config.HOST, port=config.PORT)
     return 0
 
 

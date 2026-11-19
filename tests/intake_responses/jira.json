@@ -1,0 +1,214 @@
+{
+  "source": "실제 jira 이슈 조회 응답 녹화 (2026-11-19). 인증 정보 없음, 사이트 주소는 your-site 로 바꿈",
+  "link_path": "/browse/KAN-5",
+  "status": 200,
+  "body": {
+    "expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations",
+    "id": "10014",
+    "self": "https://your-site.atlassian.net/rest/api/3/issue/10014",
+    "key": "KAN-5",
+    "fields": {
+      "summary": "패키지 구매 후 보상 팝업 표기와 실제 지급량이 다름",
+      "description": {
+        "type": "doc",
+        "version": 1,
+        "content": [
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "[요약]: 패키지 구매 후 보상 팝업 표기와 실제 지급량이 다름"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "[분류]: 결함"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "[모듈]: 결제·재화"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "[우선순위]: Major"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "[재현 정보]: 충분"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "[발생 빈도]: 항상"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "[처리]: 개발 배정"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "[누락 정보 및 권장 조치]: 없음"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "── 원문 (QA 이슈 · 내부 QA · 출처 paste) ──"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "제목: [상점] 패키지 구매 후 보상 팝업의 수량 표기가 실제 지급량과 다름"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "[테스트 환경]"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "PC / 빌드 2.7.0.1102 (QA 빌드)"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "[재현율]"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "5/5 (100%)"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "[이슈 설명]"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "주간 패키지 구매 후 보상 팝업에 '골드 x1,000'으로 표시되나 실제 지급량은 골드 100개임. 우편함·가방 모두 100개만 들어옴."
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "[기대 결과]"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "팝업 표기와 실제 지급량이 같다."
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "[실제 결과]"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "팝업은 1,000, 실제 지급은 100."
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "트리아지 서비스 표식: triage-452317e4-2"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "expect": {
+    "title": "패키지 구매 후 보상 팝업 표기와 실제 지급량이 다름",
+    "body": "[요약]: 패키지 구매 후 보상 팝업 표기와 실제 지급량이 다름\n[분류]: 결함\n[모듈]: 결제·재화\n[우선순위]: Major\n[재현 정보]: 충분\n[발생 빈도]: 항상\n[처리]: 개발 배정\n[누락 정보 및 권장 조치]: 없음\n── 원문 (QA 이슈 · 내부 QA · 출처 paste) ──\n제목: [상점] 패키지 구매 후 보상 팝업의 수량 표기가 실제 지급량과 다름\n[테스트 환경]\nPC / 빌드 2.7.0.1102 (QA 빌드)\n[재현율]\n5/5 (100%)\n[이슈 설명]\n주간 패키지 구매 후 보상 팝업에 '골드 x1,000'으로 표시되나 실제 지급량은 골드 100개임. 우편함·가방 모두 100개만 들어옴.\n[기대 결과]\n팝업 표기와 실제 지급량이 같다.\n[실제 결과]\n팝업은 1,000, 실제 지급은 100.\n트리아지 서비스 표식: triage-452317e4-2",
+    "track": "B"
+  }
+}

@@ -315,7 +315,7 @@ def test_s1_database_is_upgraded(tmp_path):
 def web(store):
     tracker = FlakyTracker(store.path)
     worker = Worker(store, client_factory=FakeClient)
-    app = create_app(store, worker, tracker, start_worker=False, allowed_hosts=("testserver", "127.0.0.1"))
+    app = create_app(store, worker, tracker, start_worker=False, allowed_hosts=("testserver", "127.0.0.1"), sources=[])
     with TestClient(app) as c:
         c.tracker = tracker
         yield c

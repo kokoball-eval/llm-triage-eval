@@ -27,6 +27,8 @@ PORT = 8000
 ALLOWED_HOSTS = ("127.0.0.1", "localhost")
 MAPPING_PATH = ROOT / "설정" / "bts_매핑.toml"              # 저장소에 올리는 예시 설정
 LOCAL_MAPPING_PATH = ROOT / "설정" / "bts_매핑.local.toml"  # 실제 사이트 설정 (git 제외)
+SOURCES_PATH = ROOT / "설정" / "출처.toml"                  # 링크 출처 예시 설정
+LOCAL_SOURCES_PATH = ROOT / "설정" / "출처.local.toml"      # 실제 출처 설정 (git 제외)
 ENV_PATH = ROOT / ".env"
 # 붙여넣기 입력 길이 상한 (설계 의도 4). 측정한 평가셋에서 가장 긴 제목은 57자, 본문은 438자다.
 TITLE_MAX = 100
@@ -51,3 +53,8 @@ def mapping_path() -> Path:
     if os.environ.get("TRIAGE_BTS_MAPPING"):
         return Path(os.environ["TRIAGE_BTS_MAPPING"])
     return LOCAL_MAPPING_PATH if LOCAL_MAPPING_PATH.is_file() else MAPPING_PATH
+
+
+def sources_path() -> Path:
+    """링크 출처 설정 — .local 파일이 있으면 그것을, 없으면 저장소 파일을 읽는다 (설계 의도 5와 같은 방식)."""
+    return LOCAL_SOURCES_PATH if LOCAL_SOURCES_PATH.is_file() else SOURCES_PATH

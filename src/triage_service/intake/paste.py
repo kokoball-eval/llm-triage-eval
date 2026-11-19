@@ -7,12 +7,16 @@
 3. 본문은 고치지 않는다. 지시문처럼 보이는 문장이 들어 있어도 그대로 입력 데이터로 넘기고, 결과는 형식 규칙과
    안전장치를 통과해야 등록된다(문서/서비스_설계.md §4 프롬프트 인젝션).
 4. 줄바꿈은 LF 로 맞춘다. 브라우저가 보내는 CRLF 가 그대로 들어가면 측정 때 한 번도 없던 문자(CR)가 모델 입력에 섞인다.
+5. 링크로 가져온 리포트도 미리보기 화면(같은 입력 칸)을 거쳐 이 함수로 들어온다. 출처 이름과 원문 링크는 숨은 칸으로
+   함께 오고, 여기서 형식을 확인한다. 같은 검사(길이 상한 등)를 붙여넣기와 똑같이 거친다.
 """
 
 from datetime import datetime
 
 from triage_service.config import BODY_MAX, TITLE_MAX
 from triage_service.contracts import REPORTERS, TRACKS, Report
+
+SOURCE_NAMES = ("paste", "jira", "redmine", "board", "discord")
 
 
 class InputError(ValueError):
@@ -36,7 +40,12 @@ def from_form(form: dict) -> Report:
     if len(title) > TITLE_MAX or len(body) > BODY_MAX:
         raise InputError(f"제목은 {TITLE_MAX}자, 본문은 {BODY_MAX}자까지 넣을 수 있습니다")
     known = tuple(k.strip() for k in text("known_issues").splitlines() if k.strip())
-    common = {"track": track, "title": title, "body": body, "update_note": text("update_note"), "known_issues": known}
+    source, url = text("source") or "paste", text("url")
+    if source not in SOURCE_NAMES or (source == "paste") != (not url) or \
+            (url and not url.lower().startswith(("http://", "https://"))):
+        raise InputError("출처 정보가 맞지 않습니다. 링크로 다시 가져오거나 본문을 붙여 넣어 주세요")
+    common = {"track": track, "title": title, "body": body, "update_note": text("update_note"), "known_issues": known,
+              "source": source, "url": url}
     if track == "A":
         return Report(**common, board=text("board") or "미기재",
                       posted_at=text("posted_at") or datetime.now().strftime("%Y-%m-%d %H:%M"))

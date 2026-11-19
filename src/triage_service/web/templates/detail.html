@@ -4,7 +4,8 @@
 {% block title %}#{{ rec.id }} {{ r.title }}{% endblock %}
 {% block body %}
 <p><span class="state {{ rec.state }}">{{ rec.state }}</span>
-   {% if rec.ticket_key %} · 티켓 <a href="{{ rec.ticket_url }}">{{ rec.ticket_key }}</a>{% endif %}
+   {% if rec.ticket_key %} · 티켓 <a href="{{ rec.ticket_url }}" target="_blank" rel="noopener">{{ rec.ticket_key }}</a>
+     · <a href="/reports/{{ rec.id }}/bts-status">BTS 상태 확인</a>{% if bts_status %} <strong>{{ bts_status }}</strong>{% endif %}{% endif %}
    <span class="muted"> · 접수 {{ rec.created_at }} · 마지막 변경 {{ rec.updated_at }}</span></p>
 <h1>#{{ rec.id }} {{ r.title }}</h1>
 
@@ -17,7 +18,12 @@
 {% if rec.state == FAILED %}
 <div class="box error">
   <strong>실패</strong> — {{ rec.error }}
-  <form method="post" action="/reports/{{ rec.id }}/retry" class="row"><button type="submit">다시 시도 (처음부터 트리아지)</button></form>
+  <div class="row">
+    {% if rec.failed_step == "등록" %}
+    <form method="post" action="/reports/{{ rec.id }}/back-to-review"><button class="primary" type="submit">검토로 되돌리기 (확정한 8칸 유지)</button></form>
+    {% endif %}
+    <form method="post" action="/reports/{{ rec.id }}/retry"><button type="submit">다시 시도 (처음부터 트리아지)</button></form>
+  </div>
 </div>
 {% endif %}
 

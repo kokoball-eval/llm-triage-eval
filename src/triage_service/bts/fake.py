@@ -24,12 +24,20 @@ class FakeTracker:
                       "created_at TEXT NOT NULL, status TEXT NOT NULL, issue TEXT NOT NULL)")
 
     def create(self, issue: Issue) -> Ticket:
-        payload = json.dumps({"report": asdict(issue.report), "fields": issue.fields}, ensure_ascii=False)
+        payload = json.dumps({"report": asdict(issue.report), "fields": issue.fields, "ref": issue.ref}, ensure_ascii=False)
         with connect(self.path) as c:
             n = c.execute("INSERT INTO fake_tickets (created_at, status, issue) VALUES (?, ?, ?)",
                           (now(), "신규", payload)).lastrowid
         key = f"FAKE-{n}"
         return Ticket(key=key, url=f"/fake-bts/{key}")
+
+    def find(self, ref: str) -> Ticket | None:
+        if not ref:
+            return None
+        with connect(self.path) as c:
+            rows = c.execute("SELECT n, issue FROM fake_tickets ORDER BY n").fetchall()
+        n = next((r["n"] for r in rows if json.loads(r["issue"]).get("ref") == ref), None)
+        return Ticket(key=f"FAKE-{n}", url=f"/fake-bts/FAKE-{n}") if n else None
 
     def status(self, key: str) -> str:
         return self.get(key)["status"]

@@ -42,9 +42,10 @@ class Report:
 
 @dataclass(frozen=True)
 class Issue:
-    """사람이 확인한 8칸 — BTS 에 등록할 내용."""
+    """사람이 확인한 8칸 — BTS 에 등록할 내용. ref 는 서비스 표식(같은 리포트의 티켓을 다시 찾는 데 쓴다)."""
     report: Report
     fields: dict[str, str]
+    ref: str = ""
 
 
 @dataclass(frozen=True)
@@ -63,8 +64,10 @@ class Source(Protocol):
 
 
 class Tracker(Protocol):
-    """BTS 어댑터 계약 — 등록하고 티켓을 돌려준다. 실패는 예외로 알린다(대체 티켓을 만들지 않는다)."""
+    """BTS 어댑터 계약 — 등록하고 티켓을 돌려준다. 실패는 TrackerError 로 알린다(대체 티켓을 만들지 않는다)."""
     name: str
+
+    def find(self, ref: str) -> Ticket | None: ...
 
     def create(self, issue: Issue) -> Ticket: ...
 

@@ -8,10 +8,14 @@
 3. 트리아지 결과 전체(시도 기록·안전장치 적용 내역)와 처리 구성 지문(pipeline: 프롬프트 버전·지문·방법 등)을 함께 남긴다.
    나중에 구성이 바뀌어도 어떤 구성이 낸 판정인지 알 수 있다.
 4. 호출마다 연결을 새로 연다. 작업자 스레드와 웹 요청이 연결을 공유하지 않아 스레드 문제가 없고, 건수가 적어 비용도 작다.
+5. BTS 티켓에 남기는 서비스 표식은 "triage-<DB 고유값>-<번호>"다. 번호만 쓰면 DB 를 새로 만들었을 때 예전 DB 의 같은
+   번호 티켓을 이 리포트의 티켓으로 잘못 연결한다. DB 고유값은 처음 만들 때 한 번 정해 meta 표에 둔다.
+6. 앞 단계에서 만든 DB 는 시작할 때 빠진 칸(failed_step)을 붙인다. 리포트 기록을 지우지 않고 이어 쓴다.
 """
 
 import json
 import sqlite3
+import uuid
 from contextlib import contextmanager
 from dataclasses import asdict
 from datetime import datetime
@@ -35,9 +39,12 @@ CREATE TABLE IF NOT EXISTS reports (
     edits TEXT,
     ticket_key TEXT,
     ticket_url TEXT,
-    error TEXT
+    error TEXT,
+    failed_step TEXT
 );
+CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 """
+FAILED_STEPS = ("트리아지", "등록")
 JSON_COLUMNS = ("result", "pipeline", "routing", "model_fields", "final_fields", "edits")
 
 
@@ -62,6 +69,15 @@ class Store:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with connect(self.path) as c:
             c.executescript(SCHEMA)
+            columns = {r["name"] for r in c.execute("PRAGMA table_info(reports)")}
+            if "failed_step" not in columns:   # S1 에서 만든 DB (설계 의도 6)
+                c.execute("ALTER TABLE reports ADD COLUMN failed_step TEXT")
+            c.execute("INSERT OR IGNORE INTO meta (key, value) VALUES ('instance', ?)", (uuid.uuid4().hex[:8],))
+            self.instance = c.execute("SELECT value FROM meta WHERE key = 'instance'").fetchone()["value"]
+
+    def ref(self, rid: int) -> str:
+        """BTS 티켓에 남길 서비스 표식 (설계 의도 5)."""
+        return f"triage-{self.instance}-{rid}"
 
     def add(self, report: Report) -> int:
         t = now()
@@ -84,7 +100,7 @@ class Store:
 
     def move(self, rid: int, dst: str, **columns) -> dict:
         """상태를 dst 로 바꾸고 columns 를 함께 쓴다. 허용되지 않은 전이면 flow.FlowError (설계 의도 1)."""
-        unknown = set(columns) - set(JSON_COLUMNS) - {"ticket_key", "ticket_url", "error"}
+        unknown = set(columns) - set(JSON_COLUMNS) - {"ticket_key", "ticket_url", "error", "failed_step"}
         if unknown:
             raise ValueError(f"모르는 칸: {sorted(unknown)}")
         values = {k: json.dumps(v, ensure_ascii=False) if k in JSON_COLUMNS else v for k, v in columns.items()}

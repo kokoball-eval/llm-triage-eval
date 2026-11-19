@@ -53,7 +53,7 @@ class Worker:
         """설계 의도 4 — 처리 중에 멈춘 건을 실패로 바꾼다."""
         for state in flow.PENDING:
             for rec in self.store.list(state):
-                self.store.move(rec["id"], flow.FAILED, error=INTERRUPTED)
+                self.store.move(rec["id"], flow.FAILED, failed_step="트리아지", error=INTERRUPTED)
 
     def process(self, rid: int) -> None:
         """한 건을 트리아지하고 검토 대기로 보낸다. 실패하면 실패 상태로 남긴다 (설계 의도 2·3)."""
@@ -63,7 +63,8 @@ class Worker:
                 self.client = self.client_factory()
             result = triage(self.client, rec["report"].to_item())
             if not result.get("success"):
-                self.store.move(rid, flow.FAILED, result=result, error=f"모델 호출 실패: {result.get('error_message')}")
+                self.store.move(rid, flow.FAILED, result=result, failed_step="트리아지",
+                                error=f"모델 호출 실패: {result.get('error_message')}")
                 return
             text = result["response_text"]
             self.store.move(rid, flow.REVIEW, result={**result, "format": check_format(text)}, pipeline=run_config(),
@@ -71,4 +72,4 @@ class Worker:
         except Exception as e:   # 설계 의도 3
             current = self.store.get(rid)
             if current and current["state"] in flow.PENDING:
-                self.store.move(rid, flow.FAILED, error=f"트리아지 중 오류: {e}")
+                self.store.move(rid, flow.FAILED, failed_step="트리아지", error=f"트리아지 중 오류: {e}")

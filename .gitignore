@@ -24,3 +24,5 @@ CLAUDE.local.md
 dist/
 # 서비스 DB (리포트 원문에 유저 정보가 들어갈 수 있어 올리지 않음)
 데이터/서비스/
+# 실제 BTS 사이트 설정 (주소·프로젝트 — 토큰은 .env)
+설정/bts_매핑.local.toml

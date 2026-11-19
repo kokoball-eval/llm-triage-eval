@@ -9,6 +9,18 @@
 
 ## [Unreleased]
 
+### 추가 (서비스 S2: Jira Cloud·Redmine 연결)
+- BTS 어댑터 `bts/jira.py`(Jira Cloud REST API v3, 이메일 + API 토큰, 본문은 Jira 문서 형식, 모듈·표식은 라벨)와 `bts/redmine.py`(REST JSON, API 키 머리글, 8칸·원문·표식은 설명에). 공통 부분은 `bts/common.py`(티켓 본문, HTTP 오류를 토큰 없는 메시지로 정리, 등록 요청이 끊기면 "등록 여부 불확실"로 알리고 다시 보내지 않음)
+- 설정 파일 `설정/bts_매핑.toml`과 검사 `bts/settings.py` — 사용할 BTS, 주소, 프로젝트, 우선순위 대응. 모르는 키·빠진 키·우선순위 대응 누락·토큰 없음이면 서버가 시작하지 않는다. 실제 사이트 값은 `설정/bts_매핑.local.toml`, 토큰은 `.env`(둘 다 git 제외)
+- 중복 등록 방지 — 티켓마다 서비스 표식(`triage-<DB 고유값>-<번호>`)을 남기고, 등록 전에 표식으로 기존 티켓을 먼저 찾는다. DB 고유값은 DB를 새로 만들었을 때 예전 티켓에 잘못 연결되지 않게 한다
+- 등록 실패 건 처리 — 실패 단계(트리아지·등록)를 기록하고, 등록 단계 실패만 [검토로 되돌리기]로 확정한 8칸을 유지한 채 다시 등록한다(상태 흐름에 실패 → 검토 대기 추가). S1 DB는 시작할 때 칸을 붙여 이어 쓴다
+- 외부 요청 차단 — 상태를 바꾸는 요청은 Origin(없으면 Referer)이 같은 서버일 때만, Host는 127.0.0.1·localhost만 받는다
+- 화면 — [BTS 상태 확인](BTS의 현재 상태 이름), [검토로 되돌리기]. 명령 `uv run triage-serve --check`(서버 없이 설정·토큰·검색 권한 확인)
+- 시험 `tests/test_bts.py` 33개 — 설정 검사, 세 어댑터(가짜·Jira·Redmine) 공통 계약 시험(실제 서버 녹화 응답 `tests/bts_responses/`), 중복 등록 방지, 검토로 되돌리기, S1 DB 이어 쓰기, 외부 요청 차단
+- 실제 서버 확인 — Redmine 6.0(로컬 Docker, 영문 기본 데이터)과 Jira Cloud 무료 사이트(팀 관리형 공간, 이슈 유형 "작업")에 작업 페이지에서 실제 모델이 트리아지한 리포트를 등록하고 상태를 읽었다
+- 의존성 — 새 패키지는 없다. HTTP 호출에 이미 쓰던 `httpx`를 개발 의존성에서 실행 의존성으로 옮겼다
+- 독립 검토 반영 — Redmine 표식 검색이 포함 검색이라 `triage-x-1`이 `triage-x-12`에 걸리던 결함(돌려받은 티켓의 표식 줄을 정확히 비교하도록 수정, 하위 계층 시험 추가), 설정 검사 빈틈(섹션 형식, 빈 값, timeout 0 이하, 라벨 공백), Jira 모듈 라벨 분리, Jira 검색 색인 지연을 한계로 기록
+
 ### 추가 (서비스 S1: 작업 페이지 뼈대 — 본문 붙여넣기 → 트리아지 → 사람 검토 → 가짜 BTS 등록)
 - 새 패키지 `src/triage_service/`와 명령 `uv run triage-serve`(http://127.0.0.1:8000). 트리아지는 측정한 구성(`triage_eval.triage.pipeline.triage`)을 그대로 호출하고, 서비스는 접수·상태 흐름·검토·등록·화면만 맡는다
   - `contracts.py`(Report·Issue·Ticket, 출처·BTS 계약 Source·Tracker), `config.py`, `intake/paste.py`, `worker.py`(작업자 하나가 차례대로 처리), `routing.py`(모든 건 사람 검토 — 9단계 라우팅 미채택), `flow.py`(허용 전이 표), `review.py`(사람이 고친 8칸을 R1~R7로 검사해 등록·폐기·다시 시도), `store.py`(SQLite, 모델 8칸·확정 8칸·고친 칸·처리 구성 지문 저장), `bts/fake.py`(가짜 BTS), `web/`(FastAPI + Jinja2)

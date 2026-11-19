@@ -1,10 +1,8 @@
 # LLM 트리아지 평가 체계
 
-> **LLM에게 1차 트리아지(분류·우선순위·처리 경로 결정)를 맡겨도 되는지, 평가와 회귀 테스트로 계속 검증하는 평가 체계**
+> **로컬 LLM이 버그 리포트를 1차 트리아지(분류·우선순위·처리 경로 결정)하는 파이프라인과, 그 판단을 믿을 수 있는지 숫자로 검증하는 평가 체계**
 >
-> 검증 사례: 게임 라이브 서비스의 버그 리포트 (v1.0~v1.4). 판정 기준과 평가셋은 게임 개발 QA 실무 기준에서 출발했습니다.
->
-> 로컬 LLM 트리아지 파이프라인(Ollama) + 이를 검증하는 현업 기반 평가셋 · 회귀 게이트 · 환각 자동 탐지 · pytest/GitHub Actions CI
+> 검증 사례: 가상 게임 "Aether Raid" 라이브 서비스의 버그 리포트. 판정 기준과 평가셋은 게임 개발 QA 실무 기준에서 출발했습니다.
 
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Package Manager: uv](https://img.shields.io/badge/uv-Fast%20Packaging-DE5FE9?logo=astral)](https://github.com/astral-sh/uv)
@@ -13,746 +11,202 @@
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
 > **30초 요약**
-> * **무엇을 하나**: 게임 라이브 서비스의 버그 리포트를 사례로, 로컬 LLM(Ollama)이 1차 트리아지(분류·우선순위·처리 경로 결정)하고, 그 판단을 현업 기반 평가셋·회귀 게이트·사전 등록 비교로 버전마다 검증합니다
-> * **현재 구성 (v1.4)**: `qwen2.5:7b` + 판정 기준서 프롬프트 + Critical 체크리스트, 그리고 형식과 절차를 코드로 강제하는 단계(형식 재요청·폐기 확인·후처리 안전장치)
-> * **최신 결과 (처음 보는 25건 × 2회)**: 날조·결함 폐기·사람 확인 누락·형식 위반 **0건**, Critical 누락 2/10. 체크리스트의 효과는 이 세트에서 확인되지 않았고, 그 결과도 그대로 기록했습니다
-> * **핵심 설계**: 모델은 판단하고, 형식과 절차는 코드가 강제합니다. 채택 기준은 측정 전에 커밋하고, 최종 평가용 세트는 한 번만 실행합니다
-> * **설계 기준**: 어떤 실수가 더 위험한지는 게임 개발 QA 실무 기준(장애 등급·회귀 판정·릴리스 판정 기준)을, 실험 절차는 KANT AI 부트캠프 Private LLM 트랙에서 학습한 평가 설계 원칙을 따랐습니다
-> * **다음 (v1.5)**: 확신할 수 없는 건을 시스템이 골라 사람 검토 큐로 보내는 라우팅 — 목표는 위험 건 누락 0건
+> * **무엇을 하나**: 버그 리포트 한 건을 받아 8칸 티켓(요약·분류·모듈·우선순위·재현 정보·발생 빈도·처리·누락 정보 및 권장 조치)으로 만듭니다. 모델은 8GB VRAM 노트북에서 도는 `qwen2.5:7b`(Ollama)입니다
+> * **구조**: 모델은 판단하고, 형식과 절차는 코드가 강제합니다 — 프롬프트 → 칸 재요청 → Critical 체크리스트 → 폐기 확인 → 후처리 안전장치
+> * **성능 (처음 보는 60건 × 6회)**: 결함 폐기 **0건**, 형식 완전 준수 99.7%, 처리 정답 61.1%, Critical 미상신 19/96, 사람이 확인한 날조 23응답
+> * **사용 전제**: Critical 누락과 날조가 남아 있어 **사람이 모든 응답을 확인합니다.** 사람 확인을 줄이는 장치(LLM 채점관, 자동 등록 라우팅)는 측정했지만 사전 기준을 넘지 못해 채택하지 않았습니다
+> * **검증 방식**: 기준은 측정 전에 커밋하고, 최종 평가용 세트는 한 번만 실행하고, 바뀐 구성은 seed 3개 회귀 게이트로 판정합니다
 
 ## 목차
 
-| 절 | 내용 | 이런 분께 |
-| :--- | :--- | :--- |
-| [1. 문제와 접근](#1-문제와-접근) | 왜 로컬 LLM인가, 어떻게 키워 왔나 | 배경이 궁금한 분 |
-| [2. 현재 구성과 결과 (v1.4)](#2-현재-구성과-결과-v14) | 파이프라인 단계, 버전별 핵심 결과, 최신 측정 | **결론만 필요한 분** |
-| [3. 출발점 — v1.0 모델 선정](#3-출발점--v10-모델-선정) | 후보 선정 기준, Qwen 선정 근거, 벤치마크 표, 환각 사례 원문 | v1.0 수치를 보실 분 |
-| [4. 실행 및 재현](#4-실행-및-재현) | 설치, 실행 명령, 수치 재검증, 테스트 | 직접 돌려보실 분 |
-| [5. 저장소 구조와 상세 보고서](#5-저장소-구조와-상세-보고서) | 보고서 목록, 디렉터리 구성 | 깊이 파보실 분 |
-| [6. 안전장치와 한계](#6-안전장치와-한계) | v1.0 가드레일 설계가 현재 어떻게 구현됐는지, 남은 한계 | 실무 적용을 검토할 분 |
-| [7. 고도화 로드맵](#7-고도화-로드맵) | 무인 트리아지 파이프라인까지의 최종 목표·지표·버전별 계획 | 앞으로의 방향이 궁금한 분 |
+| 절 | 내용 |
+| :--- | :--- |
+| [1. 문제와 접근](#1-문제와-접근) | 왜 로컬 LLM인가 |
+| [2. 구조](#2-구조) | 리포트 한 건이 거치는 단계, 코드와 폴더 |
+| [3. 성능](#3-성능) | 처음 보는 리포트에서 얼마나 잘 하는가, 남은 한계 |
+| [4. 사용법](#4-사용법) | 설치, 실행, 채점, 회귀 판정, 테스트 |
+| [5. 어떻게 믿을 수 있게 했나](#5-어떻게-믿을-수-있게-했나) | 사전 등록, 봉인 세트, 회귀 게이트, 재현 시험 |
+| [6. 설계 기준](#6-설계-기준) | QA 실무와 부트캠프에서 가져온 것 |
+| [7. 다음 단계](#7-다음-단계) | 서비스 구현, v1.6 후보 |
+| [8. 지난 과정](#8-지난-과정) | v1.0~v1.5 측정 요약과 원본 위치 |
 
 ---
 
 ## 1. 문제와 접근
 
-1차 트리아지는 들어오는 건을 분류하고, 우선순위를 매기고, 어디로 보낼지 정하는 일입니다. 버그 리포트든 장애 알람이든 핵심 위험은 같습니다. 위험한 건을 놓치면 장애로 이어지고, 모든 건을 사람에게 올리면 검토가 병목이 됩니다. 이 저장소는 이 일을 LLM에게 맡길 때 **그 판단을 어떻게 검증할지**를 다루며, 첫 검증 사례로 게임 라이브 서비스의 버그 리포트를 택했습니다.
+1차 트리아지는 들어오는 건을 분류하고, 우선순위를 매기고, 어디로 보낼지 정하는 일입니다. 위험한 건을 놓치면 장애로 이어지고, 모든 건을 사람에게 올리면 검토가 병목이 됩니다.
 
-**첫 사례 — 게임 라이브 서비스의 버그 리포트**
+라이브 서비스 게임에는 하루 수백~수천 건의 리포트가 들어오고, 대다수는 짧거나 모호하거나 여러 결함이 섞여 있습니다. 이 일을 LLM에 맡기려 할 때 제약이 하나 있습니다. **리포트에는 유저 계정 정보와 미출시 콘텐츠가 들어 있어 외부 API로 보낼 수 없습니다.** 그래서 사내에서 도는 로컬 모델이어야 하고, 담당자 노트북(8GB VRAM)에서 돌 수 있어야 합니다.
 
-라이브 서비스 게임에 인입되는 버그 리포트는 하루 수백~수천 건입니다.
+모델은 `qwen2.5:7b`(Q4_K_M)입니다. v1.0에서 `llama3.1:8b`와 비교했을 때 Llama는 짧은 리포트에 없는 결함과 PC 사양을 지어냈고, v1.4에서 후보 8개를 다시 걸렀을 때도 사전에 정한 교체 규칙을 만족한 모델이 없었습니다.
 
-대다수가 단문·모호한 표현이거나 복합 결함이 섞여 있어, 담당 QA 엔지니어의 1차 분류(Triage) 단계에서 병목이 생깁니다.
-
-이 작업을 LLM에 맡기려 할 때 걸리는 제약이 하나 있습니다.
-**게임 버그 리포트에는 유저 계정 정보와 미출시 콘텐츠가 포함되어 외부 API로 내보낼 수 없습니다.**
-이에 따라서 사내 폐쇄망에서 동작하는 로컬 모델이어야 합니다.
-
-본 프로젝트는 가상 게임 "**Aether Raid**"의 리포트 인입 파이프라인을 상정합니다.
-v1.0에서 8GB VRAM 노트북에서 구동 가능한 경량 로컬 LLM 2종을 비교해 모델을 고른 뒤([3절](#3-출발점--v10-모델-선정)), 버전마다 질문 하나를 정해 트리아지 파이프라인과 이를 검증하는 평가 체계를 함께 키워 왔습니다([7절](#7-고도화-로드맵)).
-
-* **수행 형태**: 1인 단독 프로젝트 (환경 구성, 평가셋 설계, 평가 자동화, 정량/정성 평가 전 과정)
-* **실행 환경**: Windows 11 (AMD64), NVIDIA GeForce RTX 5060 Laptop GPU (VRAM 8,151 MiB), 시스템 RAM 31.4 GB, Ollama 0.34.0, Python 3.12.13 (`uv`) — 실측 근거: [`report/environment.md`](report/environment.md)
+* **수행 형태**: 1인 프로젝트 (평가셋 설계, 파이프라인, 평가 자동화, 정량·정성 평가)
+* **실행 환경**: Windows 11, NVIDIA GeForce RTX 5060 Laptop GPU (VRAM 8,151 MiB), RAM 31.4 GB, Ollama, Python 3.12 (`uv`)
 
 ---
 
-## 2. 현재 구성과 결과 (v1.4)
+## 2. 구조
 
-### 1) 파이프라인 — 모델은 판단하고, 형식과 절차는 코드가 강제한다
-
-리포트 1건은 아래 단계를 거쳐 8칸 티켓(요약·분류·모듈·우선순위·재현 정보·발생 빈도·처리·누락 정보 및 권장 조치)이 됩니다.
+### 1) 리포트 한 건이 거치는 단계
 
 | 단계 | 담당 | 하는 일 | 쉽게 말하면 |
 | :--- | :--- | :--- | :--- |
 | 1. 1차 판정 | 모델 | 판정 기준서를 요약한 프롬프트(v2.3)로 8칸을 채움 | 담당자의 첫 판정 |
-| 2. 형식 재요청 | 코드 | 허용 값 밖인 칸만 JSON 스키마(enum·pattern)로 1회 다시 받음 | 양식이 틀린 칸만 반려 |
-| 3. Critical 체크리스트 (v1.4) | 모델 답 + 코드 판정 | 결함으로 분류된 건에 예/아니오 질문 6개("유료 결제에 피해가 있는가" 등)를 묻고, "예"가 있으면 코드가 Critical로 올림. 내리지는 않음 | 심각도 체크리스트 |
+| 2. 칸 재요청 | 코드 | 허용 값 밖인 칸만 JSON 스키마(enum·pattern)로 한 번 다시 받음 | 양식이 틀린 칸만 반려 |
+| 3. Critical 체크리스트 | 모델 답 + 코드 판정 | 결함으로 분류된 건에 체크리스트 질문 6개("유료 결제에 피해가 있는가" 등, 대부분 예/아니오)를 묻고, 해당 답이 있으면 코드가 Critical로 올림. 내리지는 않음 | 심각도 체크리스트 |
 | 4. 폐기 확인 | 모델 답 + 코드 판정 | 폐기하려는 건에 이상 현상 제보인지 한 번 더 물음 | 닫기 전 재확인 |
 | 5. 후처리 안전장치 | 코드 | `[처리]` 규칙 보정 — Critical은 리드 QA 사인을 거치는 `긴급 사인 요청`으로 보냄 (정답 라벨은 보지 않음) | 등록 전 절차 점검 |
 
-실행 기록에는 모델 원본 응답과 각 단계의 개입 내역이 함께 남습니다. 그래서 모델의 실력과 코드 보정의 효과를 따로 셀 수 있습니다.
+실행 기록에는 모델 원본 응답과 단계별 개입 내역이 함께 남습니다. 그래서 모델의 실력과 코드 보정의 효과를 따로 셀 수 있습니다.
 
-### 2) 버전별 핵심 결과
+### 2) 코드
 
-| 버전 | 답하려는 질문 | 결과 |
-| :--- | :--- | :--- |
-| v1.0 | 어떤 모델이 이 업무에 맞는가? | `qwen2.5:7b` 선정. `llama3.1:8b`는 단문 리포트에서 없는 결함과 PC 사양을 날조해 탈락 ([3절](#3-출발점--v10-모델-선정)) |
-| v1.1~v1.2 | 바꿨을 때 나빠졌는가? 평가 도구는 믿을 수 있는가? 날조를 사람 없이 잡을 수 있는가? | 회귀 게이트, pytest·GitHub Actions CI, 날조 자동 탐지, seed 고정 모드 |
-| v1.3 | 평가셋이 실제 현업 인입을 대표하는가? | 현업 기반 평가셋 63건. 처음 보는 31건에서 코드로 강제한 형식·절차 위반은 0건이었지만, Critical 누락은 6/18로 모델 판단이 개발용 문항에 맞춰져 있었음 |
-| v1.4 | 판단 기준을 프롬프트 문장이 아닌 방식으로 전달하면 Critical 누락을 줄일 수 있는가? | Critical 체크리스트(M2) 채택 — 개발용 Critical 누락 25 → 17. 판정 예시(M1)는 예시를 베껴 탈락, `gemma4:12b`는 회귀 기준 미통과로 모델 유지 |
+```
+src/triage_eval/
+├─ config.py       모델·생성 옵션·파일 위치 (경로는 이 파일에서만 정한다)
+├─ contracts.py    8칸 출력 형식·허용 값·형식 규칙 R1~R7
+├─ llm.py          Ollama 호출 입구
+├─ triage/         리포트 한 건 처리 — triage() 하나로 위 5단계를 끝까지
+│   prompt.py · checklist.py · guardrail.py · pipeline.py
+└─ evaluation/     평가
+    runner.py (triage-run) · performance.py (triage-eval) · gate.py (triage-gate)
+    score.py (채점) · hallucination.py (규칙 기반 날조 탐지) · environment.py (측정 환경 점검)
+```
 
-### 3) 최신 측정 — v1.4 최종 평가용 25건 × 2회
+각 파일 맨 위 `[설계 의도]`에 "왜 이렇게 했는가"를 번호로 적어 두었습니다.
 
-방법과 모델을 고르는 동안 한 번도 실행하지 않은 25건으로, 채택한 구성을 한 번만 측정했습니다.
+### 3) 폴더
 
-| 지표 | 결과 | 쉽게 말하면 |
-| :--- | :---: | :--- |
-| 날조 · 결함 폐기 · 사람 확인 누락 · 형식 위반 | **0건** | 지어내지 않고, 결함 제보를 버리지 않고, BTS가 읽을 수 있는 형식을 지킴 |
-| 형식 STRICT | 100% | |
-| Critical 누락 | 2 / 10 | Critical 5문항 중 1문항을 2회 모두 놓침 |
-| 처리 정답률 | 72% | |
-| 평균 응답 시간 | 2.29초 | |
-
-> 체크리스트가 이 25건에서 바꾼 판정은 0건이어서, **M2의 효과는 최종 세트에서 확인되지 않았습니다.** 개발용 개선 폭은 실제보다 크게 나올 수 있다는 사전 계획의 경고가 확인된 결과로 그대로 기록했습니다. 전문: [`report/eval_v14_final.md`](report/eval_v14_final.md)
-
-### 4) 설계 기준
-
-| 출처 | 적용한 곳 |
+| 폴더 | 내용 |
 | :--- | :--- |
-| **게임 개발 QA 실무** | Critical 누락을 가장 무거운 실수로 두고 과잉 상신과 따로 셈(장애 등급), 신입 트리아지 교육 방식(판정 사례·체크리스트), 기존 통과 케이스의 실패를 회귀로 판정, 채택 기준을 측정 전에 합의(릴리스 판정 기준), 평가셋 시나리오와 정답 라벨 |
-| **KANT AI 부트캠프 Private LLM 트랙** | 통제 실험·비교 쌍 분리, Test 세트 봉인과 데이터 누수 방지, 결과를 보기 전에 선택 규칙 고정, few-shot·체크리스트 중심 출력, JSON Schema 구조화 출력과 1회 복구, fail loud와 환경 재현성 |
-
-> 원칙별 출처(과정 기록 링크)와 적용 위치는 [`report/eval_v14_final.md`](report/eval_v14_final.md) 9절에 있습니다.
+| `기준/` | 회귀 게이트 합격 기준 (`회귀_게이트_기준.toml`) |
+| `데이터/평가셋/` | 개발용 세트(입력·정답표 — 개발용 63건과 이미 사용한 v1.4 최종 평가용 25건), 새 최종 평가용 60건(한 번 사용함), 시험용 v1.3 세트 |
+| `데이터/실행기록/` | 게이트 기준선, 게이트 재현용 기록, 최종 평가용 실행 360응답 |
+| `데이터/기준결과/` | 구조 정리 전 도구가 낸 판정·채점 결과 (재현 시험의 정답) |
+| `문서/` | [판정 기준서 v1.5](문서/판정_기준서.md), [결함 기록](문서/결함_기록.md), [기준서 v1.6 후보](문서/기준서_v1.6_후보.md), [서비스 설계](문서/서비스_설계.md) |
+| `보고서/` | [v1.0~v1.5 측정 요약](보고서/v1.5까지_요약.md) |
+| `tests/` | 모델 없이 도는 시험 (CI) |
 
 ---
 
-## 3. 출발점 — v1.0 모델 선정
+## 3. 성능
 
-v1.0(KANT 부트캠프 1차 프로젝트)에서 이 업무에 맞는 로컬 모델을 고른 과정과 결과입니다. 이 절의 수치는 동결된 v1.0 벤치마크(`src/triage_eval/bench_v1/`, 지금은 태그 `v1.5-archive`)에서 나왔고, 이후 버전에서 바꾸지 않습니다. 재현 방법은 [4절](#4-실행-및-재현)에 있습니다.
+방법과 모델을 고르는 동안 한 번도 실행하지 않은 **최종 평가용 60건**을 seed 1·11·21 × 2회로 한 번만 실행했습니다. 개발용 63건(여러 번 보며 구성을 고른 문항)은 비교용입니다. **실제 성능에 가까운 쪽은 최종 평가용입니다.**
 
-> **v1.0 요약**
-> * **선정**: `qwen2.5:7b` (Qwen2.5-7B-Instruct, Q4_K_M) — 품질 81점 / 포맷 엄격 준수 100% / 평균 1.390초
-> * **탈락**: `llama3.1:8b` (77점) — 속도와 단서 보존은 앞섰으나, 단문 리포트에서 **없는 결함과 PC 사양을 날조**
-> * **판단 기준**: 속도가 아니라 **데이터 무결성**. 소극적 응답은 룰로 고치지만 환각은 버그 트래커를 오염시킵니다
-> * **검증 방식**: 로컬 40회 + Cloud 대조 5회, 총 45회. 수치는 모두 스크립트가 원본 로그에서 재계산합니다
-> * 상용 클라우드 모델(`gpt-5.6-luna`)은 로컬 모델의 성능 상한선을 재는 기준선으로만 사용했습니다
+| 지표 | 최종 평가용 60건 × 6회 (360응답) | 개발용 63건 × 6회 (378응답) |
+| :--- | ---: | ---: |
+| 형식 완전 준수 | 99.7% | 100.0% |
+| 처리 정답 | 61.1% | 73.3% |
+| 분류 정답 | 73.1% | 65.3% |
+| 우선순위 정답 | 61.9% | 62.7% |
+| 모듈 정답 | 73.6% | 75.9% |
+| **X-1 Critical 미상신** (놓친 응답 / Critical 응답) | **19 / 96** | 14 / 102 |
+| X-2 결함을 폐기 | 0 / 264 | 0 / 258 |
+| X-3 사람 확인 없이 종결 (판단이 갈리는 경계 건을 확정 처리) | 15 / 60 | 14 / 60 |
+| 과잉 상신 (정답 처리가 긴급 사인 요청이 아닌 건을 긴급 사인 요청) | 20 | 28 |
+| 날조 — 규칙 탐지기 | 0 | 0 |
+| 날조 — 사람 확인 (검토자 1명) | 23응답 | (측정 안 함) |
+| 평균 응답 시간 | 2.44초 | 2.27초 |
 
-### 1) 후보 모델 선정 기준
+> 위 표는 저장소의 실행 기록을 `uv run triage-eval`로 다시 채점한 값이고, 시험(`tests/test_runner.py`)이 최종 평가용 채점 결과를 고정합니다. 위험 건은 비율이 아니라 **놓친 건수**로 셉니다.
 
-먼저 Use Case가 요구하는 **4가지 필수 조건**을 정리하고, 이를 기준으로 후보군을 좁혔습니다.
+### 남은 한계
 
-| 조건 | 왜 필요한가 |
-| :--- | :--- |
-| **로컬 구동 가능** | 유저 계정·미출시 콘텐츠가 포함되어 외부 API 전송이 불가. Ollama로 내려받아 폐쇄망에서 실행되어야 함 |
-| **8GB VRAM 단일 GPU 적재** | 별도 추론 서버 없이 QA 담당자 노트북에서 운용. Q4 양자화 기준 7B~8B급이 상한 |
-| **한국어 처리** | 인입되는 버그 리포트 원문이 한국어. 지시를 따르는 Instruct 튜닝 버전이어야 함 |
-| **상업적 이용 가능성** | 사내 서비스 적용이 전제이므로 라이선스 조건을 사전 확인 |
-
-조건을 만족하는 여러 후보 가운데 **성격이 대비되는 2종**을 최종 선정했습니다.
-
-* **Llama-3.1-8B-Instruct** — 오픈 LLM에서 가장 널리 쓰이는 기준선. "일반적으로 무난한 선택"이 이 Use Case에서도 통하는지 확인하는 대조군
-* **Qwen2.5-7B-Instruct** — 한국어를 포함한 다국어 지원과 Apache 2.0 라이선스를 앞세운 대안. 기준선을 넘어설 수 있는지 검증하는 도전군
-
-두 모델은 파라미터 규모(8.03B vs 7.61B)와 양자화(`Q4_K_M`)가 비슷합니다. **모델 자체의 차이 외 변수를 통제한 상태로 비교**할 수 있다는 점도 이 조합을 고른 이유입니다.
-
-> **선정 과정과 한계** — 후보군은 요구 조건을 정리한 뒤 LLM 도구의 제안을 출발점으로 추렸고, 최종 2종의 제원·라이선스·컨텍스트는 Model Card 원문으로 직접 확인했습니다. 다만 조건을 만족할 수 있는 다른 모델까지 폭넓게 탐색하지는 않았습니다. 5일 일정 안에서 후보 수보다 비교의 깊이를 우선했고, 후보 범위 확대는 후속 과제로 남깁니다.
->
-> **(v1.4) 후보 범위 확대 결과** — 업무 요구사항(한국어, 구조화 출력, VRAM 8GB, 상업 라이선스)에서 조건을 다시 정해 후보 8개를 거르고, 6개를 사전 점검한 뒤 2개(gemma4:12b, granite4:tiny-h)를 현재 모델과 seed 3개로 비교했습니다. 측정 전에 정한 교체 규칙을 만족한 후보가 없어 **qwen2.5:7b를 유지**했습니다. gemma4:12b는 Critical 누락(8→3)과 우선순위 정답(119→158)이 앞섰지만, 처리 단계 회귀와 경계 건 확정 처리가 모든 seed의 같은 문항에서 반복됐습니다 (→ [`report/eval_v14_model_selection.md`](report/eval_v14_model_selection.md)).
-
-### 2) 결론 — 선정 모델과 근거
-
-#### 🏆 Qwen2.5-7B-Instruct (`qwen2.5:7b`, Q4_K_M)
-
-| # | 의사결정 축 | 근거 |
-| :---: | :--- | :--- |
-| 1 | **데이터 무결성** (결정적 요인) | 단문 리포트에서 없는 결함과 기기 사양을 지어내지 않아 버그 트래커 오염을 차단 |
-| 2 | **규격 준수율 100%** | 가드레일 주입 후 20회 전수에서 사족 없이 5개 필드만 출력 → Jira 파싱 에러 0건 |
-| 3 | **처리 효율과 자원 마진** | 평균 응답 1.390초로 Llama보다 23% 빠름. VRAM도 499 MiB 적게 점유 |
-| 4 | **비즈니스 라이선스** | Apache 2.0 — 사내 폐쇄망 상업 배포와 수정·재배포에 제약 없음 |
-
-> 3번 VRAM 차이는 본 장비에서 당락 조건이 아니었습니다.
-> 두 모델 모두 시스템 RAM 오프로드 없이 100% GPU에 적재됐습니다. 컨텍스트 확장·저사양 이식 시의 여유분으로 해석해야 합니다.
-
-#### 📌 의사결정 여정 (1~4일차)
-
-| 일차 | 한 일 | 결과 |
-| :---: | :--- | :--- |
-| **1일차** | 단일 호출 스모크 테스트 | Llama가 고유명사 보존·스키마 준수에서 우세 → *"서두 사족만 가드레일로 잡으면 Llama가 승자"* 가설 수립 |
-| **2일차** | 40회 본 실험 | 엣지 케이스(Q08 단문)에서 **Llama의 치명적 환각 발견** → 채택 모델을 Qwen2.5로 선회 |
-| **3일차** | Cloud 대조 검증 | 7B 로컬 모델의 한계 2가지 실측 → 3대 프로덕션 가드레일의 기술적 당위성 확보 |
-| **4일차** | 가드레일 재실험 | Qwen2.5에 Few-Shot 1건 주입 → 단문 대응 소극성 교정을 기계 채점 4항목 전수 통과로 검증 |
-
-**최종 판단**: *"소극성은 룰과 퓨샷으로 잡을 수 있지만, 날조는 파이프라인을 무너뜨린다."*
-
-> 선정 사유와 배포 계획의 전문은 [`report/final_selection.md`](report/final_selection.md)에 있습니다.
-
-### 3) 벤치마크 결과
-
-#### 1) 비교 대상 모델 제원
-
-| 구분 | Qwen2.5-7B-Instruct (최종 선정) | Llama-3.1-8B-Instruct (비교 대조) |
-| :--- | :--- | :--- |
-| **Ollama 태그** | `qwen2.5:7b` | `llama3.1:8b` |
-| **파라미터 / 양자화** | 7.61B / `Q4_K_M` | 8.03B / `Q4_K_M` |
-| **디스크 용량** | 4.68 GB (4.36 GiB) | 4.92 GB (4.58 GiB) |
-| **네이티브 Context** | 32,768 토큰 (YaRN 적용 시 131,072) | 128,000 토큰 |
-| **한국어 공식 지원** | 지원 | 공식 지원 8개 언어에 **미포함** |
-| **라이선스** | **Apache 2.0** — 상업적 이용·수정·배포 제약 없음 | **Llama 3.1 Community** — MAU 7억 초과 시 별도 계약, 명명 규칙 조건 |
-
-> 실측 context(4,096) · VRAM/시스템 RAM 구분 · 생성 하이퍼파라미터를 포함한 전체 제원표는
-> [`report/model_comparison.md`](report/model_comparison.md) §1-2를 참조하세요.
-
-#### 2) 하드웨어 및 런타임 성능 요약 ($N=45$)
-
-| 지표 항목 | Qwen2.5-7B (Local, 최종 선정) | Llama-3.1-8B (Local, 비교 대조) | gpt-5.6-luna (Cloud 참조군) |
-| :--- | :---: | :---: | :---: |
-| **표본 수 ($n$)** | 20 (10문항 × 2회) | 20 (10문항 × 2회) | 5 (사전 지정 공통 문항) |
-| **호출 성공률** | **100% (20/20)** | **100% (20/20)** | **100% (5/5)** |
-| **포맷 준수율** (엄격 / 파서 호환) | **100% / 100% (20/20)** | 5% / 100% (1/20 · 20/20) | **100% / 100% (5/5)** |
-| **평균 응답 지연 (Latency)** | **1.390초** | 1.809초 | 4.079초 (Network RTT 포함) |
-| **평균 생성 토큰 속도** | 57.68 tokens/s | **66.56 tokens/s** | N/A (Serverless API) |
-| **평균 생성 토큰 수** | **76.4 tokens (핵심 압축)** | 117.6 tokens (다변 서술) | 233.4 tokens (상세 가이드) |
-| **VRAM 점유량** | **4,528.1 MiB (~4.42 GB)** | 5,027.5 MiB (~4.91 GB) | 0 MiB (Serverless) |
-| 워밍업 로딩 시간 (Cold)<br>*(실행마다 변동 · 통계 제외)* | 2.145초 | 3.429초 | N/A |
-| **모델 식별값 (Digest)** | `845dbda0ea48` | `46e0c10c039e` | N/A |
-| **양자화 레벨** | `Q4_K_M` | `Q4_K_M` | FP16/BF16 |
-| **실행 토큰 비용** | **$0.00 (온프레미스)** | **$0.00 (온프레미스)** | In: 1,277 / Out: 1,167 tokens |
-
-> **지연 시간의 역설** — 토큰 생성 속도는 Llama가 15% 빠릅니다. 그런데 최종 응답 시간은 Qwen이 23% 짧습니다.
-> Llama가 평균 117.6토큰을 쓰는 동안 Qwen은 76.4토큰으로 끝내기 때문입니다. 초당 처리량이 높아도 더 많이 쓰면 총 시간은 길어집니다.
-
-> **포맷 준수율 산출 기준** — `src/triage_eval/common/score_format.py`가 원본 응답 45건을 6개 규칙(R1~R6)으로 자동 채점한 값입니다.<br>
-> **엄격** 기준은 필드 사이 빈 줄까지 금지, **파서 호환** 기준은 빈 줄을 허용합니다.<br>
-> Llama의 실패 사유는 전량 '필드 사이 빈 줄'이며, **서두 사족은 45건 전수에서 0건**이었습니다.<br>
-> 규칙 정의와 회차별 판정은 [`report/format_compliance.md`](report/format_compliance.md) 참조.
->
-> **성능 수치 산출 기준** — 지연·속도·토큰·VRAM은 `src/triage_eval/bench_v1/summarize_eval.py`(태그 `v1.5-archive`)가 원본 로그에서 재집계한 값입니다.
-> 워밍업은 제외했고, 평균 속도는 회차별 `tokens_per_sec`의 단순 평균입니다. 집계 결과는 `data/results/benchmark_summary.json`에 저장됩니다.
->
-> **워밍업 로딩 시간은 비교 지표가 아닙니다.** 디스크 캐시 상태에 따라 실행마다 달라지므로(재실행 시 4.065초 / 4.672초 관측) 값만 참고로 싣고 본 통계와 우열 판정에서 제외했습니다.
-
-#### 3) 5개 영역 QA 루브릭 정량 채점표 (100점 만점)
-
-```text
-[ 종합 품질 점수 ]
-1. gpt-5.6-luna (Cloud) : ■■■■■■■■■■ 99점 (이상적 참조 기준선)
-2. Qwen2.5-7B   (Local) : ■■■■■■■■□□ 81점 (최종 채택: 규격 준수 & 무결성)
-3. Llama-3.1-8B (Local) : ■■■■■■■□□□ 77점 (탈락: Q08 환각 발생)
-```
-
-| 평가 영역 | 배점 | Qwen2.5-7B | Llama-3.1-8B | gpt-5.6-luna | 채점 및 핵심 분석 요약 |
-| :--- | :---: | :---: | :---: | :---: | :--- |
-| **정확성** | 25 | **21** | 19 | **24** | 결함 심각도 및 모듈 판정 타당성 (Llama: 가짜 결함 판정 -6) |
-| **지시·형식 준수** | 25 | **24** | 21 | **25** | 5개 필드 Contract 준수 (Qwen: 사족 0건, Llama: 개행 과다 -4) |
-| **핵심 정보 누락** | 20 | 15 | **19** | **20** | OS/기기/중복 단서 보존율 (Llama: Q01/Q10 단서 완벽 추출) |
-| **정보 부족 대응** | 15 | 8 | 3 | **15** | 단문 인입 시 Fallback 정책 (Llama: 치명적 환각으로 -12) |
-| **한국어 표현** | 15 | 13 | **15** | **15** | Jira 버그 등록에 적합한 실무 문체 (Qwen: 일부 비문 발생 -2) |
-| **합계** | **100** | **81** | **77** | **99** | **로컬 1위: Qwen2.5-7B** |
-
-> 루브릭 채점은 평가자 1인이 수행했으므로 주관이 포함됩니다.
-> 주관이 개입하지 않는 지표는 모두 스크립트로 기계 채점했습니다.
-
-#### 4) 결정적 장면 — Q08 단문 리포트
-
-점수 4점 차이가 모델을 가른 것이 아닙니다. 아래 한 케이스가 갈랐습니다.
-
-**🚨 Llama-3.1-8B의 환각 (Hallucination)**
-
-* **입력 (Q08)**: `"크래시남"` — 단 1단어
-* **Run 1 응답**:
-  > `[요약]: 게임 내 전투 모드에서 플레이어 캐릭터가 무한히 이동하는 결함 현상 발생`
-* **Run 2 응답**:
-  > `[누락 정보]: 추가 확인이 필요한 기기/OS/재현스텝: Windows 10, Intel Core i5, NVIDIA GeForce GTX 1660 Ti...`
-* **QA 관점 리스크**: 입력에 전투 모드도, 이동도, 하드웨어 정보도 없습니다. 이 티켓이 Jira에 등록되면 **개발자가 존재하지 않는 버그를 GTX 1660 Ti로 재현하려 시간을 씁니다.**
-
-**🛡️ Qwen2.5-7B의 파싱 계약(Contract) 안전성**
-
-* 같은 입력에서 허위 정보를 만들지 않고 `누락 정보: 없음`으로 응답 — 소극적이지만 날조는 없음
-* 20회 전 구간에서 시스템 지시문 외 사족(문두 인사, 서두 설명)을 차단
-* Regex·문자열 파서 연동 시 줄바꿈/인덱스 밀림 예외(Index Error) 발생률 0%
-
-> Qwen의 소극성은 4일차 Few-Shot 재실험에서 교정 가능함을 검증했습니다 (근거: `data/results/fewshot_verify.json`).
+* **Critical 미상신.** 처음 보는 리포트에서 Critical 응답 96건 중 19건을 긴급 사인 요청으로 보내지 않았습니다. 체크리스트의 효과는 개발용 문항에서만 확인됐습니다.
+* **날조 탐지.** 규칙 탐지기는 한 건도 잡지 못했지만, 검토자 1명이 요약을 확인하니 23응답(12묶음)에서 날조가 있었습니다. 확인자가 한 명이라 판단에 주관이 들어갈 수 있습니다. LLM 채점관(gemma4:12b)도 사람 판단과 일치도가 낮아(κ 0.18) 채택하지 않았습니다. 날조 확인은 사람이 합니다.
+* **누락 정보 칸이 거의 비어 있음.** 최종 평가용 360응답 중 336건이 `[누락 정보 및 권장 조치]`에 "없음"·"해당 없음"만 적었습니다. 정답표가 요구하는 요청·권장 문구의 반영률은 최종 평가용 0%, 개발용 21.8%입니다.
+* **자동 등록 라우팅 미채택.** 확신 신호로 자동 등록할 응답을 골랐을 때, 위험·날조 응답 56건 중 32건(57.1%)이 검토 없이 통과했습니다(사전 기준 50% 이하).
+* **정답표의 흔들림.** 외부 QA 2명의 판정과 정답표의 일치율이 사전 기준에 못 미쳐 기준서를 v1.5로 고쳤습니다. 라우팅 판정은 기준서와 다른 판단을 따른 3문항에 민감했습니다.
+* **검증한 도메인은 게임 버그 리포트 하나입니다.** 판정 기준서·출력 형식·모듈 목록이 게임 도메인에 맞춰져 있습니다.
 
 ---
 
-## 4. 실행 및 재현
+## 4. 사용법
 
-> **코드 정리 안내** — v1.5 이후 측정이 끝난 단계의 코드(v1.0 벤치마크 `bench-*`, `scripts/legacy/`, 후보 사전 점검 `triage-screen`, 라벨 일치율·LLM-as-judge 도구, 버전별 평가셋 생성 도구 `tools/dataset_v13~v15/`)를 지웠습니다. 이 절에서 그 명령을 쓰는 재현 절차는 태그 `v1.5-archive`를 받아 실행합니다(`git switch --detach v1.5-archive`). 결과와 근거는 `report/`와 `data/`에 그대로 있습니다.
+### 1) 설치
 
-### 1) 선행 환경 준비
-
-* **Python**: 3.12 이상
-* **패키지 관리자**: `uv` ([설치 문서](https://docs.astral.sh/uv/))
-* **추론 런타임**: [Ollama](https://ollama.ai/) 설치 및 모델 다운로드
+* Python 3.12 이상, [`uv`](https://docs.astral.sh/uv/), [Ollama](https://ollama.ai/)
 
 ```powershell
-ollama pull qwen2.5:7b      # 현재 모델 (v1.0~v1.4)
-ollama pull llama3.1:8b     # v1.0 벤치마크 재현용 대조군
-```
-
-> v1.4 실험 B를 재현하려면 `gemma4:12b`도 필요합니다. 현재 구성만 실행할 때는 `qwen2.5:7b` 하나면 됩니다.
-
-### 2) 클론 및 가상환경 동기화
-
-```powershell
+ollama pull qwen2.5:7b
 git clone https://github.com/kokoball-eval/llm-triage-eval.git
 cd llm-triage-eval
 uv sync
 ```
 
-> `uv sync`는 의존성과 함께 이 저장소의 패키지(`src/triage_eval`)를 편집 가능 모드로 설치합니다. 이후 실행 명령은 `uv run <명령>` 형태입니다(`bench-run`, `triage-run` 등, 목록은 `pyproject.toml`의 `[project.scripts]`). 같은 동작을 `uv run python -m triage_eval.pipeline.run`처럼 모듈 경로로도 실행할 수 있습니다.
-
-### 3) 실험 실행
+### 2) 실행 → 채점 → 회귀 판정
 
 ```powershell
-# 로컬 40회 본 실험 (워밍업 2회 자동 분리 · 10문항 × 2모델 × 2회)
-uv run bench-run
-# (v1.2) seed 고정 모드 — 1회차 seed=1, 2회차 seed=2. 측정 환경 경고가 있으면 멈춤
-uv run bench-run --seed 1 --strict-env
-# 결과를 문서 수치의 새 기준으로 삼을 때만
-uv run bench-run --update-latest
+# 개발용 63건 × 2회 실행 (seed N, N+1). --strict-env: 다른 프로그램이 GPU를 쓰거나 배터리 구동이면 멈춤
+uv run triage-run --seed 1 --strict-env
+uv run triage-run --seed 11 --strict-env
+uv run triage-run --seed 21 --strict-env
 
-# Cloud 대조군 (선택) — 실행 후 프롬프트에 OpenAI API Key 입력 (화면 미노출)
-uv run python scripts/legacy/02_luna_chat.py
+# 성능표 — 실행 기록을 정답표로 채점
+uv run triage-eval --log 데이터/새실행/<실행 기록>.json
 
-# 4일차 Few-Shot 단문 결함 교정 재실험
-uv run python scripts/legacy/test_fewshot.py
+# 회귀 판정 — 채택 구성(기준선)보다 나빠졌는지, seed 3개 모두 통과해야 PASS
+uv run triage-gate --candidate <seed1 기록> --candidate <seed11 기록> --candidate <seed21 기록>
 ```
 
-> ℹ️ `src/triage_eval/bench_v1/run_eval.py` 는 실행 결과를 `data/results/history/local_eval_results_<실행시각>.json` 에만 저장합니다 (v1.1.1부터).
-> `data/results/local_eval_results.json` 은 README·보고서 수치의 출처이므로, `--update-latest` 를 준 경우에만 교체됩니다.
+* 실행 기록은 `데이터/새실행/`, 게이트 결과는 `데이터/게이트결과/`에 새 파일로 저장됩니다.
+* 최종 평가용 문항은 `--split final --final`을 함께 줘야만 실행됩니다. 구성을 고치면서 최종 평가 점수를 보면 그 문항에 맞춰 고치게 되기 때문입니다. 기본 평가셋에 든 최종 평가용 문항은 v1.4의 25건이고, 새 60건은 `--dataset 데이터/평가셋/최종용_60건.json`으로 지정합니다. 두 세트 모두 이미 한 번 실행했으므로 새 구성의 최종 평가에는 새 세트를 만들어 씁니다.
+* 다른 정답표로 채점하려면 `triage-eval --labels <평가셋.json>`을 씁니다. 실행 기록의 문항이 정답표에 없으면 채점하지 않습니다.
 
-### 4) 재현 검증 (Reproducibility Check)
-
-본 실험 로그를 수정하지 않고 산출물만 다시 만들어 문서 수치를 검증하는 스크립트입니다.
-모두 읽기 전용이거나 결과 파일만 덮어쓰므로 40회 본 실험 결과에는 영향을 주지 않습니다.
+### 3) 테스트
 
 ```powershell
-# 성능 지표 재집계 (문서에 기재된 지연·속도·토큰 수치를 원본 로그에서 다시 계산)
-uv run bench-summarize
-
-# 포맷 계약 준수율 재채점 (원본 응답 45건을 R1~R6 규칙으로 다시 채점)
-uv run bench-score-format
-
-# 실행 환경 및 자원 점유 재측정 (CLI/Python 경로 검증 포함)
-uv run bench-capture-env
-
-# (v1.2) 환각 탐지 — 입력에 근거 없는 기기·OS·조작·시간 조건을 응답에서 찾음
-uv run bench-hallucination
+uv run pytest -q
 ```
 
-| 스크립트 | 입력 | 산출물 | 재현 확인 방법 |
-| :--- | :--- | :--- | :--- |
-| `src/triage_eval/bench_v1/summarize_eval.py` | `data/results/local_eval_results.json`, `cloud_eval_results.json` | `data/results/benchmark_summary.json`, 표준 출력 | 출력 표의 값이 3절 벤치마크 표 및 보고서 수치와 일치하는지 대조 |
-| `src/triage_eval/common/score_format.py` | `data/results/local_eval_results.json`, `cloud_eval_results.json` | `data/results/format_compliance.json`, `report/format_compliance.md` | 회차별 판정과 집계율이 보고서 수치와 일치하는지 대조 |
-| `src/triage_eval/bench_v1/capture_env.py` | 실행 중인 Ollama 런타임 | `data/results/environment.json`, `report/environment.md` | 산출 파일의 `captured_at` 으로 재실행 시점 확인 |
-| `scripts/legacy/test_fewshot.py` | 고정 프롬프트 (Q08 단문) | `data/results/fewshot_verify.json` | `verdict.corrected` 값으로 교정 성공 여부 확인 |
-| `src/triage_eval/bench_v1/compare_runs.py` | 기준선·후보 실행 로그, `gate_criteria.toml` | `data/results/gate_result.json`, `report/regression_gate.md` | 종료 코드(0/1/2)와 기준별 판정 확인 |
-| `src/triage_eval/common/detect_hallucination.py` | 실행 로그, `data/questions.json` | `data/results/hallucination_report.json`, 표준 출력 | v1.0 로그에서 Llama Q08 2건만 탐지되고 Qwen·Cloud는 0건인지 확인 |
+모델을 호출하지 않고 저장소의 실제 실행 기록과 가짜 모델만 쓰므로 Ollama 없이 몇 초 안에 끝나고, push마다 GitHub Actions가 돌립니다.
 
-### 5) 회귀 게이트 — 두 실행 비교 (v1.1)
-
-프롬프트·모델·Ollama 버전을 바꾼 뒤 **"이전보다 나빠졌는가"를 종료 코드 하나로 판정**합니다.
-기본 기준선은 v1.2에서 찍은 **seed 고정 실행**(`data/results/baseline/v1.2_seed1_local_eval_results.json`)입니다. seed와 실행 조건이 기록돼 있어야 판정 변화까지 합격 기준으로 쓸 수 있기 때문입니다. README 수치의 출처인 v1.0 로그도 같은 폴더에 보존돼 있어 `--baseline`으로 지정할 수 있습니다.
-
-```powershell
-# 1) 새 실행 → 2) 고정 기준선(v1.2 seed=1)과 비교 (후보 기본값: history/ 의 가장 최근 실행)
-uv run bench-run --seed 1 --strict-env
-uv run bench-gate
-
-# 파일 직접 지정 / 대조군 모델까지 판정
-uv run bench-gate --baseline <기준선.json> --candidate <후보.json>
-uv run bench-gate --model llama3.1:8b
-```
-
-| 종료 코드 | 의미 |
-| :---: | :--- |
-| `0` PASS | `gate_criteria.toml`의 모든 기준 통과 |
-| `1` FAIL | 기준 1개 이상 미달 |
-| `2` ERROR | 판정 불가 — 문항 구성 불일치, 실행 조건(옵션·프롬프트·문항·모델 digest) 변경, 기준 파일 오타 등. 의도한 조건 변경이면 `--allow-config-change` |
-
-* **합격 기준**은 루트의 `gate_criteria.toml`에 있습니다. 절대 기준(바닥선)과 회귀 기준(기준선 대비 허용 악화폭) 두 종류이며, 기준마다 근거를 주석으로 달았습니다.
-* 채점 규칙은 `score_format.py`, 지표 정의는 `summarize_eval.py`를 그대로 재사용하므로 README 표와 같은 숫자가 나옵니다.
-* (v1.2) **날조 응답 0건**이 절대 기준에 추가됐습니다. 형식은 정상인데 입력에 없는 사실을 지어낸 응답을 막습니다.
-* (v1.2) 심각도·모듈·재현 여부 **판정 변화**는 두 실행이 **같은 seed**로 돌았을 때만 합격 기준(`verdict_change_max`)으로 판정합니다. seed가 없거나 다르면 같은 조건에서도 흔들리므로 `⏭️ SKIP`(판정 생략)으로 표시하고 목록만 보여 줍니다. SKIP은 통과가 아니라 "이번 비교로는 판정할 수 없음"입니다.
-* 결과: `data/results/gate_result.json`(기계 판독용), `report/regression_gate.md`(판정 근거)
-
-### 6) 평가 도구 테스트 (v1.1.1)
-
-채점·집계·게이트·비교 로직과 평가셋이 **같은 입력에 같은 판정을 내는지** pytest로 검증합니다. 모델을 호출하지 않고 저장소의 실제 로그나 가짜 모델 응답만 쓰므로 Ollama 없이 몇 초 안에 끝나며, `main` 브랜치에 push할 때마다 GitHub Actions가 자동 실행합니다.
-
-```powershell
-uv run pytest        # 전체
-uv run pytest -v     # 테스트별 결과 표시
-```
-
-**테스트 계층 — 빠른 테스트는 많이, 실제 모델 실행은 적게**
-
-테스트는 [테스트 피라미드](https://martinfowler.com/articles/practical-test-pyramid.html) 원칙에 따라 세 계층으로 나눴습니다. 빠르고 결과가 항상 같은 테스트를 아래에 많이 두고, 느리고 흔들리는 실제 모델 실행은 위에 적게 둡니다. 실제 모델 실행으로 도구의 결함까지 잡으려 하면 측정마다 시간이 들고, 실패 원인이 모델인지 도구인지 구분하기 어렵기 때문입니다.
-
-| 계층 | 이 저장소에서 검증하는 것 | 실행 시점 | 특성 |
-| :--- | :--- | :--- | :--- |
-| 단위 | 채점 규칙(R1~R7), 날조 탐지, 후처리 안전장치, 게이트·비교 판정, Critical 체크리스트 규칙 | push마다 CI | 수 초, 같은 입력에 항상 같은 결과 |
-| 통합 | 가짜 모델 클라이언트(테스트 더블)로 실행 → 형식 재요청·체크리스트·폐기 확인 → 채점까지 이어지는 전 과정 | push마다 CI | Ollama 없이 단계 사이의 연결을 확인 |
-| E2E | 실제 모델(Ollama) 실행 → 채점 → 게이트·비교 판정 | 프롬프트·모델·방법을 바꿀 때, 최종 측정 1회 | 수 분~수십 분, GPU 필요, 같은 seed라도 실행 조건에 따라 흔들림([OBS-002](docs/issue_log.md#obs-002)·[OBS-004](docs/issue_log.md#obs-004)) |
-
-* **E2E는 모델과 방법의 품질을 판정하는 데만 씁니다.** 도구가 맞게 동작하는지는 아래 두 계층이 CI에서 먼저 확인합니다.
-* **위 계층에서 드러난 결함은 아래 계층의 테스트로 내려 고정합니다.** 최종 측정에서 발견한 날조 탐지기 오탐([ISSUE-008](docs/issue_log.md#issue-008))과 채점 보고서 오류([ISSUE-010](docs/issue_log.md#issue-010))는 각각 회귀 테스트로 추가해, 같은 결함이 다시 생기면 모델을 돌리기 전에 CI에서 실패합니다.
-* **E2E 실행 조건은 실제 운영과 비슷하게 맞춥니다.** 같은 장비·전원 연결·다른 GPU 프로그램 없음(`--strict-env`)을 실행 전에 점검하고, 평가셋은 현업 시나리오로 만든 가상 데이터(실제 유저 정보 미사용)를 쓰며, 문항과 정답 라벨은 검토 기록을 거친 뒤에만 바꿉니다([E2E 테스트 운영 원칙](https://testrail.codetalk.co.kr/how-to-improve-end-to-end-testing/)).
-
-| 테스트 파일 | 검증하는 것 |
+| 계층 | 검증하는 것 |
 | :--- | :--- |
-| `tests/test_score_format.py` | R1~R6 규칙이 각자 정확히 자기 위반만 잡는지, v1.0 로그 채점 결과가 README 준수율과 같은지 |
-| `tests/test_detect_hallucination.py` | (v1.2) 범주별 탐지, 근거 있는 사실·요청 문맥·선택지 필드 오탐 방지, 실제 로그의 Llama Q08 날조 4건 전수 탐지와 Qwen·Cloud 오탐 0건 |
-| `tests/test_preflight.py` | (v1.2) 측정 환경 경고 판정 (다른 프로그램의 GPU 사용, 배터리 구동, 측정 불가와 문제 있음의 구분) |
-| `tests/test_pipeline_contract.py` | (v1.3) 출력 형식 v2 채점 규칙 R1~R7 |
-| `tests/test_pipeline_run.py` | (v1.3) 평가용 문항 실행 차단, 문항 유출 없음, 형식 재요청·폐기 확인 |
-| `tests/test_pipeline_guardrail.py` | (v1.3) 후처리 안전장치 규칙, 정답 라벨 미사용, 모델 원본 보존 |
-| `tests/test_pipeline_score.py` | (v1.3) 정답 대조 채점, 가짜 모델로 실행 → 채점 전 과정, (v1.4) v1.4 평가셋 채점과 빈 세트 보고서 |
-| `tests/test_pipeline_gate.py` | (v1.3) 게이트 판정, 비교 조건, 기준 파일 검증 |
-| `tests/test_pipeline_selection.py` | (v1.4) 모델 교체 판정 규칙 |
-| `tests/test_pipeline_methods.py` | (v1.4) 판정 예시와 평가셋 표현 겹침, Critical 체크리스트 규칙, 기존 방법(M0) 프롬프트 불변 |
-| `tests/test_pipeline_compare.py` | (v1.4) 방법·모델 비교 판정, '예' 편향 체크리스트 탈락, 비교 조건 불일치 거부 |
-| `tests/test_pipeline_gate_v14.py` | (v1.5) 채택 구성 게이트 — 기준선이 실험 A 기록과 같은지, 재현된 실행은 PASS·이전 방법(M0)과 지연 증가는 FAIL, seed 누락·최종 평가용·구성 혼합·digest 불일치 거부, 가짜 모델로 실행 → 게이트 |
+| 단위 | 형식 규칙 R1~R7, 채점, 날조 탐지, 안전장치, Critical 체크리스트, 게이트 판정 규칙 |
+| 통합 (가짜 모델) | 실행 → 칸 재요청 → 체크리스트 → 폐기 확인 → 채점 전 과정, 실행 조건이 기준선과 비교 가능한지 |
+| 재현 | 저장된 실행 기록 738건을 가짜 모델로 재생해 같은 최종 응답·같은 프롬프트가 나오는지, 게이트 판정과 최종 평가용 채점이 구조 정리 전과 같은지 |
+| E2E (실제 모델) | `triage-run` → `triage-gate`. 프롬프트·모델·방법을 바꿀 때만 실행 (CI 제외) |
 
-* README 수치를 재현하는 테스트가 있어서, 채점·집계 코드를 고쳤을 때 **문서 수치가 더는 재현되지 않으면 테스트가 실패**합니다.
-* 테스트를 추가하면서 경계값 버그 1건을 발견해 수정했습니다. 정확히 허용폭(+20%)만큼 느려진 경우 부동소수점 오차로 FAIL이 나던 문제입니다(`test_exactly_at_tolerance_passes`).
-* (v1.2) 환각 탐지기도 테스트 단계에서 오탐 결함 2건이 걸러졌습니다([ISSUE-006](docs/issue_log.md#issue-006)).
-
-### 7) 측정 환경 체크리스트와 seed 재현성 확인 (v1.2)
-
-성능 지표는 모델이 같아도 측정 환경에 따라 크게 흔들립니다. 9/30 재실행에서 모델 파일은 그대로인데 Llama의 평균 지연이 +45.6% 늘었습니다([OBS-001](docs/issue_log.md#obs-001)). 벤치마크를 돌리기 전에 아래를 확인합니다.
-
-| 확인 항목 | 이유 | 자동 점검 |
-| :--- | :--- | :---: |
-| 게임·영상·브라우저 등 GPU를 쓰는 프로그램 종료 | 같은 GPU를 나눠 쓰면 지연·속도가 흔들림 | ✅ Ollama 외 VRAM 1,024 MiB 이상이면 경고 |
-| 노트북 전원 어댑터 연결 | 배터리 구동 시 GPU 클럭이 낮아질 수 있음 | ✅ Windows에서 경고 |
-| 같은 seed로 실행 (`--seed 1`) | seed가 같아야 판정 변화를 합격 기준으로 쓸 수 있음 | — |
-
-`run_eval.py`는 모델을 호출하기 전에 이 점검 결과를 화면에 출력하고 로그(`metadata.run_config.environment`)에 남깁니다. `--strict-env`를 주면 경고가 있을 때 실행하지 않습니다(종료 코드 2). `compare_runs.py`는 두 실행의 환경 경고와 전원 상태 차이를 함께 보여 줍니다.
-
-**seed 재현성 확인 방법** — 같은 seed로 두 번 돌린 결과를 비교하면, 판정 변화가 0건이어야 합니다.
-
-```powershell
-uv run bench-run --seed 1 --strict-env      # 1차
-uv run bench-run --seed 1 --strict-env      # 2차
-uv run bench-gate --baseline data/results/history/<1차 파일>.json
-```
-
-**실측 결과 (2026-10-01, RTX 5060 Laptop · 전원 연결 · Ollama 외 VRAM 362~485 MiB)**
-
-| 항목 | 결과 |
-| :--- | :--- |
-| 같은 seed 재실행 시 응답 원문 일치 | **40/40건** (생성 토큰 수도 40/40 일치) |
-| 같은 seed 재실행 시 판정 변화 | **0건** → `verdict_change_max = 0` 유지 |
-| 한 실행 안에서 1·2회차(seed 1 vs 2) 응답이 다른 문항 | 20문항 중 17개 → 회차 간 변동 관찰이라는 2회 반복 설계도 그대로 유지 |
-| 깨끗한 환경에서 Llama 평균 속도 | 64.3 t/s (v1.0 66.56 / 9/30 재실행 44.9) → 9/30의 급락은 측정 환경 탓이었다는 해석을 뒷받침 ([OBS-001](docs/issue_log.md#obs-001)) |
-
-첫 번째 실행은 기본 기준선(`baseline/v1.2_seed1_local_eval_results.json`)으로 고정했고, 두 실행 모두 `data/results/history/`에 보존했습니다.
-
-> (v1.3) 같은 seed라도 **직전에 다른 프롬프트를 처리한 Ollama 프로세스**에서는 응답이 재현되지 않았습니다([OBS-002](docs/issue_log.md#obs-002)). 프롬프트를 바꿔 가며 측정할 때는 실행 전에 `ollama stop <모델>`로 모델을 내립니다.
-
-### 8) v1.3 평가셋 실행·채점·회귀 게이트
-
-```powershell
-ollama stop qwen2.5:7b                                                       # 재현성 조건 (OBS-002)
-uv run triage-run --seed 1 --strict-env --model qwen2.5:7b   # 개발용 32건 × 2회
-uv run triage-score                                          # 정답 대조 채점
-uv run triage-gate; echo "종료 코드: $LASTEXITCODE"           # 고정 기준선 대비 판정 (0 PASS · 1 FAIL · 2 판정 불가)
-```
-
-* 평가용(test) 문항은 `--final`을 줘야만 실행됩니다. 게이트는 개발용 실행만 판정합니다. v1.3 최종 측정은 `uv run triage-run --seed 1 --strict-env --split test --final`로 1회 실행했습니다(→ [`report/eval_v13_final.md`](report/eval_v13_final.md)).
-* `--no-retry`, `--no-discard-check`, `--no-guardrail`로 형식 재요청·폐기 확인·후처리 안전장치를 끄면 모델 단독 성능을 잴 수 있습니다. 켜 둔 상태에서도 실행 기록에 모델 원본 응답(`raw_response_text`)이 함께 남습니다.
-* 결과: `data/results/v13/gate_result_v13.json`(기계 판독용), `report/regression_gate_v13.md`(판정 근거)
-
-### 9) v1.4 모델 재선정·방법 비교
-
-```powershell
-# 모델 재선정 — 후보 사전 점검(설치·생각 끄기·GPU 적재·구조화 출력·형식) → seed 3개 비교 → 교체 판정
-uv run triage-screen --model gemma4:12b
-uv run triage-select --run <seed1.json> --run <seed11.json> --run <seed21.json>   # 0 교체 · 1 유지 · 2 판정 불가
-
-# 방법 비교 — v1.4 평가셋 개발용 63건, 방법(m0·m1·m2·m1m2)마다 seed 1·11·21
-uv run triage-run --dataset v14 --seed 1 --strict-env --method m2
-uv run triage-compare --label a --run <실행 기록> ...                               # 0 채택 · 1 기준 유지 · 2 판정 불가
-```
-
-* `--dataset v14`는 v1.3의 63건(모두 개발용)과 새 최종 평가용 25건(`final`)으로 이루어진 평가셋을 씁니다. `final`은 `--final` 없이 실행되지 않고, 방법·모델 선택이 끝난 뒤 1회만 실행합니다.
-* 비교 기준은 측정 전에 커밋한 [`method_selection_v14.toml`](method_selection_v14.toml)과 [`report/method_comparison_v14_plan.md`](report/method_comparison_v14_plan.md)에 있습니다. 비교 대상 말고 다른 조건이 다르거나 seed가 빠지면 판정하지 않습니다.
-* 결과: `data/results/v14/compare_<a|b>.json`, `report/method_comparison_v14_<a|b>.md`
-
-**현재 채택 구성(v1.4: `qwen2.5:7b` + Critical 체크리스트)으로 실행·채점**
-
-```powershell
-uv run triage-run --dataset v14 --method m2 --seed 1 --strict-env   # 개발용 63건 × 2회
-uv run triage-score --dataset v14
-```
-
-* `triage-run`의 기본값(`--dataset v13 --method m0`)은 이전 버전의 실행 기록과 같은 결과가 나오도록 그대로 두었습니다. 현재 채택 구성은 위처럼 옵션을 명시해 실행합니다.
-* **(v1.5) 채택 구성 회귀 게이트** — 위 실행을 seed 1·11·21로 하고 게이트에 넣습니다. seed 3개가 모두 통과해야 PASS입니다.
-
-```powershell
-uv run triage-gate --dataset v15 --candidate <seed1.json> --candidate <seed11.json> --candidate <seed21.json>
-```
-
-  (v1.5 라벨 전환) 게이트는 v1.5 정답표로 채점합니다. 기준선 실행 기록과 기준 값은 아래 v1.4 게이트와 같고, 정답표만 v1.5 평가셋으로 바꿨습니다([계획](report/regression_gate_v15_plan.md), 기준 [`gate_criteria_v15.toml`](gate_criteria_v15.toml)). 재현 점검에서 같은 구성은 PASS·문항 단위 변화 0건, 체크리스트를 뺀 구성은 Critical 누락 증가로 FAIL이었습니다([`report/regression_gate_v15.md`](report/regression_gate_v15.md)). v1.4 게이트(`--dataset v14`)는 이전 판정의 재현용으로 동결했습니다.
-
-  기준선은 M2 채택의 근거가 된 v1.4 실험 A 실행 기록(`data/results/v14/baseline/`)이고, 합격 기준은 [`gate_criteria_v14.toml`](gate_criteria_v14.toml)입니다. 기준 값은 v1.4 방법 선택 기준과 같고, 평균 지연 증가 20% 이하를 더했습니다. X-2·X-3은 기준선(M2)도 개발용에서 0건이 아니어서 "기준선보다 늘지 않을 것"으로 판정합니다. 실행 도중 모델이 다시 로드된 실행은 같은 seed로 재현되지 않으므로 판정하지 않습니다([OBS-005](docs/issue_log.md#obs-005)). 기준선 재현 점검(같은 구성을 다시 실행해 게이트에 넣는 확인)에서 seed 3개 모두 응답 126/126이 기준선과 같았고, PASS·문항 단위 변화 0건이었습니다([`report/regression_gate_v14.md`](report/regression_gate_v14.md)). 결과: `data/results/v14/gate_result_v14.json`, `report/regression_gate_v14.md`
+실제 모델 실행에서 드러난 결함은 아래 계층의 시험으로 내려 고정합니다. 같은 결함이 다시 생기면 모델을 돌리기 전에 CI에서 실패합니다.
 
 ---
 
-## 5. 저장소 구조와 상세 보고서
+## 5. 어떻게 믿을 수 있게 했나
 
-### 1) 상세 기술 보고서
-
-| 문서 | 담고 있는 것 |
-| :--- | :--- |
-| [`report/final_selection.md`](report/final_selection.md) | **최종 선정 보고서.** 4대 의사결정 축, 종합 스코어카드, 3단계 프로덕션 아키텍처, 프로젝트 한계 |
-| [`report/model_comparison.md`](report/model_comparison.md) | **1~3일차 비교 분석서.** 실험 조건·프롬프트 전문, 평가 문항 10건, **벤치마크 코드 구성과 설계 의도**, 항목별 판정, Cloud 대조 심층 분석 |
-| [`report/format_compliance.md`](report/format_compliance.md) | **포맷 준수율 채점 근거.** R1~R6 규칙 정의와 응답 45건의 회차별 판정 |
-| [`report/environment.md`](report/environment.md) | **실행 환경 실측.** 시스템 RAM/VRAM 구분, 실측 context length, CLI/Python 경로 검증 |
-| [`report/eval_v13_baseline.md`](report/eval_v13_baseline.md) | **(v1.3) 기준선 측정 보고서.** 개발용 세트 측정 조건, 결과, 오판 원인 분석 |
-| [`report/eval_v13.md`](report/eval_v13.md) | **(v1.3) 정답 대조 채점 요약.** 모델·세트별 칸별 정답률, 위험 건, 날조 (`pipeline/score.py` 생성, 가장 최근 실행 기준) |
-| [`report/eval_v13_final.md`](report/eval_v13_final.md) | **(v1.3) 최종 측정 보고서.** 평가용 세트 결과, 개발용 대비 비교, 모델 원본과 최종 출력 비교, 오답 원인 분석 |
-| [`report/regression_gate.md`](report/regression_gate.md) | **회귀 게이트 판정 근거.** 기준선 대비 최신 실행의 지표·기준별 판정·판정 변화 (`compare_runs.py` 생성) |
-| [`report/regression_gate_v13.md`](report/regression_gate_v13.md) | **(v1.3) 회귀 게이트 판정 근거.** 기준선 대비 후보 실행의 기준별 판정과 문항 단위 변화 (`pipeline/gate.py` 생성) |
-| [`report/eval_v14_model_selection.md`](report/eval_v14_model_selection.md) | **(v1.4) 모델 재선정 보고서.** 업무 요구사항에서 정한 후보 조건, 사전 점검, seed 3개 비교, 현재 모델 유지 결정의 근거 |
-| [`report/model_selection_v14.md`](report/model_selection_v14.md) | **(v1.4) 모델 선택 판정표.** seed별 기준 판정 (`pipeline/selection.py` 생성) |
-| [`report/method_comparison_v14_plan.md`](report/method_comparison_v14_plan.md) | **(v1.4) 방법 비교 계획(사전 등록).** 비교하는 방법(M0·M1·M2), 채택 기준, 알려진 위험과 대응. 측정 전 커밋 |
-| [`report/eval_v14_final.md`](report/eval_v14_final.md) | **(v1.4) 최종 보고서.** 실험 A(방법)·B(모델) 결과와 원인 분석, 최종 평가용 세트 측정, 한계와 v1.5 과제 |
-| [`report/method_comparison_v14_a.md`](report/method_comparison_v14_a.md), [`_b.md`](report/method_comparison_v14_b.md) | **(v1.4) 비교 판정표.** seed별 기준 판정 (`pipeline/compare.py` 생성) |
-| [`report/eval_v14.md`](report/eval_v14.md) | **(v1.4) 최종 평가용 세트 채점 요약** (`pipeline/score.py` 생성) |
-| [`report/label_agreement_v15_results.md`](report/label_agreement_v15_results.md) | **(v1.5) 라벨 일치율 결과 보고서.** 외부 QA 2명의 블라인드 판정 결과, 불일치 177건 검토, 기준서·평가셋 변경, 모델 성적에 준 영향, 채점자끼리 갈린 문항과 라우팅 시사점 |
-| [`report/judge_v15_results.md`](report/judge_v15_results.md) | **(v1.5) LLM-as-judge 결과 보고서(요약 날조).** 채점관 gemma4:12b와 검토자 판정의 일치율 — 미채택(일치율 85.71%·κ 0.18 미달, 심은 날조 검출 95%), 갈린 문항과 사후 의견, 재현성, 다음 버전 과제. 판정표는 [`judge_v15.md`](report/judge_v15.md) |
-| [`report/quality_v15_results.md`](report/quality_v15_results.md) | **(v1.5) LLM-as-judge 결과 보고서(요약 품질).** 채점관 gemma4:12b와 검토자 판정의 일치율 — 미채택(일치율 77.42%·검출률 73.33%·κ 0.5634 미달, 거짓 경보 0%), 갈린 자연 응답 7건(모두 채점관이 놓침), 심은 결함 15건, 프롬프트 개발 과정(q1~q3), 세트 구성 변경 공개. 판정표는 [`quality_v15.md`](report/quality_v15.md) |
-| [`report/routing_v15_results.md`](report/routing_v15_results.md) | **(v1.5) 확신도 기반 라우팅 결과 보고서(개발용 기준선).** 신호를 하나씩 더해 선택한 S1+S2 — 위험·날조 응답 22건 중 15건 통과, 자동 처리율 38.4%, 채택 판정 없음. 9단계 판정 기준(목표선 0건·하한선 50% 이하, 하한선은 개발용 결과를 본 뒤 정한 값) 확정. 표는 [`routing_dev_v15.md`](report/routing_dev_v15.md) |
-| [`report/rescore_v15.md`](report/rescore_v15.md) | **(v1.5) v1.4 실행 기록 v1.5 라벨 재채점.** 모델을 다시 돌리지 않고 정답표만 바꿔 다시 센 값과 참고 재판정 (`pipeline/rescore.py` 생성) |
-| [`report/regression_gate_v15.md`](report/regression_gate_v15.md) | **(v1.5) 채택 구성 회귀 게이트 판정 근거(v1.5 정답표).** seed별 기준 판정, 문항 단위 변화, 응답 동일성 (`pipeline/gate_v15.py` 생성) |
-| [`CHANGELOG.md`](CHANGELOG.md) | **버전별 변경 이력.** v1.0부터 v1.5 진행분까지, 버전마다 답하려는 질문 |
-| [`docs/issue_log.md`](docs/issue_log.md) | **이슈 기록.** 고도화 중 발견한 결함, v1.3 실사용 시나리오, 알려진 한계, 관찰 사항을 현상 → 원인 → 조치 → 재발 방지 형식으로 정리 |
-| [`docs/dataset/triage_guideline.md`](docs/dataset/triage_guideline.md) | **(v1.3, v1.4 보완) 트리아지 판정 기준서.** 분류·우선순위·처리·발생 빈도 규칙과 조항별 근거(인터뷰 출처) |
-| [`docs/dataset/review_log.md`](docs/dataset/review_log.md) | **(v1.3) 평가셋 검토 기록.** 배치·전체 검토의 쟁점, 검토자 판단, 그에 따른 라벨·기준서 변경 (v1.4 최종 평가용 세트 검토 포함) |
-| [`docs/dataset/final_v14_review.md`](docs/dataset/final_v14_review.md) | **(v1.4) 최종 평가용 세트 25건.** 문항 전문과 정답 라벨, 기존 문항과의 겹침 정도 |
-| [`docs/method/m1_examples.md`](docs/method/m1_examples.md) | **(v1.4) 방법 M1의 판정 예시 4개.** 측정 전 확정본 (실행 코드가 이 문서를 그대로 읽음) |
-
-### 2) 디렉터리 구조
-
-<details>
-<summary>전체 트리 펼치기</summary>
-
-```text
-llm-triage-eval/
-├── .github/workflows/tests.yml   # (v1.1.1) push 시 pytest 자동 실행 (GitHub Actions)
-├── .gitattributes                # 줄바꿈(EOL) 정규화 규칙
-├── .python-version               # Python 3.12 고정
-├── pyproject.toml                # uv 기반 의존성 명세 (ollama / 개발용 pytest)
-├── gate_criteria.toml            # (v1.1) 회귀 게이트 합격 기준
-├── gate_criteria_v13.toml        # (v1.3) 평가셋 회귀 게이트 합격 기준 (응답 수 기준 허용폭)
-├── gate_criteria_v14.toml        # (v1.5) 채택 구성 회귀 게이트 합격 기준 (seed 3개)
-├── model_selection_v14.toml      # (v1.4) 모델 교체 판정 기준 (지연 절대 기준, seed 수)
-├── method_selection_v14.toml     # (v1.4) 방법·모델 비교 채택 기준 (측정 전 커밋)
-├── uv.lock                       # 의존성 잠금 파일 (재현 가능한 환경 구성)
-├── README.md                     # 프로젝트 종합 대시보드 (본 문서)
-├── CHANGELOG.md                  # 버전별 변경 이력
-├── docs/
-│   ├── issue_log.md              # 결함·알려진 한계 기록 (현상 → 원인 → 조치 → 재발 방지)
-│   ├── dataset/                  # (v1.3) 평가셋 근거 문서
-│   │   ├── triage_guideline.md   # 판정 기준서 (조항별 근거)
-│   │   ├── seed_plan.md          # 분류 체계·제보 품질 분포·문항 설계안
-│   │   ├── interview_round1~4.md # 설계 인터뷰 기록 (질문·답변 요지·결정 사항)
-│   │   ├── review_log.md         # 배치·전체 검토의 쟁점·판단·반영 기록
-│   │   └── final_v14_review.md   # (v1.4) 최종 평가용 세트 25건 문항·라벨 (생성 문서)
-│   └── method/
-│       └── m1_examples.md        # (v1.4) 방법 M1의 판정 예시 4개 (측정 전 확정본)
-├── data/
-│   ├── questions.json            # 고정 벤치마크 10건 (정상 6, 경계 2, 예외 2)
-│   ├── eval_v13/
-│   │   └── aether_raid_v13.json  # (v1.3) 현업 기반 평가셋 63건 (정답 라벨, dev/test 분할)
-│   ├── eval_v14/
-│   │   └── aether_raid_v14.json  # (v1.4) 63건 전부 개발용 + 새 최종 평가용 25건(final)
-│   ├── eval_v15/
-│   │   ├── aether_raid_v15.json  # (v1.5) 외부 QA 2명 라벨 일치율 검토를 반영한 개발용 라벨 (최종 평가용은 v1.4 그대로)
-│   │   └── label_changes_v15.json # (v1.5) v1.4 대비 라벨 변경표 (칸마다 이전 값·근거)
-│   └── results/
-│       ├── qwen2.5_7b_verify.json       # 1일차 단일 호출 검증 로그
-│       ├── llama3.1_8b_verify.json      # 1일차 단일 호출 검증 로그
-│       ├── local_eval_results.json      # 2일차 로컬 40회 본 실험 원본 로그
-│       ├── cloud_eval_results.json      # 3일차 Cloud 5회 비교 실험 원본 로그
-│       ├── format_compliance.json       # 포맷 준수율 자동 채점 결과 (45건 회차별 판정)
-│       ├── benchmark_summary.json       # 성능 지표 재집계 결과 (summarize_eval.py 생성)
-│       ├── environment.json             # 실행 환경/자원 점유 실측값 (capture_env.py 생성)
-│       ├── fewshot_verify.json          # 4일차 Few-Shot 교정 검증 응답 및 판정 근거
-│       ├── gate_result.json             # (v1.1) 회귀 게이트 판정 결과 (compare_runs.py 생성)
-│       ├── hallucination_report.json    # (v1.2) 환각 탐지 결과 (detect_hallucination.py 생성)
-│       ├── baseline/
-│       │   ├── v1.0_local_eval_results.json # (v1.1) v1.0 기준선 — README 수치의 출처, 덮어쓰지 않음
-│       │   └── v1.2_seed1_local_eval_results.json # (v1.2) 기본 기준선 — seed=1, 깨끗한 환경
-│       ├── history/                     # 실행 기록 (run_eval.py 실행마다 생성, compare_runs.py 기본 후보)
-│       ├── v13/                         # (v1.3) 평가셋 실행 기록(history/), 고정 기준선(baseline/), 채점 결과(score_*.json), 게이트 판정(gate_result_v13.json)
-│       └── v14/                         # (v1.4) 사전 점검(screening/), 모델 선택 판정, v1.4 평가셋 실행 기록(history/), 비교 판정(compare_*.json), (v1.5) 채택 구성 고정 기준선(baseline/)·게이트 판정(gate_result_v14.json)
-├── report/
-│   ├── model_comparison.md      # 로컬 2종 vs Cloud 상세 정량/정성 분석서
-│   ├── final_selection.md       # Qwen2.5 최종 선정 사유 및 배포 가드레일
-│   ├── format_compliance.md     # 포맷 준수율 채점 규칙 및 회차별 판정 근거
-│   ├── environment.md           # 시스템 RAM/VRAM 구분, 실측 context length 기록
-│   ├── regression_gate.md       # (v1.1) 회귀 게이트 판정 근거 (compare_runs.py 생성)
-│   ├── eval_v13_baseline.md     # (v1.3) 기준선 측정 보고서 (원인 분석)
-│   ├── eval_v13.md              # (v1.3) 정답 대조 채점 요약 (pipeline/score.py 생성)
-│   ├── eval_v13_final.md        # (v1.3) 평가용 세트 최종 측정 보고서
-│   ├── regression_gate_v13.md   # (v1.3) 회귀 게이트 판정 근거 (pipeline/gate.py 생성)
-│   ├── eval_v14_model_selection.md # (v1.4) 모델 재선정 보고서
-│   ├── model_selection_v14.md   # (v1.4) 모델 선택 판정표 (pipeline/selection.py 생성)
-│   ├── method_comparison_v14_plan.md # (v1.4) 방법 비교 계획 (사전 등록)
-│   ├── method_comparison_v14_a.md # (v1.4) 실험 A 판정표 (pipeline/compare.py 생성)
-│   ├── method_comparison_v14_b.md # (v1.4) 실험 B 판정표 (pipeline/compare.py 생성)
-│   ├── eval_v14.md              # (v1.4) 최종 평가용 세트 채점 요약 (pipeline/score.py 생성)
-│   └── eval_v14_final.md        # (v1.4) 최종 보고서
-├── src/triage_eval/              # (v1.3 구조 정리) 패키지 — 실행 명령은 pyproject.toml [project.scripts]
-│   ├── common/                   # 파이프라인이 함께 쓰는 도구
-│   │   ├── paths.py              # 저장소 루트 경로 (한 곳에서만 정의)
-│   │   ├── ollama_runtime.py     # 모델 digest·VRAM·프롬프트 지문 수집
-│   │   ├── score_format.py       # 응답 줄 파서 + v1.0 포맷 계약 채점 (R1~R6)   → bench-score-format
-│   │   ├── detect_hallucination.py # (v1.2) 입력에 근거 없는 구체 사실 탐지      → bench-hallucination
-│   │   └── preflight.py          # (v1.2) 실행 전 측정 환경 점검 (GPU 점유·전원)
-│   └── pipeline/                 # 현역 트리아지 파이프라인 (버전은 파일 이름이 아니라 코드 안 상수로 관리)
-│       ├── contract.py           # 출력 형식 v2 — 8칸 정의·파싱·형식 채점 (R1~R7)
-│       ├── prompt.py             # 판정 기준서 요약 프롬프트(v2.3)와 재요청·폐기 확인 질문 조립
-│       ├── run.py                # 평가셋 실행 — 형식 재요청, 폐기 확인, 후처리 안전장치, (v1.4) 평가셋·방법 선택  → triage-run
-│       ├── methods.py            # (v1.4) 방법 M1(판정 예시)·M2(Critical 체크리스트)
-│       ├── guardrail.py          # 후처리 안전장치 g2 — [처리] 규칙 보정 (정답 라벨 미사용)
-│       ├── score.py              # 정답 대조 채점 (칸별 정답률·위험 건·과잉 상신·날조)   → triage-score
-│       ├── gate.py               # 평가셋 회귀 게이트 판정                               → triage-gate
-│       ├── gate_v14.py           # (v1.5) 채택 구성 회귀 게이트 (seed 3개)             → triage-gate --dataset v14
-│       ├── selection.py          # (v1.4) 모델 교체 판정 (seed 3개)                      → triage-select
-│       └── compare.py            # (v1.4) 방법·모델 비교 판정 (사전 등록 기준)            → triage-compare
-├── tools/
-│   ├── dataset_v15_final/        # (v1.5) 새 최종 평가용 세트 문항 작성·검토 화면·SHA-256 봉인 (v1.5 이전 도구는 태그 v1.5-archive)
-│   └── final_v15/                # (v1.5) 9단계 날조 사람 확인 화면
-└── tests/                        # (v1.1.1) 평가 도구 단위 테스트 (pytest)
-    ├── conftest.py               # 공통 준비물 (기준선 로그 로드, 임시 파일)
-    ├── test_score_format.py      # 포맷 채점 규칙 R1~R6
-    ├── test_detect_hallucination.py # (v1.2) 환각 탐지 범주·오탐 방지·실제 로그 골든 테스트
-    ├── test_preflight.py         # (v1.2) 측정 환경 경고 판정
-    ├── test_pipeline_contract.py # (v1.3) 출력 형식 v2 채점 규칙 (R1~R7)
-    ├── test_pipeline_score.py    # (v1.3) 정답 대조 채점, 가짜 모델로 실행→채점 전 과정
-    ├── test_pipeline_run.py      # (v1.3) 평가용 실행 차단, 문항 유출 없음, 형식 재요청·폐기 확인
-    ├── test_pipeline_guardrail.py # (v1.3) 후처리 안전장치 규칙, 정답 라벨 미사용, 원본 보존
-    ├── test_pipeline_gate.py     # (v1.3) 게이트 판정·비교 조건·기준 파일 검증
-    ├── test_pipeline_selection.py # (v1.4) 모델 교체 판정 규칙
-    ├── test_pipeline_methods.py  # (v1.4) M1 예시·M2 체크리스트 규칙, M0 프롬프트 불변
-    ├── test_pipeline_compare.py  # (v1.4) 방법·모델 비교 판정, 비교 조건 불일치 거부
-    └── test_pipeline_gate_v14.py # (v1.5) 채택 구성 게이트 판정·판정 거부·가짜 모델 전 과정
-```
-
-</details>
-
----
-
-## 6. 안전장치와 한계
-
-### 1) 안전장치 — v1.0 설계에서 현재 구현까지
-
-7B 소형 모델의 한계를 모델로 풀지 않고, 앞뒤에 룰과 사람을 두어 막는 구조입니다. v1.0에서 아래 3가지를 설계했습니다.
-
-1. **Few-Shot 역질문 가드레일** — 단문 입력에서 `누락 정보: 없음`으로 처리되는 소극성을 보완하기 위해 시스템 프롬프트에 역질문 예시 1건 주입. *4일차 재실험에서 교정 검증 완료.*
-2. **Two-Stage 이슈 분할기** — Q06처럼 다중 결함이 혼재된 리포트는 LLM 앞단의 룰 기반 경량 분할기로 쪼갠 뒤 순차 입력.
-3. **Human-in-the-Loop 큐** — 심각도 `Blocker`/`Critical` 판정 또는 재현 여부 `불명확` 건은 Jira 자동 등록을 보류하고 QA 엔지니어 검토 큐로 라우팅.
-
-> 파이프라인 도식과 설계 근거는 [`report/final_selection.md`](report/final_selection.md) §5에 있습니다.
-
-v1.3에서 판정 체계를 실무 방식(우선순위·재현 정보·처리)으로 바꾸면서, 세 가지는 다음과 같이 이어졌습니다.
-
-| v1.0 설계 | 현재 (v1.4) |
-| :--- | :--- |
-| Few-Shot 역질문 가드레일 | 출력 형식 v2의 `[재현 정보]`(충분·부족)와 `정보 요청 후 보류` 처리로 정보가 부족한 건을 따로 다룹니다. 판정 예시를 프롬프트에 넣는 방식(M1)은 v1.4 비교에서 7B 모델이 예시를 베껴 탈락했습니다 |
-| Two-Stage 이슈 분할기 | 아직 구현하지 않았습니다. 여러 결함이 섞인 제보는 평가셋 문항(A11 등)으로 측정합니다 |
-| Human-in-the-Loop 큐 | Critical은 코드가 `긴급 사인 요청`(리드 QA 사인 후 개발팀 전달)으로 보냅니다. 판정이 갈리는 경계 건은 사람 확인 누락(X-3)으로 측정합니다. 확신도를 근거로 자동 등록과 검토 큐를 나누는 라우팅은 v1.5에서 구현합니다 |
-
-여기에 v1.3·v1.4에서 형식 재요청, 폐기 확인, Critical 체크리스트가 더해졌습니다([2절](#2-현재-구성과-결과-v14)).
-
-### 2) 한계
-
-**v1.0 실험의 한계와 보완**
-
-* **표본 크기** — 고정 질문 10건을 40회 반복한 소규모 평가셋입니다. 실제 서비스의 엣지 케이스를 모두 대변하지는 못합니다. *(v1.3에서 현업 기반 평가셋 63건, v1.4에서 새 최종 평가용 25건으로 보완)*
-* **평가자 1인** — QA 루브릭 채점에 주관이 포함됩니다. 이를 보완하기 위해 주관이 개입하지 않는 지표는 전부 스크립트로 기계 채점했습니다.
-* **생성 시드 미고정** — `seed`를 지정하지 않아 회차마다 출력이 달라질 수 있습니다. 재실행 시 동일한 응답이 나오는 것을 보장하지 않습니다. 상세 영향 범위는 [`report/final_selection.md`](report/final_selection.md) §6에 기록했습니다. *(v1.2에서 seed 고정 모드로 보완)*
-
-**현재 남은 한계 (v1.4)**
-
-* **판단 정확도가 개발용 문항에 맞춰져 있음** — 같은 방법(M2)에서도 프롬프트를 다듬을 때 쓴 문항은 Critical 누락 1/66, 나머지 문항은 16/54입니다 ([KL-003](docs/issue_log.md#kl-003))
-* **모델 비교가 현재 모델에 맞춘 프롬프트 위에서 이루어짐** — 다른 모델이 불리한 조건일 수 있습니다 ([KL-004](docs/issue_log.md#kl-004))
-* **최종 평가용 세트의 위험 건 문항이 적음** — Critical 10응답(5문항), 사람 확인 2응답(1문항)이라 개발용 결과와 함께 봐야 합니다
-* **정답 라벨이 외부 채점자와 충분히 일치하지 않았음 (v1.5)** — 외부 QA 2명의 블라인드 판정이 6칸 모두 사전 등록 기준에 못 미쳤습니다. 불일치를 검토해 라벨 2문항을 바꾸고 허용 답을 넓힌 v1.5 평가셋과 기준서를 만들었으며, v1.4 결과를 v1.5 라벨로 다시 채점했습니다. 판정(M2 채택, qwen2.5:7b 유지)은 바뀌지 않았습니다 ([결과 보고서](report/label_agreement_v15_results.md), [검토 기록](docs/dataset/review_log.md))
-* **검증한 도메인이 하나뿐** — 평가 체계는 트리아지 일반을 겨냥하지만, 실제로 검증한 것은 게임 버그 리포트뿐입니다. 판정 기준과 출력 형식의 선택지(`src/triage_eval/pipeline/contract.py`, `prompt.py`)도 게임 도메인에 맞춰져 있습니다 (→ [7절 도메인 확장](#7-고도화-로드맵))
-
----
-
-## 7. 고도화 로드맵
-
-### 최종 목표 — 사람이 보지 않아도 1차 트리아지가 돌아가는 파이프라인
-
-v1.0은 "지금 어떤 모델이 이 업무에 맞는가"를 **한 번** 측정한 결과입니다.
-최종 목표는 여기서 더 나아가, **유저 리포트가 들어오면 사람이 보고 있지 않아도 트리아지되어 BTS(버그 트래커)에 자동 등록되는 파이프라인**입니다(첫 사례 기준).
-
-다만 목표는 "사람 검토가 전혀 필요 없다"가 아닙니다. 7B 로컬 모델이 모든 리포트를 맞힐 수는 없으므로, **확신할 수 있는 건은 자동 등록하고, 확신할 수 없는 건은 시스템이 스스로 골라 QA 검토 큐로 보내는 구조**를 만들고, 그 성능을 숫자로 증명합니다.
-
-| 최종 지표 | 뜻 | 목표 |
-| :--- | :--- | :---: |
-| **자동 처리율** | 전체 리포트 중 사람 손을 거치지 않고 등록된 비율 | 측정 후 설정 |
-| **자동 처리분 정확도** | 자동 등록된 건의 심각도·모듈 판정이 정답과 일치한 비율 | 측정 후 설정 |
-| **날조 건수** | 입력에 없는 사실(기기·조작·시간 조건 등)을 만들어 낸 응답 | **0건** |
-| **위험 건 누락** | Critical 이상이거나 판단보류여야 할 건이 검토 없이 자동 등록된 건수 | **0건** |
-
-> 날조와 위험 건 누락은 0건이 목표입니다. 자동 처리율과 자동 처리분 정확도의 목표는 v1.5에서 라우팅의 기준선을 잰 뒤 정합니다. 측정하지 않은 수치는 문서에 쓰지 않습니다.
-
-### 버전별 계획
-
-| 버전 | 답하려는 질문 | 작업 |
+| 장치 | 하는 일 | 왜 |
 | :--- | :--- | :--- |
-| ✅&nbsp;v1.0 | 어떤 모델이 이 업무에 맞는가? | 로컬 LLM 2종 비교·선정 |
-| ✅&nbsp;v1.1 | 무언가 바꿨을 때 나빠졌는가? | 두 실행 비교 회귀 게이트 (`compare_runs.py`, `gate_criteria.toml`) |
-| ✅&nbsp;v1.1.1 | 평가 도구 자체는 믿을 수 있는가? | 채점·게이트 로직 단위 테스트(pytest) + GitHub Actions CI |
-| ✅&nbsp;v1.2 | 가장 위험한 결함(날조)을 사람 없이 잡을 수 있는가? | 환각 자동 탐지 + seed 고정 모드 + 측정 환경 체크리스트 |
-| ✅&nbsp;v1.3 | 평가셋이 실제 현업 인입을 대표하는가? | ✅ 현업 기반 평가셋 63건 (분류 체계 → 판정 기준서 → 시드 케이스·정답 라벨), 개발용/평가용 분리 · ✅ 출력 형식 v2와 기준선 측정 · ✅ v1.3 게이트·실사용 시나리오 · ✅ 저장소 구조 정리 · ✅ 평가용 세트 최종 측정 |
-| ✅&nbsp;v1.4 | 판단 기준을 프롬프트 문장이 아닌 방식으로 전달하면 Critical 누락을 줄일 수 있는가? | ✅ 모델 재선정(현재 모델 유지) · ✅ 날조 탐지기 오탐 수정 · ✅ 새 최종 평가용 세트 25건 · ✅ 방법 비교 사전 등록 · ✅ 방법 비교(Critical 체크리스트 채택) · ✅ 최종 측정 |
-| 🔨&nbsp;v1.5 | 무엇을 자동 처리하고 무엇을 사람에게 넘길지 시스템이 판단할 수 있는가? | ✅ 채점자 간 라벨 일치율([결과 보고서](report/label_agreement_v15_results.md)) · ✅ v1.5 라벨 재채점·게이트 전환 · ✅ LLM-as-judge와 사람 채점의 일치율(요약 날조 — 미채택, [결과 보고서](report/judge_v15_results.md)) · ✅ LLM-as-judge와 사람 채점의 일치율(요약 품질 — 미채택, [결과 보고서](report/quality_v15_results.md)) · ✅ 확신도 기반 라우팅 개발용 기준선(S1+S2 선택, 채택 판정 없음, [결과 보고서](report/routing_v15_results.md)) → 새 최종 평가용 세트 봉인 + 라우팅 한 번 판정 |
-| ⏳&nbsp;v2.0 | 사람이 보지 않는 동안에도 BTS에 올바르게 인입되는가? | BTS 자동 인입 (Redmine) + 중복 티켓 감지(RAG) + 무인 운영 데모 |
-| ⏳&nbsp;도메인 확장 | 같은 평가 체계가 다른 도메인의 트리아지에서도 작동하는가? | 두 번째 도메인(예: 공정 알람, 가상 데이터) 평가셋 + 도메인별 판정 기준·출력 형식 분리 |
-
-> ✅ 완료 · 🔨 다음 작업 · ⏳ 예정
-
-### 버전별 상세
-
-* **v1.1.1** — 모델을 호출하지 않는 채점·게이트 로직은 저장된 로그만으로 테스트할 수 있어 CI에서 자동 실행합니다. 검증 도구가 틀리면 모든 판정이 틀리기 때문입니다. 함께 `run_eval.py`가 문서 기준 로그를 기본으로 덮어쓰지 않게 바꿨습니다(→ [4-6)](#6-평가-도구-테스트-v111)).
-* **v1.2** — 9/30 첫 재실행에서 확인된 두 공백(형식은 정상인 날조가 게이트를 통과, 판정 저하가 참고용이라 PASS)을 메웠습니다. 입력에 근거 없는 구체 사실을 규칙으로 탐지해 `hallucination_max = 0`을 기준에 넣었고, 같은 seed로 돈 두 실행에서는 판정 변화(`verdict_change_max = 0`)도 합격 기준으로 씁니다. 같은 seed 재실행 시 응답 40/40건이 일치해 이 기준이 노이즈 없이 동작함을 확인했습니다(→ [4-7)](#7-측정-환경-체크리스트와-seed-재현성-확인-v12)). 탐지기는 기존 4건에 더해 새 실행에서 처음 나온 날조 형태("3회 연속 패턴", "10분 정도 플레이 후")까지 잡았습니다. (근거: [`docs/issue_log.md`](docs/issue_log.md) KL-001·OBS-001)
-* **v1.3** — 평가셋은 "현업에서 실제로 들어오는 리포트"를 대표해야 합니다. 게임 개발 QA 8년 경험을 채팅 인터뷰(4회)로 옮겨 다음 순서로 만들었습니다. 근거 문서는 모두 [`docs/dataset/`](docs/dataset/)에 있습니다.
-  1. ✅ **분류 체계** — 입력을 두 트랙으로 나눴습니다. **트랙 A**는 커뮤니티 원문(목적: 걸러내기), **트랙 B**는 QA가 양식대로 쓴 BTS 이슈(BTS 인입의 약 95%, 목적: 우선순위 제안과 작성 품질 점검)입니다. 제보 품질(명확·단문·감정적 불만·복합·중복·문의·무관)의 비율은 실무 비율에 맞췄습니다 ([`seed_plan.md`](docs/dataset/seed_plan.md))
-  2. ✅ **판정 기준서** — 분류 6종, 우선순위 6단계, 처리 6종, 발생 빈도 5종과 조항마다 근거를 적었습니다 ([`triage_guideline.md`](docs/dataset/triage_guideline.md)). Critical은 자동화가 개발팀에 직접 보내지 않고 **리드 QA 사인**을 거칩니다(`긴급 사인 요청`). 부서마다 판정이 갈리는 경계 사례 6종(P-B1~B6)은 정답 범위와 "사람 검토 필요" 표시를 둡니다
-  3. ✅ **시드 케이스와 정답 라벨** — 63건(대표 세트 40 + 집중 세트 23). 문항 원문은 인터뷰에서 정한 시나리오를 바탕으로 Claude가 작성했고, 운영 불만형 5건은 직접 작성했습니다. 모든 문항과 라벨은 배치 검토 5회와 전체 검토 5회로 확정했으며, 쟁점과 판단, 반영 내용을 [`review_log.md`](docs/dataset/review_log.md)에 기록했습니다
-  4. ⏭️ **변형** — v1.3에서는 하지 않았습니다. 63건 모두 사람이 문항별로 검토한 원문이라, 검수되지 않은 변형으로 수를 늘리기보다 검토된 원문만 쓰는 쪽을 택했습니다
-  5. ✅ **개발용/평가용 분리** — 세트마다 반씩(대표 20/20, 집중 12/11) 나누되, 위험 건 측정 문항(Critical, 사람 검토)을 먼저 번갈아 배정해 양쪽에 고르게 들어가게 했습니다. 난수를 쓰지 않아 다시 실행해도 같은 분할이 나옵니다
-  6. ✅ **출력 형식 v2와 기준선 측정** — 새 판정 체계용 8칸 출력 형식(`src/triage_eval/pipeline/contract.py`), 판정 기준서 요약 프롬프트(`src/triage_eval/pipeline/prompt.py`), 정답 대조 채점기(`src/triage_eval/pipeline/score.py`)를 만들고 개발용 32건으로 기준선을 쟀습니다. v1.0 파일은 수정하지 않고 별도 파일로 두어 v1.0 수치의 재현성을 유지했습니다. 평가용 세트는 `--final` 없이 실행되지 않습니다
-     - Qwen2.5-7B 기준선: 형식 STRICT 89.1%, 처리 정답률 40.6%, **X-1 누락(Critical 미상신) 13/22**, 날조·결함 폐기·경계 건 확정 0건
-     - 주원인: Critical 인식 실패(악용·이중 결제·필터 우회 등 피해가 쌓이는 유형을 Major로 판정), 명백한 결함을 "버그 아님"으로 분류, `개발 배정` 미사용 (→ [`report/eval_v13_baseline.md`](report/eval_v13_baseline.md))
-     - 대조군 Llama3.1-8B는 형식 붕괴(대괄호 누락 16/64)와 판정 불안정(seed가 다른 두 회차에서 19/32문항 변화)으로, 새 평가셋에서도 Qwen 선정 판단이 유지됩니다
-  7. ✅ **v1.3 회귀 게이트와 실사용 시나리오** — 위 기준선으로 합격 기준을 정하고(`gate_criteria_v13.toml`, `src/triage_eval/pipeline/gate.py`), 프롬프트 개선 과정을 게이트로 판정했습니다. 게이트 FAIL 5회를 거쳐 PASS에 이른 과정과 원인 분석은 [ISSUE-007](docs/issue_log.md#issue-007)에 기록했습니다
-     - 기준선 → 최종(seed 1): X-1 누락 13 → 2, 처리 정답 26 → 48/64, 6칸 모두 정답 6 → 18, 형식 STRICT 57 → 64, 허용 값 위반 7 → 0, 날조·결함 폐기·경계 건 확정·언어 위반 0건, 평균 지연 +4.6%. seed 11·21에서도 절대 기준 0건 유지
-     - 확인한 것: 7B 모델은 프롬프트 문장 1~2줄만 바꿔도 응답 64개 중 29~49개가 바뀌고, 규칙을 문장으로 강제하면 분류를 바꿔 규칙을 피해 갑니다. 형식 오류는 판단 오류를 가리고, "다시 써 달라"는 재요청은 같은 오류를 되풀이합니다
-     - 그래서 **모델은 판단하고, 절차와 형식은 코드가 강제하는 구조**로 정리했습니다: 프롬프트 v2.3 → 형식 위반 필드만 재요청(구조화 출력의 enum·pattern으로 생성 단계 제한) → 폐기 직전 확인 질문 → 후처리 안전장치(`src/triage_eval/pipeline/guardrail.py`, [처리]만 보정)
-     - 선택지 표기를 고친 프롬프트 v2.4는 seed 3쌍 비교에서 우선순위·처리 정답 하락과 과잉 상신 증가가 일관되게 나타나 기각했습니다
-  8. ✅ **저장소 구조 정리 (v1.3 태그 전)** — `src/`를 패키지 `src/triage_eval/` 아래 공용 도구(`common/`), 동결된 v1.0 벤치마크(`bench_v1/`), 현역 파이프라인(`pipeline/`)으로 나누고, 일회용 스크립트는 `scripts/legacy/`로 옮겼습니다. 현역 파이프라인 파일 이름에서 버전을 빼(`run_eval_v2.py` → `pipeline/run.py` 등) 이후 버전은 같은 파일을 고쳐 나가고, 이전 버전은 git 태그로 보존합니다. 실행 명령은 `uv run triage-run`처럼 짧아졌습니다. 정리 전후의 동작이 같은지는 저장된 실행 기록 22건 재채점, 게이트 판정, 기록된 모델 응답 재생, 실제 모델 재측정으로 확인했습니다. 기존 경로 → 새 경로 대응표는 [`CHANGELOG.md`](CHANGELOG.md)에 있습니다
-  9. ✅ **평가용 세트 최종 측정** — 개발 과정에서 한 번도 실행하지 않은 평가용 31건으로 최종 구성을 한 번 측정했습니다. 결과를 보고 프롬프트·안전장치·채점기를 고치지 않는다는 규칙을 미리 정했습니다 (→ [`report/eval_v13_final.md`](report/eval_v13_final.md))
-     - **코드로 강제한 형식·절차는 일반화됐습니다**: 허용 값 위반·출력 언어 위반·결함 폐기 0건, 형식 STRICT 100%가 평가용에서도 유지됐습니다
-     - **모델의 판단은 개발용에 맞춰져 있었습니다**: 개발용 → 평가용으로 우선순위 정답률 62.5% → 43.5%, X-1 누락 2/22 → 6/18, X-3 누락 0/12 → 4/10, 처리 정답률 75.0% → 62.9%. 놓친 Critical 5문항은 모두 프롬프트에 해당 규칙 문장이 있었는데도 판정되지 않았습니다 ([KL-003](docs/issue_log.md#kl-003))
-     - 날조 2건은 같은 수량을 다른 단위로 옮긴 표현("100번" → "100회")을 탐지기가 날조로 잡은 오탐으로 판단하고, 측정값은 그대로 기록했습니다 ([ISSUE-008](docs/issue_log.md#issue-008))
-     - 대조군 Llama3.1-8B는 평가용에서도 형식 STRICT 50%, X-1 누락 18/18로 Qwen 선정 판단이 유지됩니다
-     - 이 결과로 v1.4의 과제가 분명해졌습니다: 판단 기준을 프롬프트 문장이 아닌 방식으로 전달하는 방법을 여러 seed로 비교하고, v1.5에서는 확신할 수 없는 건을 사람 검토 큐로 보내 위험 건 누락 0건을 지킵니다
-
-  정답 라벨의 원본은 생성 스크립트(`tools/dataset_v13/`, 지금은 태그 `v1.5-archive`)이고 JSON은 그 결과물입니다. 테스트가 둘의 일치와 라벨 규칙 간 일관성을 CI에서 확인했습니다.
-
-  실사용 시나리오(프롬프트 수정 → 게이트 FAIL → 원인 분석 → 수정 → PASS)는 [ISSUE-007](docs/issue_log.md#issue-007)에 기록했습니다. 남은 한계는 [KL-002](docs/issue_log.md#kl-002)에 있습니다.
-* **v1.4** — v1.3 최종 측정에서 모델 판단(Critical 인식·우선순위)이 처음 보는 리포트에서 크게 떨어졌습니다. 판단 문제의 해법은 판단을 더 잘하는 모델로 바꾸거나, 판단 기준을 전달하는 방법을 바꾸는 것입니다. 두 가지를 한 번에 바꾸면 무엇 덕분인지 알 수 없어 한 가지씩 비교합니다.
-  1. ✅ **모델 재선정** — 후보 8개 → 사전 점검 6개 → 비교 2개, seed 3개. 교체 규칙을 만족한 후보가 없어 qwen2.5:7b 유지 (→ [`report/eval_v14_model_selection.md`](report/eval_v14_model_selection.md)). 사전 점검 중 GPU 적재 판정의 거짓 통과를 발견해 판정 불가(HOLD) 규칙을 추가했습니다([ISSUE-009](docs/issue_log.md#issue-009))
-  2. ✅ **날조 탐지기 오탐 수정** — 같은 수량을 다른 횟수 표현으로 옮긴 응답("100번" → "100회")을 날조로 잡던 오탐을 고쳤습니다. 저장된 응답 2,545건을 다시 판정해 바뀐 판정이 이 오탐 사례뿐임을 확인했습니다([ISSUE-008](docs/issue_log.md#issue-008))
-  3. ✅ **새 최종 평가용 세트** — v1.3 평가용 31건은 결과를 이미 봤으므로 개발용으로 돌리고, 새 시나리오 25건을 검토 2회로 확정했습니다. 방법·모델 선택이 끝날 때까지 실행하지 않습니다 (→ [`docs/dataset/final_v14_review.md`](docs/dataset/final_v14_review.md))
-  4. ✅ **방법 비교 사전 등록** — M1(판정 예시 4개), M2(Critical 체크리스트 후 코드가 판정)와 채택 기준을 측정 전에 커밋했습니다 (→ [`report/method_comparison_v14_plan.md`](report/method_comparison_v14_plan.md))
-  5. ✅ **방법 비교** — 개발용 63건 × 2회 × seed 3개 (→ [실험 A 판정표](report/method_comparison_v14_a.md), [실험 B 판정표](report/method_comparison_v14_b.md))
-     - 실험 A(qwen2.5:7b 고정): **M2(Critical 체크리스트) 채택** — X-1 누락 25 → 17, 체크리스트가 올린 8건 모두 실제 Critical, 다른 지표 악화 없음. M1(판정 예시)은 X-1 25 → 9로 효과가 가장 컸지만, 예시를 따라 해 과잉 상신(26 → 56)과 모듈 오답이 늘어 탈락
-     - 실험 B(M2 고정): gemma4:12b는 **X-1 누락 0건**, 6칸 정답 19.8% → 45.8%였지만 처리·분류 문항 단위 회귀와 과잉 상신이 seed 3개 모두에서 기준을 넘어 qwen2.5:7b 유지. 결과를 본 뒤 기준을 바꾸지 않고 v1.5의 근거로 남겼습니다
-  6. ✅ **최종 측정** — 최종 평가용 25건 × 2회, qwen2.5:7b + M2 (→ [`report/eval_v14_final.md`](report/eval_v14_final.md))
-     - 날조·결함 폐기·경계 건 확정 처리·형식 위반 **0건**, 형식 STRICT 100%, 평균 2.3초
-     - X-1 누락 2/10(한 문항을 2회 모두 놓침). 체크리스트가 바꾼 판정은 0건이라 **M2의 효과는 최종 세트에서 확인되지 않았습니다** — 개발용 개선 폭은 실제보다 크게 나올 수 있다는 사전 등록 계획의 경고가 확인된 결과입니다
-     - 결론: 체크리스트는 올린 판정이 모두 맞을 만큼 정확하지만 놓친 Critical을 찾는 힘이 약하고, 분류가 틀리면 작동하지 않습니다. 모델 하나로 "놓치지 않으면서 과하게 올리지도 않는" 판단을 기대하기보다, 놓치지 않는 쪽으로 기운 판단을 사람 검토 큐가 받아내는 구조를 v1.5에서 만듭니다
-
-* **v1.5** — 첫 작업으로 채택 구성(v1.4 평가셋 + M2)의 기준선을 고정해 회귀 게이트가 판정하게 하고, 측정 환경 점검이 남은 모델 때문에 실행을 거부하던 문제([ISSUE-011](docs/issue_log.md#issue-011))를 고칩니다. 이어서 같은 기준서로 다른 채점자가 독립적으로 라벨을 달아 일치율을 재고, LLM-as-judge의 채점이 사람 채점과 얼마나 일치하는지 측정합니다. 라우팅이 "확신할 수 없는 건"을 고르려면 판정 기준과 채점이 믿을 만한지부터 알아야 하기 때문입니다(v1.4 계획에서 옮김). 이어서 응답의 확신도, 환각 탐지 결과, 판단보류·Critical 여부를 근거로 **자동 등록 / 검토 큐**를 나눕니다. 자동 처리율을 높이는 것보다 **위험 건 누락 0건을 지키는 것**이 우선입니다. v1.0 보고서의 Human-in-the-Loop 큐 설계([`report/final_selection.md`](report/final_selection.md) §5)를 실제로 구현하고 측정하는 단계입니다.
-* **도메인 확장** — 지금의 판정 기준서·출력 형식·모듈 목록은 게임 도메인에 맞춰져 있습니다. 평가 방법(사전 등록, 봉인된 최종 평가용 세트, 회귀 게이트, 날조 탐지, 사람 검토 라우팅)이 도메인에 묶여 있지 않다는 것을 보이려면, 두 번째 도메인에서 같은 절차로 평가셋을 만들고 측정해야 합니다. 이를 위해 도메인에 따라 바뀌는 부분(기준서, 출력 형식의 선택지, 프롬프트)을 코드에서 분리합니다. 실제 데이터를 쓸 수 없으므로 가상 데이터임을 밝히고, 순서는 v1.5 이후 상황에 따라 정합니다.
-* **v2.0** — 리포트가 쌓이면 자동으로 감지해 트리아지하고, BTS에 등록합니다. BTS는 사내 설치형인 **Redmine**(Docker 로컬 실행)을 써서 "외부 API 전송 불가" 전제를 지키고, 공개 데모용으로 녹화 영상을 함께 남깁니다. 과거 티켓을 검색해 중복 제보(예: Q10과 Q01)를 묶는 RAG를 붙이며, 검색이 끼면서 생기는 새 실패 유형(엉뚱한 티켓을 중복으로 판정)도 기존 게이트 체계로 측정합니다.
+| 사전 등록 | 채택 기준과 계획을 측정 전에 커밋하고, 결과를 본 뒤 바꾸지 않음 | 결과에 맞춰 기준을 옮기면 무엇이든 "통과"가 됨 |
+| 최종 평가용 세트 봉인 | 구성을 고르는 동안 실행하지 않고, 한 번 실행하면 다시 평가용으로 쓰지 않음 | 본 문항에 맞춰 고친 점수는 실제 성능보다 높게 나옴 |
+| seed 3개 회귀 게이트 | 기준선과 같은 seed끼리 비교해 위험 누락·칸 정답·문항 단위 회귀를 판정 | seed 하나로는 효과와 우연을 구분할 수 없음 |
+| 비교 조건 확인 | 평가셋 지문·생성 옵션·모델 digest가 다르거나 실행 도중 모델이 다시 로드되면 판정 거부 | 조건이 다른 두 실행의 차이는 변경의 효과가 아님 |
+| 한 번에 하나만 변경 | 방법·모델·프롬프트를 따로 비교 | 여러 개를 함께 바꾸면 무엇이 결과를 바꿨는지 모름 |
+| 정답표 검증 | 외부 QA 2명이 같은 기준서로 따로 판정해 일치율(κ)을 잼 | 정답표가 틀리면 모델 점수도 틀림 |
 
 ---
 
-## 8. 라이선스 (License)
+## 6. 설계 기준
 
-본 프로젝트의 소스 코드와 데이터셋은 [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)에 따라 자유롭게 수정, 배포 및 상업적 용도로 활용할 수 있습니다.
+| 출처 | 쓴 곳 |
+| :--- | :--- |
+| **게임 개발 QA 실무 (8년)** | Critical 누락을 가장 무거운 실수로 두고 과잉 상신과 따로 셈(장애 등급). 위험 건을 비율이 아니라 놓친 건수로 셈(출시 전 결함 누락 집계). 기존에 맞던 문항이 틀리면 회귀로 판정. 채택 기준을 측정 전에 합의(릴리스 판정 기준). Critical은 리드 QA 사인을 거쳐 개발팀에 전달. 신입 교육 방식의 체크리스트. 평가셋 시나리오와 정답 라벨 |
+| **KANT AI 부트캠프 Private LLM 트랙** | 통제 실험(한 번에 하나만 변경). 최종 평가용 세트 봉인과 데이터 누수 방지. 결과를 보기 전에 선택 규칙 고정. JSON Schema 구조화 출력과 1회 복구. 채점자 일치도(κ)로 정답표·LLM 채점관 검증. 생성 옵션·모델 digest 기록과 측정 환경 점검으로 재현성 확보 |
 
-> 참고: 평가에 사용한 모델의 라이선스는 본 프로젝트 라이선스와 별개입니다. `qwen2.5:7b`는 Apache 2.0, `llama3.1:8b`는 Llama 3.1 Community License를 따르며, 상세 조건은 [`report/model_comparison.md`](report/model_comparison.md) 모델 제원표의 Model Card 링크를 참조하세요.
+---
+
+## 7. 다음 단계
+
+* **서비스 구현** — 리포트 링크를 붙여 넣으면 본문을 가져와 트리아지하고, 사람이 확인·수정한 뒤 BTS(Jira·Redmine)에 등록하는 작업 페이지와 처리 현황 대시보드입니다. 출처와 BTS를 어댑터로 분리해 파일 하나 단위로 바꿔 끼웁니다 (→ [서비스 설계](문서/서비스_설계.md)). 위 한계 때문에 첫 구현은 사람이 모든 응답을 확인하는 흐름입니다.
+* **기준서 v1.6 후보** — 크로스 플랫폼 재현 확인, 라벨 재검토, 라우팅 신호 개선, 누락 정보 칸 등 (→ [기준서 v1.6 후보](문서/기준서_v1.6_후보.md)).
+
+---
+
+## 8. 지난 과정
+
+v1.0(모델 선정)부터 v1.5(라벨 일치율, LLM 채점관, 라우팅)까지의 결정과 핵심 숫자는 [`보고서/v1.5까지_요약.md`](보고서/v1.5까지_요약.md)에 모았습니다. 단계별 계획·기준 파일·보고서·실행 기록 원본과 당시 도구는 태그 [`v1.5-archive`](https://github.com/kokoball-eval/llm-triage-eval/tree/v1.5-archive)에 그대로 있습니다. 버전별 변경은 [`CHANGELOG.md`](CHANGELOG.md)에 있습니다.
+
+---
+
+## 라이선스
+
+본 프로젝트의 소스 코드와 데이터셋은 [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)을 따릅니다. 사용 모델 `qwen2.5:7b`의 라이선스(Apache 2.0)는 본 프로젝트 라이선스와 별개입니다.

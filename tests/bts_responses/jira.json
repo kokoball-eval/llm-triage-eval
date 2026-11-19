@@ -1,0 +1,70 @@
+{
+  "source": "실제 Jira Cloud(팀 관리형 공간, 이슈 유형 작업) 응답 녹화 (2026-11-19). 인증 정보는 저장하지 않고 사이트 주소는 your-site 로 바꿈",
+  "base_url": "https://your-site.atlassian.net",
+  "find_none": {
+    "status": 200,
+    "body": {
+      "issues": [],
+      "isLast": true
+    }
+  },
+  "create": {
+    "status": 201,
+    "body": {
+      "id": "10013",
+      "key": "KAN-4",
+      "self": "https://your-site.atlassian.net/rest/api/3/issue/10013"
+    }
+  },
+  "find_hit": {
+    "status": 200,
+    "body": {
+      "issues": [
+        {
+          "expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations",
+          "id": "10013",
+          "self": "https://your-site.atlassian.net/rest/api/3/issue/10013",
+          "key": "KAN-4"
+        }
+      ],
+      "isLast": true
+    }
+  },
+  "status_name": "해야 할 일",
+  "status": {
+    "status": 200,
+    "body": {
+      "expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations",
+      "id": "10013",
+      "self": "https://your-site.atlassian.net/rest/api/3/issue/10013",
+      "key": "KAN-4",
+      "fields": {
+        "status": {
+          "self": "https://your-site.atlassian.net/rest/api/3/status/10003",
+          "description": "",
+          "iconUrl": "https://your-site.atlassian.net/images/icons/statuses/generic.png",
+          "name": "해야 할 일",
+          "id": "10003",
+          "statusCategory": {
+            "self": "https://your-site.atlassian.net/rest/api/3/statuscategory/2",
+            "id": 2,
+            "key": "new",
+            "colorName": "blue-gray",
+            "name": "해야 할 일"
+          }
+        }
+      }
+    }
+  },
+  "rejected": {
+    "status": 400,
+    "body": {
+      "errorMessages": [],
+      "errors": {
+        "priority": "선택한 우선 순위가 유효하지 않습니다."
+      }
+    }
+  },
+  "rejected_text": "priority: 선택한 우선 순위가 유효하지 않습니다.",
+  "ticket_key": "KAN-4"
+}

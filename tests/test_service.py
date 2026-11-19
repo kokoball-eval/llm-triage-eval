@@ -290,6 +290,9 @@ def test_retry_clears_previous_result(store):
 class RefusingTracker:
     name = "refusing"
 
+    def find(self, ref):
+        return None
+
     def create(self, issue):
         raise TrackerError("BTS 점검 중")
 
@@ -310,7 +313,7 @@ def test_tracker_failure_keeps_reviewed_values(store):
 @pytest.fixture
 def web(store, tracker):
     worker = Worker(store, client_factory=FakeClient)
-    with TestClient(create_app(store, worker, tracker, start_worker=False)) as c:
+    with TestClient(create_app(store, worker, tracker, start_worker=False, allowed_hosts=("testserver",))) as c:
         c.worker = worker
         yield c
 

@@ -5,6 +5,7 @@ description = "LLM에게 1차 트리아지를 맡길 때, 그 판단을 평가�
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.165.0",
+    "httpx>=0.28.1",
     "jinja2>=3.1.6",
     "ollama>=0.6.2",
     "python-multipart>=0.0.34",
@@ -29,7 +30,6 @@ packages = ["src/triage_eval", "src/triage_service"]
 
 [dependency-groups]
 dev = [
-    "httpx>=0.28.1",
     "pytest>=9.1.1",
 ]
 

@@ -1,0 +1,44 @@
+# ─────────────────────────────────────────────────────────────
+# BTS 연결 설정 — 작업 페이지(uv run triage-serve)가 시작할 때 읽고 검사한다(src/triage_service/bts/settings.py).
+#
+# 회사마다 다른 값(주소·프로젝트·우선순위 이름)은 이 파일에서만 바꾼다. 코드는 고치지 않는다.
+# 토큰은 여기에 적지 않는다. 환경 변수(또는 저장소 루트의 .env, git 제외)로만 넣는다:
+#   Jira    — JIRA_EMAIL, JIRA_API_TOKEN
+#   Redmine — REDMINE_API_KEY
+# 검사에 걸리면(모르는 키, 빠진 우선순위 대응, 토큰 없음) 서버가 시작하지 않는다. 대응이 빠진 채 돌면
+# 등록할 때마다 엉뚱한 값이 BTS 에 조용히 들어가기 때문이다.
+# ─────────────────────────────────────────────────────────────
+
+[bts]
+use = "fake"        # fake(같은 DB 에 저장하는 가짜 BTS) | jira | redmine
+
+# ── Jira Cloud (REST API v3) ────────────────────────────────
+[jira]
+base_url = "https://your-site.atlassian.net"   # 무료 사이트 주소
+project_key = "TRI"                             # 프로젝트(공간) 키 — 주소창 /projects/<키>/ 부분
+issue_type = "Bug"                              # 회사 관리형 프로젝트는 Bug. 팀 관리형 공간에 Bug 가 없으면 "작업"(Task) 등 실제 유형 이름
+labels = ["triage"]                             # 모든 티켓에 붙일 라벨. 모듈은 라벨로 붙는다(공백은 _)
+timeout_sec = 10
+
+[jira.priority]     # 8칸 [우선순위] → Jira 우선순위 이름 (Jira Cloud 기본값)
+Critical = "Highest"
+Major = "High"
+Minor = "Medium"
+Trivial = "Low"
+"판단보류" = "Medium"
+"해당 없음" = "Lowest"
+
+# ── Redmine (REST API) ─────────────────────────────────────
+[redmine]
+base_url = "http://127.0.0.1:3000"   # 로컬 Docker Redmine
+project_id = "triage"                # 프로젝트 식별자
+tracker_id = 1                       # 유형 번호 (영문 기본 데이터: 1 = Bug)
+timeout_sec = 10
+
+[redmine.priority]  # 8칸 [우선순위] → Redmine 우선순위 번호 (영문 기본 데이터: 1 Low · 2 Normal · 3 High · 4 Urgent · 5 Immediate)
+Critical = 5
+Major = 3
+Minor = 2
+Trivial = 1
+"판단보류" = 2
+"해당 없음" = 1

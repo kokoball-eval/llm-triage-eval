@@ -9,6 +9,9 @@
    같은 잠금을 써서, BTS 등록 도중에 폐기되어 BTS 에만 티켓이 남는 일을 막는다.
 3. 사람이 고친 칸은 고치기 전 값과 함께 남긴다(store 설계 의도 2).
 4. BTS 등록이 실패하면 "실패"로 남기고 사람이 확정한 값도 함께 저장한다. 대체 티켓을 만들지 않는다.
+5. 등록하기 전에 서비스 표식(store.ref)으로 BTS 에서 같은 리포트의 티켓을 먼저 찾는다. 이전 등록 요청이 응답 없이
+   끊겼지만 실제로는 만들어졌다면, 새로 만들지 않고 그 티켓에 연결한다(티켓 중복 방지).
+6. BTS 등록에서 실패한 건은 [검토로 되돌리기]로 확정한 8칸을 그대로 둔 채 다시 등록할 수 있다. 모델을 다시 돌리지 않는다.
 """
 
 import threading
@@ -58,12 +61,14 @@ def register(store: Store, tracker, rid: int, fields: dict[str, str]) -> dict:
         flow.check(rec["state"], flow.REGISTERED)
         final = {f: fields[f].strip() for f in FIELDS}
         changed = edits(rec["model_fields"], final)
-        try:
-            ticket = tracker.create(Issue(report=rec["report"], fields=final))
+        ref = store.ref(rid)
+        try:   # 설계 의도 5 — 같은 리포트의 티켓이 이미 있으면 새로 만들지 않는다
+            ticket = tracker.find(ref) or tracker.create(Issue(report=rec["report"], fields=final, ref=ref))
         except Exception as e:   # 설계 의도 4
-            return store.move(rid, flow.FAILED, final_fields=final, edits=changed, error=f"BTS 등록 실패: {e}")
+            return store.move(rid, flow.FAILED, final_fields=final, edits=changed, failed_step="등록",
+                              error=f"BTS 등록 실패: {e}")
         return store.move(rid, flow.REGISTERED, final_fields=final, edits=changed,
-                          ticket_key=ticket.key, ticket_url=ticket.url, error=None)
+                          ticket_key=ticket.key, ticket_url=ticket.url, error=None, failed_step=None)
 
 
 def discard(store: Store, rid: int) -> dict:
@@ -71,10 +76,19 @@ def discard(store: Store, rid: int) -> dict:
         return store.move(rid, flow.DISCARDED)
 
 
+def back_to_review(store: Store, rid: int) -> dict:
+    """실패 → 검토 대기. BTS 등록에서 실패한 건만 — 사람이 확정한 8칸을 그대로 두고 다시 등록하게 한다 (설계 의도 6)."""
+    with _decision_lock:
+        rec = store.get(rid)
+        if rec["state"] != flow.FAILED or rec["failed_step"] != "등록":
+            raise flow.FlowError("BTS 등록 단계에서 실패한 건만 검토로 되돌릴 수 있습니다")
+        return store.move(rid, flow.REVIEW, error=None, failed_step=None)
+
+
 def retry(store: Store, worker, rid: int) -> dict:
     """실패 → 접수. 이전 처리 결과를 비우고 처음부터 다시 트리아지한다(지난 결과가 새 결과처럼 보이지 않게)."""
     with _decision_lock:
-        rec = store.move(rid, flow.RECEIVED, error=None, result=None, pipeline=None, routing=None,
+        rec = store.move(rid, flow.RECEIVED, error=None, failed_step=None, result=None, pipeline=None, routing=None,
                          model_fields=None, final_fields=None, edits=None)
     worker.submit(rid)
     return rec

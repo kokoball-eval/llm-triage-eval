@@ -2,8 +2,8 @@
 {% block body %}
 <h1>리포트</h1>
 <nav class="filter">
-  <a href="/">전체</a>
-  {% for s in STATES %}<a href="/?state={{ s }}">{{ s }} {{ counts[s] }}</a>{% endfor %}
+  <a href="/reports">전체</a>
+  {% for s in STATES %}<a href="/reports?state={{ s }}">{{ s }} {{ counts[s] }}</a>{% endfor %}
 </nav>
 {% if reports %}
 <table>

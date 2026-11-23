@@ -34,7 +34,7 @@
 </nav>
 
 <h2>상태</h2>
-<div class="states">{% for s, n in m.states.items() %}<a class="card" href="/?state={{ s }}"><span class="muted">{{ s }}</span><br><span class="big">{{ n }}</span></a>{% endfor %}</div>
+<div class="states">{% for s, n in m.states.items() %}<a class="card" href="/reports?state={{ s }}"><span class="muted">{{ s }}</span><br><span class="big">{{ n }}</span></a>{% endfor %}</div>
 
 <div class="grid" style="margin-top:16px">
   <div class="card"><h2>사람 수정 비율 (등록한 건 중 한 칸이라도 고침)</h2>

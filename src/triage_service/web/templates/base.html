@@ -55,6 +55,13 @@
     .steps span { background:var(--tint); border-radius:999px; padding:1px 10px; }
     .steps i { font-style:normal; color:var(--muted); }
     .badge { display:inline-block; min-width:1.6em; text-align:center; background:var(--accent); color:#fff; border-radius:999px; padding:0 8px; font-size:13px; }
+    .steps span.now { background:var(--accent); color:#fff; }
+    nav.tabs { display:flex; gap:8px; margin:12px 0; }
+    nav.tabs a { padding:6px 18px; border-radius:999px; border:1px solid var(--line); color:var(--muted); text-decoration:none; font-weight:600; }
+    nav.tabs a.on { background:var(--tint); border-color:var(--accent); color:var(--accent-dark); }
+    details.more { margin-top:16px; border:1px solid var(--line); border-radius:var(--radius); padding:8px 16px; }
+    details.more summary { cursor:pointer; font-weight:600; color:var(--muted); }
+    .big-input { font-size:17px; padding:12px 14px; }
     @media (max-width:520px) { header { padding:10px 16px; gap:12px; } .hero h1 { font-size:24px; } }
   </style>
 </head>

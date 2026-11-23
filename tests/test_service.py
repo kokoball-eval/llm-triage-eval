@@ -359,6 +359,28 @@ def test_web_home_shows_entries_and_recent(web, store):
     assert web.get("/reports?state=없는상태").status_code == 200
 
 
+def test_web_new_has_two_tabs(web):
+    """붙여넣기·링크 두 탭을 주소로 고르고, 모르는 값은 붙여넣기로 간다 (app 설계 의도 9)."""
+    paste, link = web.get("/new?mode=paste").text, web.get("/new?mode=link").text
+    assert 'name="body"' in paste and 'name="link"' in paste and 'action="/fetch"' not in paste
+    assert 'action="/fetch"' in link and 'name="body"' not in link
+    assert web.get("/new?mode=엉뚱").text == web.get("/new").text == paste
+    assert "켜진 출처" in paste and "켜진 출처" in link
+
+
+def test_web_new_opens_extra_fields_only_when_filled(web):
+    assert "<details class=\"more\" >" in web.get("/new").text
+    page = web.post("/fetch", data={"link": "https://evil.example/x"}).text   # 실패해도 붙여넣기 탭
+    assert 'name="body"' in page and "추가 정보" in page
+
+
+def test_web_detail_marks_current_step(web, store):
+    rid = int(web.post("/reports", data=form_of(DEV_ITEMS[0]), follow_redirects=False).headers["location"].rsplit("/", 1)[1])
+    assert '<span class="now">접수</span>' in web.get(f"/reports/{rid}").text
+    web.worker.process(rid)
+    assert '<span class="now">8칸 검토</span>' in web.get(f"/reports/{rid}").text
+
+
 def test_web_shows_input_errors(web):
     r = web.post("/reports", data={"track": "A", "title": "", "body": ""})
     assert r.status_code == 422 and "제목과 본문" in r.text

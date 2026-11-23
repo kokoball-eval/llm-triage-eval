@@ -1,0 +1,2 @@
+{# 단계 표시 — labels 는 단계 이름 목록, now 는 지금 단계의 번호(0부터, 없으면 아무것도 강조하지 않는다) #}
+{% macro steps(labels, now=-1) %}<div class="steps">{% for l in labels %}{% if not loop.first %}<i>→</i>{% endif %}<span{% if loop.index0 == now %} class="now"{% endif %}>{{ l }}</span>{% endfor %}</div>{% endmacro %}

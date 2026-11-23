@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_steps.html" import steps %}
 {% set r = rec.report %}
 {% block head %}{% if rec.state in PENDING %}<meta http-equiv="refresh" content="{{ REFRESH }}">{% endif %}{% endblock %}
 {% block title %}#{{ rec.id }} {{ r.title }}{% endblock %}
@@ -8,6 +9,7 @@
      · <a href="/reports/{{ rec.id }}/bts-status">BTS 상태 확인</a>{% if bts_status %} <strong>{{ bts_status }}</strong>{% endif %}{% endif %}
    <span class="muted"> · 접수 {{ rec.created_at }} · 마지막 변경 {{ rec.updated_at }}</span></p>
 <h1>#{{ rec.id }} {{ r.title }}</h1>
+{{ steps(["접수", "8칸 검토", "BTS 등록"], 0 if rec.state in PENDING else 1 if rec.state in (REVIEW, FAILED) else 2 if rec.state == "등록 완료" else -1) }}
 
 {% if problems %}<div class="box error"><strong>처리할 수 없습니다</strong><ul>{% for p in problems %}<li>{{ p }}</li>{% endfor %}</ul></div>{% endif %}
 

@@ -119,6 +119,8 @@ class Recorder:
         self.requests.append(request)
         routes = {(m, p.format(key=self.data["ticket_key"])): v for (m, p), v in ROUTES[self.name].items()}
         what = routes[(request.method, request.url.path)]
+        if what == "find" and ("issue_id" in request.url.params or "status" in request.url.params.get("fields", "")):
+            what = "snapshot"   # 같은 검색 주소로 여러 티켓의 상태를 읽는 요청 (jira.py 설계 의도 7, redmine.py 설계 의도 6)
         mode = self.fail.get(what)
         if mode == "timeout":
             raise httpx2.ReadTimeout("timed out", request=request)

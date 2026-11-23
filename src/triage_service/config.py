@@ -14,6 +14,8 @@
    변수를 덮어쓰지 않는다. 토큰을 설정 파일이나 코드에 적지 않기 위해서다.
 7. 받는 Host 는 127.0.0.1·localhost 뿐이다. 외부 도메인이 이 PC 를 가리키게 만들어(DNS 리바인딩) 브라우저로 로컬
    서버를 부르는 공격을 막는다.
+8. BTS 동기화(sync.py)는 등록한 리포트 중 최근 SYNC_LIMIT 건만 읽고, 한 번에 SYNC_CHUNK 건씩 묶어 요청한다. 한 건씩 부르면
+   요청이 건수만큼 늘고, 오래된 건까지 읽으면 BTS 호출 한도와 대기 시간이 커진다(shortcut: 200건이 모자라면 올린다).
 """
 
 import os
@@ -34,6 +36,8 @@ ENV_PATH = ROOT / ".env"
 TITLE_MAX = 100
 BODY_MAX = 1000
 STATUS_REFRESH_SEC = 1    # 트리아지가 끝날 때까지 상세 화면을 다시 읽는 간격
+SYNC_LIMIT = 200          # BTS 에서 상태를 읽는 등록 리포트 수의 상한 (설계 의도 8)
+SYNC_CHUNK = 50           # 한 번의 BTS 요청에 담는 티켓 수 (Jira 검색 maxResults 100, Redmine limit 100 이하)
 
 
 def load_env(path: Path = ENV_PATH) -> None:

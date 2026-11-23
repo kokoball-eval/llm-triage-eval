@@ -13,13 +13,15 @@
    (그룹은 Redmine 관리 설정 "그룹에 일감 할당 허용"이 켜져 있어야 한다). 담당자는 프로젝트 구성원이어야 한다.
    연결 확인은 구성원 목록을 끝 페이지까지 읽어 구성원인지만 본다. 목록을 읽으려면 API 키에 구성원 관리 권한이 필요하고,
    그 구성원의 역할이 "일감 할당 가능"인지는 보지 않는다(shortcut: 역할 확인 없음, 실제 Redmine 으로 다시 확인할 때 올림).
+6. 상태 읽기(snapshot)는 목록 한 번(issue_id 쉼표 목록)으로 가져온다. status_id=* 를 주지 않으면 닫힌 티켓이 빠진다.
+   응답 모양은 녹화한 단건 응답과 Redmine API 문서를 따랐고 실제 서버로는 확인하지 않았다(Redmine 컨테이너를 지운 뒤).
 """
 
 import httpx2
 
 from triage_service.bts import clients
 from triage_service.bts.common import call, description_lines, marker_line
-from triage_service.contracts import Issue, Ticket, TrackerError
+from triage_service.contracts import BtsState, Issue, Ticket, TrackerError
 
 
 class RedmineTracker:
@@ -55,6 +57,11 @@ class RedmineTracker:
 
     def status(self, key: str) -> str:
         return call(self.http, "GET", f"/issues/{key}.json").json()["issue"]["status"]["name"]
+
+    def snapshot(self, keys: list[str]) -> dict[str, BtsState]:   # 설계 의도 6
+        resp = call(self.http, "GET", "/issues.json", params={"issue_id": ",".join(keys), "status_id": "*", "limit": len(keys)})
+        return {str(i["id"]): BtsState(i["status"]["name"], (i.get("assigned_to") or {}).get("name", ""), i.get("updated_on", ""))
+                for i in resp.json().get("issues", [])}
 
     def check_assignees(self) -> list[str]:
         """[redmine.teams] 의 번호가 이 프로젝트의 구성원(사용자·그룹)인지 (연결 확인 --check, 설계 의도 5)."""

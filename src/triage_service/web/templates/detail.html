@@ -17,7 +17,8 @@
 {% block body %}
 <p><span class="state {{ rec.state }}">{{ rec.state }}</span>
    {% if rec.ticket_key %} · 티켓 <a href="{{ rec.ticket_url }}" target="_blank" rel="noopener">{{ rec.ticket_key }}</a>
-     · <a href="/reports/{{ rec.id }}/bts-status">BTS 상태 확인</a>{% if bts_status %} <strong>{{ bts_status }}</strong>{% endif %}{% endif %}
+     · <a href="/reports/{{ rec.id }}/bts-status">BTS 상태 확인</a>{% if bts_status %} <strong>{{ bts_status }}</strong>{% endif %}
+     {% if rec.bts %} · 읽어 둔 BTS 상태 <strong>{{ rec.bts.status }}</strong> <span class="muted">({{ rec.bts.synced_at }} 동기화)</span>{% endif %}{% endif %}
    <span class="muted"> · 접수 {{ rec.created_at }} · 마지막 변경 {{ rec.updated_at }}</span></p>
 <h1>#{{ rec.id }} {{ r.title }}</h1>
 {{ steps(["접수", "8칸 검토", "BTS 등록"], 0 if rec.state in PENDING else 1 if rec.state in (REVIEW, FAILED) else 2 if rec.state == "등록 완료" else -1) }}

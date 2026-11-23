@@ -8,6 +8,8 @@
    "문항 → Report → 문항"을 돌려 모델 입력 문자열이 같은지 고정한다.
 3. 입력 종류(track)는 측정 때와 같은 두 가지다. A는 커뮤니티 원문(게시판·게시 일시), B는 QA가 쓴 BTS 이슈(작성자).
    B 의 작성자는 REPORTERS 중 하나여야 한다(안전장치 규칙이 작성자 값을 본다).
+4. BTS 에서 읽어 오는 상태(BtsState)는 이름 그대로 가져온다. 그 이름이 "검증 대기"인지 "완료"인지는 BTS 마다 다르므로
+   서비스가 설정(sync.py)으로 해석하고, 어댑터는 해석하지 않는다.
 """
 
 from dataclasses import dataclass
@@ -57,6 +59,14 @@ class Ticket:
     url: str
 
 
+@dataclass(frozen=True)
+class BtsState:
+    """BTS 에서 읽은 티켓 상태. updated 는 BTS 가 기록한 마지막 변경 시각(ISO 8601)."""
+    status: str
+    assignee: str = ""
+    updated: str = ""
+
+
 class Source(Protocol):
     """출처 어댑터 계약 — 링크를 받아 Report 를 만든다 (S3 에서 게시판·디스코드 등을 붙인다)."""
     name: str
@@ -79,6 +89,8 @@ class Tracker(Protocol):
     def status(self, key: str) -> str: ...
 
     def check_assignees(self) -> list[str]: ...   # 자동 배정 계정이 BTS 에서 담당자가 될 수 없으면 문제 목록
+
+    def snapshot(self, keys: list[str]) -> dict[str, BtsState]: ...   # 티켓 여러 건의 상태(BTS 에 없는 키는 빠진다)
 
 
 class TrackerError(Exception):

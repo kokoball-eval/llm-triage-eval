@@ -12,6 +12,9 @@
    방금 만들어진 티켓을 못 찾아 중복될 수 있으므로, "등록 여부 불확실" 안내대로 Jira 에서 먼저 확인한다.
 6. 자동 배정(assign.py)한 팀은 담당자(계정 ID, [jira.teams])로 넣고 "팀_<이름>" 라벨도 붙인다. 팀 관리형 공간에는
    컴포넌트가 없어 컴포넌트 기본 담당자를 쓸 수 없다(2026-11-23 KAN 공간에서 확인). 라벨로 BTS 에서 팀별로 걸러 본다.
+7. 상태 읽기(snapshot)는 검색 한 번으로 여러 티켓을 가져온다. 예전 /search 는 삭제돼(HTTP 410) /search/jql 만 쓴다(2026-11-23 KAN
+   에서 확인). 키는 따옴표로 감싸고, 한 번에 SYNC_CHUNK 건 이하만 받는다. 검색에 없는 키는 오류 없이 결과에서 빠진다
+   (존재하지 않는 KAN-999 를 섞어 실제 KAN 에서 확인: HTTP 200, 그 키만 빠짐).
 """
 
 import httpx2
@@ -19,7 +22,7 @@ import httpx2
 from triage_eval.contracts import NO_MODULE, split_modules
 from triage_service.bts import clients
 from triage_service.bts.common import call, description_lines
-from triage_service.contracts import Issue, Ticket
+from triage_service.contracts import BtsState, Issue, Ticket
 
 
 class JiraTracker:
@@ -57,6 +60,14 @@ class JiraTracker:
     def status(self, key: str) -> str:
         resp = call(self.http, "GET", f"/rest/api/3/issue/{key}", params={"fields": "status"})
         return resp.json()["fields"]["status"]["name"]
+
+    def snapshot(self, keys: list[str]) -> dict[str, BtsState]:   # 설계 의도 7
+        listed = ", ".join(f'"{k}"' for k in keys)
+        resp = call(self.http, "GET", "/rest/api/3/search/jql", params={
+            "jql": f'project = "{self.s["project_key"]}" AND key in ({listed})',
+            "fields": "status,assignee,updated", "maxResults": len(keys)})
+        return {i["key"]: BtsState(i["fields"]["status"]["name"], (i["fields"].get("assignee") or {}).get("displayName", ""),
+                                   i["fields"].get("updated", "")) for i in resp.json().get("issues", [])}
 
     def check_assignees(self) -> list[str]:
         """[jira.teams] 의 계정이 이 프로젝트의 담당자가 될 수 있는지 (연결 확인 --check)."""

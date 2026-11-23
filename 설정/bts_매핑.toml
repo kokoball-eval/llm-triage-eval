@@ -58,6 +58,10 @@ QA = "your-qa-account-id"
 "아트" = "your-art-account-id"
 "기획" = "your-design-account-id"
 
+[jira.status]       # QA 화면(상태 동기화, src/triage_service/sync.py)이 읽는 상태 이름. 이 섹션을 지우면 동기화하지 않는다
+verify = ["검토 중", "In Review"]   # 검증 대기로 볼 Jira 상태 이름 (팀 관리형 한국어 기본값 / 영어 기본값)
+done = ["완료", "Done"]             # 끝난 것으로 볼 상태 이름. 두 목록에 같은 이름이 있으면 안 된다
+
 # ── Redmine (REST API) ─────────────────────────────────────
 [redmine]
 base_url = "http://127.0.0.1:3000"   # 로컬 Docker Redmine
@@ -80,3 +84,7 @@ QA = 5
 "서버" = 8
 "아트" = 9
 "기획" = 10
+
+[redmine.status]    # QA 화면(상태 동기화)이 읽는 상태 이름. 이 섹션을 지우면 동기화하지 않는다 (영문 기본 데이터 기준)
+verify = ["Resolved"]
+done = ["Closed", "Rejected"]

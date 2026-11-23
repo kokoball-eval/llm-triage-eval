@@ -19,6 +19,10 @@
 8. 첫 화면(/)은 하고 싶은 일을 고르는 입구 카드이고, 리포트 표는 /reports 다. 입구마다 단계 표시를 붙여 다음에 무엇이
    일어나는지 미리 보인다. 색·모서리 같은 디자인 값은 base.html 의 :root 한 곳에서만 정한다. 외부 글꼴·이미지를 쓰지
    않아 사내망에서도 같게 보이고, 최근 5건은 store.list() 결과를 자를 뿐이라 새 규칙이 없다.
+9. 새 리포트 화면은 "직접 붙여넣기"와 "링크로 가져오기" 두 탭이고 탭은 주소(/new?mode=)로 고른다(자바스크립트 없음).
+   모르는 mode 값은 붙여넣기로 간다. 가져오기가 실패하거나 중복이면 붙여넣기 탭에 이유를 보여 줘 바로 직접 붙여
+   넣을 수 있다(기존 동작과 시험 그대로). 게시판·작성자·참고 칸은 입력 종류에 따라 쓰는 칸이라 <details> 로 접고,
+   가져오기로 채워졌으면 펼친다. 폼의 칸 이름과 전송 주소는 바꾸지 않아 입력 검사·접수 규칙은 그대로다.
 """
 
 from contextlib import asynccontextmanager
@@ -110,18 +114,19 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
             state = None
         return page(request, "list.html", reports=store.list(state), state=state, counts=counts())
 
-    def new_page(request: Request, form: dict, status_code: int = 200, error=None, notice=None, existing=None):
+    def new_page(request: Request, form: dict, status_code: int = 200, error=None, notice=None, existing=None,
+                 mode: str = "paste"):
         on = sorted({s.name for s in sources})
         return page(request, "new.html", status_code=status_code, form=form, error=error, notice=notice,
-                    existing=existing, sources_on=on, sources_off=sources_off)
+                    existing=existing, sources_on=on, sources_off=sources_off, mode=mode)
 
     @app.get("/dashboard", response_class=HTMLResponse)
     def dashboard(request: Request, period: str = "30"):   # 설계 의도 4
         return page(request, "dashboard.html", m=metrics.compute(store.list(), store.history(), period))
 
     @app.get("/new", response_class=HTMLResponse)
-    def new(request: Request):
-        return new_page(request, {"track": "A"})
+    def new(request: Request, mode: str = "paste"):   # 설계 의도 9
+        return new_page(request, {"track": "A"}, mode="link" if mode == "link" else "paste")
 
     @app.post("/fetch")
     async def fetch(request: Request):

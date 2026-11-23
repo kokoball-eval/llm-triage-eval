@@ -381,6 +381,21 @@ def test_web_detail_marks_current_step(web, store):
     assert '<span class="now">8칸 검토</span>' in web.get(f"/reports/{rid}").text
 
 
+def test_web_review_is_two_columns_and_marks_changed_fields(web, store):
+    """검토 화면은 원문·폼 두 단이고, 모델 값과 다른 칸만 표시하며 처리 기록은 접혀 있다 (app 설계 의도 10)."""
+    rid = int(web.post("/reports", data=form_of(DEV_ITEMS[0]), follow_redirects=False).headers["location"].rsplit("/", 1)[1])
+    web.worker.process(rid)
+    page = web.get(f"/reports/{rid}").text
+    assert '<div class="split">' in page and '<details class="log">' in page and "원문" in page
+    assert "(모델:" not in page and page.count('class=" changed"') == 0   # 안 고쳤으면 표시 없음
+    values = store.get(rid)["model_fields"]
+    data = {f: values[f] for f in FIELDS if f != "모듈"}
+    data["모듈"] = [m.strip() for m in values["모듈"].split("/")]
+    data["분류"] = "엉터리"   # 허용 값이 아니라 등록되지 않고, 고친 값이 담긴 검토 화면이 오류와 함께 다시 나온다
+    page = web.post(f"/reports/{rid}/register", data=data).text
+    assert "(모델:" in page and "changed" in page
+
+
 def test_web_shows_input_errors(web):
     r = web.post("/reports", data={"track": "A", "title": "", "body": ""})
     assert r.status_code == 422 and "제목과 본문" in r.text

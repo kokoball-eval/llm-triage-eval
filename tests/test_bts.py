@@ -31,9 +31,9 @@ SECRETS = {"jira": {"JIRA_EMAIL": "qa@example.com", "JIRA_API_TOKEN": "SECRET-TO
            "redmine": {"REDMINE_API_KEY": "SECRET-TOKEN-123"}}
 ROUTES = {   # (방법, 경로) → 녹화 응답 이름. {key} 는 녹화한 티켓 키
     "jira": {("POST", "/rest/api/3/issue"): "create", ("GET", "/rest/api/3/search/jql"): "find",
-             ("GET", "/rest/api/3/issue/{key}"): "status"},
+             ("GET", "/rest/api/3/issue/{key}"): "status", ("GET", "/rest/api/3/user/assignable/search"): "assignable"},
     "redmine": {("POST", "/issues.json"): "create", ("GET", "/issues.json"): "find",
-                ("GET", "/issues/{key}.json"): "status"},
+                ("GET", "/issues/{key}.json"): "status", ("GET", "/projects/triage/memberships.json"): "memberships"},
 }
 
 
@@ -127,6 +127,8 @@ class Recorder:
         if what == "create" and mode is None:
             self.created = json.loads(request.content)
         key = "rejected" if mode == "reject" else ("find_hit" if self.found else "find_none") if what == "find" else what
+        if what == "assignable":   # 녹화한 계정(qa-account-id)만 담당자가 될 수 있다
+            key = "assignable_hit" if request.url.params.get("accountId") == "qa-account-id" else "assignable_none"
         body = json.loads(json.dumps(self.data[key]["body"]))
         if key == "find_hit" and self.name == "redmine" and self.created:
             # 녹화한 검색 응답의 모양 그대로, 설명만 이 시험에서 등록한 내용으로 (Redmine 은 설명의 표식 줄을 비교한다)

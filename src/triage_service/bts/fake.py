@@ -24,7 +24,8 @@ class FakeTracker:
                       "created_at TEXT NOT NULL, status TEXT NOT NULL, issue TEXT NOT NULL)")
 
     def create(self, issue: Issue) -> Ticket:
-        payload = json.dumps({"report": asdict(issue.report), "fields": issue.fields, "ref": issue.ref}, ensure_ascii=False)
+        payload = json.dumps({"report": asdict(issue.report), "fields": issue.fields, "ref": issue.ref, "team": issue.team},
+                             ensure_ascii=False)
         with connect(self.path) as c:
             n = c.execute("INSERT INTO fake_tickets (created_at, status, issue) VALUES (?, ?, ?)",
                           (now(), "신규", payload)).lastrowid
@@ -41,6 +42,9 @@ class FakeTracker:
 
     def status(self, key: str) -> str:
         return self.get(key)["status"]
+
+    def check_assignees(self) -> list[str]:
+        return []   # 계정이 없다. 팀 이름을 그대로 저장한다
 
     def get(self, key: str) -> dict:
         n = int(key.removeprefix("FAKE-")) if key.startswith("FAKE-") and key[5:].isdigit() else -1

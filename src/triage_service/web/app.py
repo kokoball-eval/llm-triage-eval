@@ -16,6 +16,9 @@
    실제 BTS 토큰으로 티켓이 생긴다. 상태를 바꾸는 요청(POST)은 Origin(없으면 Referer)이 이 서버와 같을 때만 받는다.
    로그인 쿠키를 쓰지 않으므로 토큰 방식보다 이 확인이 단순하고 충분하다. Host 머리글도 127.0.0.1·localhost 만 받는다
    (외부 도메인이 이 PC 를 가리키게 만드는 DNS 리바인딩 차단, config 설계 의도 7).
+8. 첫 화면(/)은 하고 싶은 일을 고르는 입구 카드이고, 리포트 표는 /reports 다. 입구마다 단계 표시를 붙여 다음에 무엇이
+   일어나는지 미리 보인다. 색·모서리 같은 디자인 값은 base.html 의 :root 한 곳에서만 정한다. 외부 글꼴·이미지를 쓰지
+   않아 사내망에서도 같게 보이고, 최근 5건은 store.list() 결과를 자를 뿐이라 새 규칙이 없다.
 """
 
 from contextlib import asynccontextmanager
@@ -94,12 +97,18 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
     def go(rid: int) -> RedirectResponse:
         return RedirectResponse(f"/reports/{rid}", status_code=303)
 
+    def counts() -> dict:
+        return {s: len(store.list(s)) for s in flow.STATES}
+
     @app.get("/", response_class=HTMLResponse)
+    def home(request: Request):   # 설계 의도 8
+        return page(request, "home.html", counts=counts(), recent=store.list()[:5])
+
+    @app.get("/reports", response_class=HTMLResponse)
     def index(request: Request, state: str | None = None):
         if state is not None and state not in flow.STATES:
             state = None
-        counts = {s: len(store.list(s)) for s in flow.STATES}
-        return page(request, "list.html", reports=store.list(state), state=state, counts=counts)
+        return page(request, "list.html", reports=store.list(state), state=state, counts=counts())
 
     def new_page(request: Request, form: dict, status_code: int = 200, error=None, notice=None, existing=None):
         on = sorted({s.name for s in sources})

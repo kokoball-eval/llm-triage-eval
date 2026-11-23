@@ -326,7 +326,7 @@ def form_of(item: dict) -> dict:
 
 
 def test_web_full_flow(web, store):
-    assert "아직 리포트가 없습니다" in web.get("/").text
+    assert "아직 리포트가 없습니다" in web.get("/reports").text
     r = web.post("/reports", data=form_of(DEV_ITEMS[0]), follow_redirects=False)
     assert r.status_code == 303
     url = r.headers["location"]
@@ -346,7 +346,17 @@ def test_web_full_flow(web, store):
     rec = store.get(rid)
     assert rec["state"] == flow.REGISTERED and rec["edits"] == []
     assert DEV_ITEMS[0]["input"]["title"] in web.get(rec["ticket_url"]).text
-    assert "등록 완료 1" in web.get("/").text
+    assert "등록 완료 1" in web.get("/reports").text
+
+
+def test_web_home_shows_entries_and_recent(web, store):
+    """첫 화면은 입구 카드와 최근 리포트를 보이고, 표는 /reports 에 있다 (app 설계 의도 8)."""
+    page = web.get("/").text
+    assert "지금 어떤 일이 필요하세요?" in page and "아직 리포트가 없습니다" in page
+    rid = int(web.post("/reports", data=form_of(DEV_ITEMS[0]), follow_redirects=False).headers["location"].rsplit("/", 1)[1])
+    page = web.get("/").text
+    assert DEV_ITEMS[0]["input"]["title"] in page and f'href="/reports/{rid}"' in page
+    assert web.get("/reports?state=없는상태").status_code == 200
 
 
 def test_web_shows_input_errors(web):

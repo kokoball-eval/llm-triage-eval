@@ -29,7 +29,7 @@ from starlette.concurrency import run_in_threadpool
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from triage_eval.contracts import ENUMS, FIELDS, MODULES, NO_MODULE, split_modules
-from triage_service import config, flow, metrics, review
+from triage_service import assign, config, flow, metrics, review
 from triage_service.bts import make_tracker, settings
 from triage_service.contracts import REPORTERS, TRACKS
 from triage_service import intake
@@ -47,10 +47,13 @@ templates.env.globals.update(TITLE_MAX=config.TITLE_MAX, BODY_MAX=config.BODY_MA
 
 def create_app(store: Store | None = None, worker: Worker | None = None, tracker=None,
                start_worker: bool = True, allowed_hosts=config.ALLOWED_HOSTS,
-               sources: list | None = None, sources_off: dict | None = None) -> FastAPI:
+               sources: list | None = None, sources_off: dict | None = None, assign_rules: dict | None = None) -> FastAPI:
+    """assign_rules: 자동 배정 규칙(설정 [assign], 없으면 배정하지 않음). tracker 를 넘기지 않으면 설정 파일에서 둘 다 읽는다."""
     store = store or Store(config.DB_PATH)
     worker = worker or Worker(store)
-    tracker = tracker or make_tracker(settings.load(config.mapping_path()), store)
+    if tracker is None:
+        loaded = settings.load(config.mapping_path())
+        tracker, assign_rules = make_tracker(loaded, store), loaded["assign"]
     if sources is None:
         loaded = intake_settings.load(config.sources_path(), config.mapping_path())
         sources, sources_off = intake.make_sources(loaded), loaded["off"]
@@ -75,6 +78,12 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
 
     def page(request: Request, name: str, status_code: int = 200, **ctx) -> HTMLResponse:
         return templates.TemplateResponse(request, name, ctx, status_code=status_code)
+
+    def detail_page(request: Request, rec: dict, values: dict, problems: list, status_code: int = 200,
+                    team: str = assign.AUTO) -> HTMLResponse:
+        return page(request, "detail.html", status_code=status_code, rec=rec, values=values, problems=problems,
+                    teams=assign.teams(assign_rules), team=team, AUTO=assign.AUTO,
+                    suggested=assign.suggest(assign_rules, values))
 
     def get_or_404(rid: int) -> dict:
         rec = store.get(rid)
@@ -133,8 +142,9 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
     @app.get("/reports/{rid}", response_class=HTMLResponse)
     def detail(request: Request, rid: int):
         rec = get_or_404(rid)
-        return page(request, "detail.html", rec=rec, values=rec["final_fields"] or rec["model_fields"] or {},
-                    problems=[])
+        a = rec["assignment"]   # 등록 실패 후 검토로 되돌린 건은 사람이 고른 팀을 그대로 보인다 (review 설계 의도 7)
+        team = a["team"] if a and a["team"] != a["suggested"] else assign.AUTO
+        return detail_page(request, rec, rec["final_fields"] or rec["model_fields"] or {}, [], team=team)
 
     @app.post("/reports/{rid}/register")
     async def register(request: Request, rid: int):
@@ -142,18 +152,18 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
         form = await request.form()
         values = {f: v if isinstance(v := form.get(f, ""), str) else "" for f in FIELDS if f != "모듈"}
         values["모듈"] = " / ".join(m for m in form.getlist("모듈") if isinstance(m, str))
+        team = t if isinstance(t := form.get("team", assign.AUTO), str) else assign.AUTO
         try:   # DB·BTS 호출은 기다리는 동안 다른 요청을 막지 않게 스레드에서 (설계 의도 6)
-            await run_in_threadpool(review.register, store, tracker, rid, values)
+            await run_in_threadpool(review.register, store, tracker, rid, values, assign_rules, team)
         except ValueError as e:
-            return page(request, "detail.html", status_code=422, rec=store.get(rid), values=values, problems=e.args[0])
+            return detail_page(request, store.get(rid), values, e.args[0], 422, team)
         except flow.FlowError as e:
             return refused(request, rid, e)
         return go(rid)
 
     def refused(request: Request, rid: int, e: Exception) -> HTMLResponse:
         rec = store.get(rid)
-        return page(request, "detail.html", status_code=409, rec=rec,
-                    values=rec["final_fields"] or rec["model_fields"] or {}, problems=[str(e)])
+        return detail_page(request, rec, rec["final_fields"] or rec["model_fields"] or {}, [str(e)], 409)
 
     @app.post("/reports/{rid}/discard")
     def discard(request: Request, rid: int):

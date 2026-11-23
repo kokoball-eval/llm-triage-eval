@@ -149,5 +149,118 @@
     }
   },
   "rejected_text": "Subject cannot be blank",
-  "ticket_key": "1"
+  "ticket_key": "1",
+  "memberships": {
+    "status": 200,
+    "body": {
+      "memberships": [
+        {
+          "id": 1,
+          "project": {
+            "id": 1,
+            "name": "triage"
+          },
+          "user": {
+            "id": 5,
+            "name": "QA 담당"
+          },
+          "roles": [
+            {
+              "id": 4,
+              "name": "Developer"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "project": {
+            "id": 1,
+            "name": "triage"
+          },
+          "user": {
+            "id": 6,
+            "name": "운영 담당"
+          },
+          "roles": [
+            {
+              "id": 4,
+              "name": "Developer"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "project": {
+            "id": 1,
+            "name": "triage"
+          },
+          "group": {
+            "id": 7,
+            "name": "클라팀"
+          },
+          "roles": [
+            {
+              "id": 4,
+              "name": "Developer"
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "project": {
+            "id": 1,
+            "name": "triage"
+          },
+          "group": {
+            "id": 8,
+            "name": "서버팀"
+          },
+          "roles": [
+            {
+              "id": 4,
+              "name": "Developer"
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "project": {
+            "id": 1,
+            "name": "triage"
+          },
+          "group": {
+            "id": 9,
+            "name": "아트팀"
+          },
+          "roles": [
+            {
+              "id": 4,
+              "name": "Developer"
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "project": {
+            "id": 1,
+            "name": "triage"
+          },
+          "group": {
+            "id": 10,
+            "name": "기획팀"
+          },
+          "roles": [
+            {
+              "id": 4,
+              "name": "Developer"
+            }
+          ]
+        }
+      ],
+      "total_count": 6,
+      "offset": 0,
+      "limit": 100
+    }
+  },
+  "memberships_source": "Redmine REST API 문서 형식(/projects/:id/memberships.json)으로 만든 응답 — 실제 서버 녹화 아님. 컨테이너를 지운 뒤라 S5-1 에서는 실제 Redmine 으로 확인하지 않음"
 }

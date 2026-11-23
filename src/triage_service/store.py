@@ -10,7 +10,7 @@
 4. 호출마다 연결을 새로 연다. 작업자 스레드와 웹 요청이 연결을 공유하지 않아 스레드 문제가 없고, 건수가 적어 비용도 작다.
 5. BTS 티켓에 남기는 서비스 표식은 "triage-<DB 고유값>-<번호>"다. 번호만 쓰면 DB 를 새로 만들었을 때 예전 DB 의 같은
    번호 티켓을 이 리포트의 티켓으로 잘못 연결한다. DB 고유값은 처음 만들 때 한 번 정해 meta 표에 둔다.
-6. 앞 단계에서 만든 DB 는 시작할 때 빠진 칸(failed_step)을 붙인다. 리포트 기록을 지우지 않고 이어 쓴다.
+6. 앞 단계에서 만든 DB 는 시작할 때 빠진 칸(failed_step, assignment)을 붙인다. 리포트 기록을 지우지 않고 이어 쓴다.
 7. 같은 원문 링크는 한 번만 접수한다. 같은 제보를 두 사람이 따로 넣어 BTS 에 티켓이 둘 생기는 일을 접수 단계에서 막는다.
 8. 상태가 바뀔 때마다 같은 트랜잭션 안에서 이력(transitions: 시각, 이전 → 다음 상태)을 한 줄 남긴다. 접수 시각과 마지막
    변경 시각만으로는 "검토 대기에 얼마나 머물렀는지" 같은 처리 시간을 셀 수 없기 때문이다(대시보드, metrics.py).
@@ -44,7 +44,8 @@ CREATE TABLE IF NOT EXISTS reports (
     ticket_key TEXT,
     ticket_url TEXT,
     error TEXT,
-    failed_step TEXT
+    failed_step TEXT,
+    assignment TEXT
 );
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS transitions (
@@ -55,7 +56,9 @@ CREATE TABLE IF NOT EXISTS transitions (
 );
 """
 FAILED_STEPS = ("트리아지", "등록")
-JSON_COLUMNS = ("result", "pipeline", "routing", "model_fields", "final_fields", "edits")
+JSON_COLUMNS = ("result", "pipeline", "routing", "model_fields", "final_fields", "edits",
+                "assignment")   # assignment: {"suggested": 규칙의 팀, "team": 배정한 팀} (assign.py)
+ADDED_COLUMNS = ("failed_step", "assignment")   # 앞 단계 DB 에 붙이는 칸 (설계 의도 6)
 
 
 @contextmanager
@@ -80,8 +83,9 @@ class Store:
         with connect(self.path) as c:
             c.executescript(SCHEMA)
             columns = {r["name"] for r in c.execute("PRAGMA table_info(reports)")}
-            if "failed_step" not in columns:   # S1 에서 만든 DB (설계 의도 6)
-                c.execute("ALTER TABLE reports ADD COLUMN failed_step TEXT")
+            for name in ADDED_COLUMNS:   # 설계 의도 6
+                if name not in columns:
+                    c.execute(f"ALTER TABLE reports ADD COLUMN {name} TEXT")
             c.execute("INSERT OR IGNORE INTO meta (key, value) VALUES ('instance', ?)", (uuid.uuid4().hex[:8],))
             self.instance = c.execute("SELECT value FROM meta WHERE key = 'instance'").fetchone()["value"]
 

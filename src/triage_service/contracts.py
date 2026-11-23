@@ -43,10 +43,12 @@ class Report:
 
 @dataclass(frozen=True)
 class Issue:
-    """사람이 확인한 8칸 — BTS 에 등록할 내용. ref 는 서비스 표식(같은 리포트의 티켓을 다시 찾는 데 쓴다)."""
+    """사람이 확인한 8칸 — BTS 에 등록할 내용. ref 는 서비스 표식(같은 리포트의 티켓을 다시 찾는 데 쓴다).
+    team 은 자동 배정한 팀 이름(assign.py, 빈 문자열이면 배정하지 않음). 팀 → BTS 계정은 어댑터가 설정에서 찾는다."""
     report: Report
     fields: dict[str, str]
     ref: str = ""
+    team: str = ""
 
 
 @dataclass(frozen=True)
@@ -75,6 +77,8 @@ class Tracker(Protocol):
     def create(self, issue: Issue) -> Ticket: ...
 
     def status(self, key: str) -> str: ...
+
+    def check_assignees(self) -> list[str]: ...   # 자동 배정 계정이 BTS 에서 담당자가 될 수 없으면 문제 목록
 
 
 class TrackerError(Exception):

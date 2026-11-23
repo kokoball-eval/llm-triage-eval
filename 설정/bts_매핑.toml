@@ -12,6 +12,28 @@
 [bts]
 use = "fake"        # fake(같은 DB 에 저장하는 가짜 BTS) | jira | redmine
 
+# ── 생성 시 자동 배정 (src/triage_service/assign.py) ────────
+# 사람이 확정한 8칸으로 받을 팀을 정한다. 이 섹션을 지우면 배정하지 않는다.
+#   [처리] 등록(재현 대기)·정보 요청 후 보류 → qa 팀
+#   [처리] 개발 배정·긴급 사인 요청        → 첫 [모듈]의 팀 (모듈이 "해당 없음"이면 qa 팀)
+#   [처리] CS 응대                       → cs 팀 (지우면 배정하지 않음)
+# 팀마다 BTS 계정은 아래 [jira.teams]·[redmine.teams] 에 적는다. 검토 화면에서 팀을 바꿀 수 있다.
+[assign]
+qa = "QA"
+cs = "운영"
+
+[assign.modules]    # 10개 모듈 → 개발팀 (빠지면 서버가 시작하지 않는다)
+"클라이언트 안정성" = "클라"
+"플랫폼 호환성" = "클라"
+"UI·텍스트" = "클라"
+"네트워크" = "서버"
+"계정·로그인" = "서버"
+"결제·재화" = "서버"
+"보안·어뷰징" = "서버"
+"그래픽·사운드" = "아트"
+"게임플레이·밸런스" = "기획"
+"콘텐츠 진행" = "기획"
+
 # ── Jira Cloud (REST API v3) ────────────────────────────────
 [jira]
 base_url = "https://your-site.atlassian.net"   # 무료 사이트 주소
@@ -28,6 +50,14 @@ Trivial = "Low"
 "판단보류" = "Medium"
 "해당 없음" = "Lowest"
 
+[jira.teams]        # 팀 → 담당자 계정 ID (accountId — Jira 사용자 프로필 주소의 /people/<ID> 부분). 연결 확인(--check)이 검사한다
+QA = "your-qa-account-id"
+"운영" = "your-cs-account-id"
+"클라" = "your-client-account-id"
+"서버" = "your-server-account-id"
+"아트" = "your-art-account-id"
+"기획" = "your-design-account-id"
+
 # ── Redmine (REST API) ─────────────────────────────────────
 [redmine]
 base_url = "http://127.0.0.1:3000"   # 로컬 Docker Redmine
@@ -42,3 +72,11 @@ Minor = 2
 Trivial = 1
 "판단보류" = 2
 "해당 없음" = 1
+
+[redmine.teams]     # 팀 → 담당자 번호 (사용자 또는 그룹. 그룹은 관리 설정 "그룹에 일감 할당 허용" 필요, 프로젝트 구성원이어야 함)
+QA = 5
+"운영" = 6
+"클라" = 7
+"서버" = 8
+"아트" = 9
+"기획" = 10

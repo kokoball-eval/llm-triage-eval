@@ -10,6 +10,8 @@
 4. 인증은 이메일 + API 토큰(기본 인증). 토큰은 httpx2 클라이언트 안에만 있고 오류 메시지에는 나오지 않는다(common.py).
 5. 한계: Jira 검색은 등록 직후 바로 반영되지 않을 수 있다(검색 색인 지연). 등록 요청이 끊긴 직후 곧바로 다시 등록하면
    방금 만들어진 티켓을 못 찾아 중복될 수 있으므로, "등록 여부 불확실" 안내대로 Jira 에서 먼저 확인한다.
+6. 자동 배정(assign.py)한 팀은 담당자(계정 ID, [jira.teams])로 넣고 "팀_<이름>" 라벨도 붙인다. 팀 관리형 공간에는
+   컴포넌트가 없어 컴포넌트 기본 담당자를 쓸 수 없다(2026-11-23 KAN 공간에서 확인). 라벨로 BTS 에서 팀별로 걸러 본다.
 """
 
 import httpx2
@@ -46,12 +48,25 @@ class JiraTracker:
             "priority": {"name": self.s["priority"][issue.fields["우선순위"]]},
             "labels": [*self.s["labels"], issue.ref, *(f"모듈_{m}" for m in modules)],
         }
+        if issue.team:   # 설계 의도 6
+            fields["assignee"] = {"accountId": self.s["teams"][issue.team]}
+            fields["labels"].append("팀_" + issue.team.replace(" ", "_"))
         resp = call(self.http, "POST", "/rest/api/3/issue", json={"fields": fields}, creating=True)
         return self.ticket(resp.json()["key"])
 
     def status(self, key: str) -> str:
         resp = call(self.http, "GET", f"/rest/api/3/issue/{key}", params={"fields": "status"})
         return resp.json()["fields"]["status"]["name"]
+
+    def check_assignees(self) -> list[str]:
+        """[jira.teams] 의 계정이 이 프로젝트의 담당자가 될 수 있는지 (연결 확인 --check)."""
+        out = []
+        for team, account in self.s.get("teams", {}).items():
+            found = call(self.http, "GET", "/rest/api/3/user/assignable/search",
+                         params={"project": self.s["project_key"], "accountId": account}).json()
+            if not any(u.get("accountId") == account for u in found):
+                out.append(f"{team}: 계정 {account} 은 {self.s['project_key']} 의 담당자가 될 수 없습니다")
+        return out
 
 
 def adf(lines: list[str]) -> dict:

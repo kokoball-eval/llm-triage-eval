@@ -66,5 +66,24 @@
     }
   },
   "rejected_text": "priority: 선택한 우선 순위가 유효하지 않습니다.",
-  "ticket_key": "KAN-4"
+  "ticket_key": "KAN-4",
+  "assignable_hit": {
+    "status": 200,
+    "body": [
+      {
+        "self": "https://your-site.atlassian.net/rest/api/3/user?accountId=qa-account-id",
+        "accountId": "qa-account-id",
+        "displayName": "QA 담당",
+        "accountType": "atlassian",
+        "active": true,
+        "timeZone": "Asia/Seoul",
+        "locale": "ko_KR"
+      }
+    ]
+  },
+  "assignable_none": {
+    "status": 200,
+    "body": []
+  },
+  "assignable_source": "실제 Jira Cloud KAN 공간 /rest/api/3/user/assignable/search 녹화 (2026-11-23). 계정 ID·이름·주소는 지움(qa-account-id)"
 }

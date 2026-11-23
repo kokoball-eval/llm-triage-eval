@@ -61,6 +61,14 @@
       <input type="text" id="f{{ loop.index }}" name="{{ f }}" value="{{ values.get(f) or '' }}">
     {% endif %}
   {% endfor %}
+  {% if teams %}
+    <label for="team">배정 팀 <span class="muted">(규칙: [처리]가 재현·정보 보완이면 QA, 개발 배정·긴급이면 첫 모듈의 팀)</span></label>
+    <select id="team" name="team">
+      <option value="{{ AUTO }}" {% if team == AUTO %}selected{% endif %}>{{ AUTO }} — 지금 값으로는 {{ suggested or "배정 안 함" }}</option>
+      {% for t in teams %}<option value="{{ t }}" {% if team == t %}selected{% endif %}>{{ t }}</option>{% endfor %}
+      <option value="" {% if team == "" %}selected{% endif %}>배정 안 함</option>
+    </select>
+  {% endif %}
   <div class="row">
     <button class="primary" type="submit">BTS 등록</button>
     <button type="submit" formaction="/reports/{{ rec.id }}/discard" formnovalidate onclick="return confirm('폐기하면 되돌릴 수 없습니다. 폐기할까요?')">폐기 (등록하지 않음)</button>
@@ -69,6 +77,7 @@
 {% elif rec.final_fields %}
 <h2>확정한 8칸</h2>
 <table>{% for f in FIELDS %}<tr><th>{{ f }}</th><td>{{ rec.final_fields.get(f) }}</td></tr>{% endfor %}</table>
+{% if rec.assignment %}<p class="muted">배정 팀: {{ rec.assignment.team or "배정 안 함" }}{% if rec.assignment.team != rec.assignment.suggested %} (규칙: {{ rec.assignment.suggested or "배정 안 함" }} → 사람이 바꿈){% endif %}{% if rec.assignment.linked_existing %} — 이미 있던 티켓에 연결해 담당자는 바꾸지 않음{% endif %}</p>{% endif %}
 {% if rec.edits %}<p class="muted">사람이 고친 칸: {% for e in rec.edits %}{{ e.field }}({{ e.before or "없음" }} → {{ e.after }}){% if not loop.last %}, {% endif %}{% endfor %}</p>{% endif %}
 {% endif %}
 

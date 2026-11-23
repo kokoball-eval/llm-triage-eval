@@ -9,13 +9,17 @@
    같은지 다시 확인하고, 같은 것만 같은 리포트의 티켓으로 본다. 필터(f[])를 주면 Redmine 은 상태 조건을 붙이지 않아
    닫힌 티켓도 함께 찾는다.
 4. 인증은 API 키 머리글(X-Redmine-API-Key). 키는 httpx2 클라이언트 안에만 있고 오류 메시지에는 나오지 않는다(common.py).
+5. 자동 배정(assign.py)한 팀은 담당자 번호(assigned_to_id, [redmine.teams])로 넣는다. 사용자 번호도, 그룹 번호도 된다
+   (그룹은 Redmine 관리 설정 "그룹에 일감 할당 허용"이 켜져 있어야 한다). 담당자는 프로젝트 구성원이어야 한다.
+   연결 확인은 구성원 목록을 끝 페이지까지 읽어 구성원인지만 본다. 목록을 읽으려면 API 키에 구성원 관리 권한이 필요하고,
+   그 구성원의 역할이 "일감 할당 가능"인지는 보지 않는다(shortcut: 역할 확인 없음, 실제 Redmine 으로 다시 확인할 때 올림).
 """
 
 import httpx2
 
 from triage_service.bts import clients
 from triage_service.bts.common import call, description_lines, marker_line
-from triage_service.contracts import Issue, Ticket
+from triage_service.contracts import Issue, Ticket, TrackerError
 
 
 class RedmineTracker:
@@ -44,8 +48,28 @@ class RedmineTracker:
             "description": "\n".join(description_lines(issue)),
             "priority_id": self.s["priority"][issue.fields["우선순위"]],
         }}
+        if issue.team:   # 설계 의도 5
+            body["issue"]["assigned_to_id"] = self.s["teams"][issue.team]
         resp = call(self.http, "POST", "/issues.json", json=body, creating=True)
         return self.ticket(resp.json()["issue"]["id"])
 
     def status(self, key: str) -> str:
         return call(self.http, "GET", f"/issues/{key}.json").json()["issue"]["status"]["name"]
+
+    def check_assignees(self) -> list[str]:
+        """[redmine.teams] 의 번호가 이 프로젝트의 구성원(사용자·그룹)인지 (연결 확인 --check, 설계 의도 5)."""
+        teams = self.s.get("teams", {})
+        if not teams:
+            return []
+        members, offset, total = set(), 0, 1
+        while offset < total:   # 설계 의도 5 — 한 번에 100명까지라 끝 페이지까지 읽는다
+            try:
+                page = call(self.http, "GET", f"/projects/{self.s['project_id']}/memberships.json",
+                            params={"limit": 100, "offset": offset}).json()
+            except TrackerError as e:
+                raise TrackerError(f"구성원 목록을 읽을 수 없습니다(API 키에 구성원 관리 권한이 필요): {e}") from e
+            batch = page.get("memberships", [])
+            members |= {m[k]["id"] for m in batch for k in ("user", "group") if k in m}
+            offset, total = offset + len(batch), page.get("total_count", 0) if batch else 0
+        return [f"{team}: 번호 {n} 은 {self.s['project_id']} 프로젝트의 구성원이 아닙니다"
+                for team, n in teams.items() if n not in members]

@@ -5,13 +5,15 @@
    먼저 읽은 뒤 검사한다.
 2. --check 는 서버를 띄우지 않고 BTS 연결(설정·토큰·검색 권한)과 켜진·꺼진 출처만 확인한다. 실제 BTS 에 연결하기 전에
    설정이 맞는지 먼저 보기 위해서다.
+3. 자동 배정을 쓰면 --check 가 팀마다 설정한 계정이 BTS 에서 담당자가 될 수 있는지도 확인한다. 계정이 틀리면 등록할
+   때마다 BTS 가 거절하기 때문이다.
 """
 
 import sys
 
 import uvicorn
 
-from triage_service import config, intake
+from triage_service import assign, config, intake
 from triage_service.bts import make_tracker, settings
 from triage_service.intake import settings as intake_settings
 from triage_service.store import Store
@@ -32,17 +34,24 @@ def main(argv: list[str] | None = None) -> int:
     store = Store(config.DB_PATH)
     if "--check" in argv:
         try:
-            make_tracker(loaded, store).find("triage-connection-check")
+            tracker = make_tracker(loaded, store)
+            tracker.find("triage-connection-check")
+            missing = tracker.check_assignees() if loaded["assign"] else []   # 설계 의도 3
         except Exception as e:
             print(f"BTS 연결 실패 ({loaded['use']}): {e}")
             return 1
         print(f"BTS 연결 확인 ({loaded['use']}): 설정·토큰·검색 권한 정상")
+        if missing:
+            print("자동 배정 계정 문제:\n- " + "\n- ".join(missing))
+            return 1
+        teams = assign.teams(loaded["assign"])
+        print(f"자동 배정: 팀 {', '.join(teams)} — 담당자 계정 확인" if teams else "자동 배정: 쓰지 않음([assign] 없음)")
         on = [s.name for s in intake.make_sources(loaded_sources)]
         print(f"링크 출처: 켜짐 {on or '없음'}" + "".join(f" · {k} 꺼짐({v})" for k, v in loaded_sources["off"].items()))
         return 0
     print(f"작업 페이지: http://{config.HOST}:{config.PORT}  · BTS: {loaded['use']} ({config.mapping_path().name})  (종료: Ctrl+C)")
     app = create_app(store, tracker=make_tracker(loaded, store), sources=intake.make_sources(loaded_sources),
-                     sources_off=loaded_sources["off"])
+                     sources_off=loaded_sources["off"], assign_rules=loaded["assign"])
     uvicorn.run(app, host=config.HOST, port=config.PORT)
     return 0
 

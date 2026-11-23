@@ -4,13 +4,15 @@
 1. Tracker 계약(contracts.py)을 실제 어댑터와 똑같이 지킨다: 등록하면 티켓 번호·링크를 돌려주고, 실패하면 예외를 올린다.
    S2 의 Jira·Redmine 어댑터도 같은 계약 시험을 통과해야 한다.
 2. 등록 내용(8칸과 원문)을 그대로 저장해, 화면에서 "BTS 에 실제로 무엇이 들어갔는지" 확인할 수 있게 한다.
+3. set_status 는 BTS 쪽에서 상태가 바뀐 것을 흉내 낸다(시험·화면 확인용). 마지막 변경 시각은 등록 내용 JSON 의 updated 에 둔다 —
+   표에 칸을 더하면 이미 만든 DB 를 고쳐야 해서다. 상태 이름은 settings.FAKE_STATUS 가 정한다.
 """
 
 import json
 from dataclasses import asdict
 from pathlib import Path
 
-from triage_service.contracts import Issue, Ticket, TrackerError
+from triage_service.contracts import BtsState, Issue, Ticket, TrackerError
 from triage_service.store import connect, now
 
 
@@ -45,6 +47,23 @@ class FakeTracker:
 
     def check_assignees(self) -> list[str]:
         return []   # 계정이 없다. 팀 이름을 그대로 저장한다
+
+    def snapshot(self, keys: list[str]) -> dict[str, BtsState]:
+        out = {}
+        for key in keys:
+            try:
+                t = self.get(key)
+            except TrackerError:   # 지워진 티켓은 돌려주지 않는다(실제 BTS 의 검색과 같다)
+                continue
+            out[key] = BtsState(t["status"], t.get("team", ""), t.get("updated", t["created_at"]))
+        return out
+
+    def set_status(self, key: str, status: str) -> None:   # 설계 의도 3
+        t = self.get(key)
+        issue = {k: v for k, v in t.items() if k not in ("key", "created_at", "status")} | {"updated": now()}
+        with connect(self.path) as c:
+            c.execute("UPDATE fake_tickets SET status = ?, issue = ? WHERE n = ?",
+                      (status, json.dumps(issue, ensure_ascii=False), int(key.removeprefix("FAKE-"))))
 
     def get(self, key: str) -> dict:
         n = int(key.removeprefix("FAKE-")) if key.startswith("FAKE-") and key[5:].isdigit() else -1

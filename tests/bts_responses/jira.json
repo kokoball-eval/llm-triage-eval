@@ -85,5 +85,33 @@
     "status": 200,
     "body": []
   },
-  "assignable_source": "실제 Jira Cloud KAN 공간 /rest/api/3/user/assignable/search 녹화 (2026-11-23). 계정 ID·이름·주소는 지움(qa-account-id)"
+  "assignable_source": "실제 Jira Cloud KAN 공간 /rest/api/3/user/assignable/search 녹화 (2026-11-23). 계정 ID·이름·주소는 지움(qa-account-id)",
+  "snapshot": {
+    "status": 200,
+    "body": {
+      "issues": [
+        {
+          "id": "10013",
+          "key": "KAN-4",
+          "fields": {
+            "status": {
+              "name": "검토 중",
+              "id": "10002",
+              "statusCategory": {
+                "key": "indeterminate",
+                "name": "In Progress"
+              }
+            },
+            "assignee": {
+              "accountId": "qa-account-id",
+              "displayName": "QA 담당"
+            },
+            "updated": "2026-11-23T10:06:47.530+0900"
+          }
+        }
+      ],
+      "isLast": true
+    }
+  },
+  "snapshot_source": "실제 KAN 공간의 /rest/api/3/search/jql 응답 모양(2026-11-23, fields=status,assignee,updated). 키·계정·이름은 가렸고 한 건으로 줄였다. 상태 이름은 팀 관리형 공간의 '검토 중'"
 }

@@ -10,11 +10,15 @@
 4. 호출마다 연결을 새로 연다. 작업자 스레드와 웹 요청이 연결을 공유하지 않아 스레드 문제가 없고, 건수가 적어 비용도 작다.
 5. BTS 티켓에 남기는 서비스 표식은 "triage-<DB 고유값>-<번호>"다. 번호만 쓰면 DB 를 새로 만들었을 때 예전 DB 의 같은
    번호 티켓을 이 리포트의 티켓으로 잘못 연결한다. DB 고유값은 처음 만들 때 한 번 정해 meta 표에 둔다.
-6. 앞 단계에서 만든 DB 는 시작할 때 빠진 칸(failed_step, assignment)을 붙인다. 리포트 기록을 지우지 않고 이어 쓴다.
+6. 앞 단계에서 만든 DB 는 시작할 때 빠진 칸(failed_step, assignment, bts)을 붙인다. 리포트 기록을 지우지 않고 이어 쓴다.
 7. 같은 원문 링크는 한 번만 접수한다. 같은 제보를 두 사람이 따로 넣어 BTS 에 티켓이 둘 생기는 일을 접수 단계에서 막는다.
 8. 상태가 바뀔 때마다 같은 트랜잭션 안에서 이력(transitions: 시각, 이전 → 다음 상태)을 한 줄 남긴다. 접수 시각과 마지막
    변경 시각만으로는 "검토 대기에 얼마나 머물렀는지" 같은 처리 시간을 셀 수 없기 때문이다(대시보드, metrics.py).
    허용되지 않은 전이는 되돌리므로 이력도 남지 않는다. 이 표가 생기기 전에 접수한 리포트는 이력이 없다.
+9. BTS 에서 읽은 마지막 상태는 reports.bts 에 두고, 동기화 때 상태가 바뀐 것을 발견하면 같은 트랜잭션에서 bts_changes 에
+   한 줄 남긴다(처음 읽은 상태도 한 줄). 재오픈률·검증 대기 시간(S5-4)은 이 기록이 있어야 셀 수 있고, 지난 변화는 나중에
+   되살릴 수 없어서 지금부터 쌓는다. 시각은 BTS 가 바뀐 때가 아니라 우리가 읽다가 발견한 때다(동기화 사이의 변화는 한 번으로
+   합쳐진다). BTS 가 원본이라 이 기록은 리포트 흐름(state·transitions)에 영향을 주지 않는다.
 """
 
 import json
@@ -45,7 +49,8 @@ CREATE TABLE IF NOT EXISTS reports (
     ticket_url TEXT,
     error TEXT,
     failed_step TEXT,
-    assignment TEXT
+    assignment TEXT,
+    bts TEXT
 );
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS transitions (
@@ -54,11 +59,17 @@ CREATE TABLE IF NOT EXISTS transitions (
     src TEXT,
     dst TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS bts_changes (
+    report_id INTEGER NOT NULL,
+    at TEXT NOT NULL,
+    src TEXT,
+    dst TEXT NOT NULL
+);
 """
 FAILED_STEPS = ("트리아지", "등록")
 JSON_COLUMNS = ("result", "pipeline", "routing", "model_fields", "final_fields", "edits",
-                "assignment")   # assignment: {"suggested": 규칙의 팀, "team": 배정한 팀} (assign.py)
-ADDED_COLUMNS = ("failed_step", "assignment")   # 앞 단계 DB 에 붙이는 칸 (설계 의도 6)
+                "assignment", "bts")   # assignment: {"suggested": 규칙의 팀, "team": 배정한 팀} (assign.py), bts: BTS 에서 읽은 마지막 상태 (sync.py)
+ADDED_COLUMNS = ("failed_step", "assignment", "bts")   # 앞 단계 DB 에 붙이는 칸 (설계 의도 6)
 
 
 @contextmanager
@@ -136,6 +147,32 @@ class Store:
             sql, args = sql + " WHERE state = ?", (state,)
         with connect(self.path) as c:
             return [_decode(r) for r in c.execute(sql + " ORDER BY id DESC", args)]
+
+    def save_bts(self, rid: int, bts: dict) -> None:
+        """BTS 에서 읽은 상태를 남기고, 상태가 처음이거나 바뀌었으면 변화 한 줄을 더한다 (설계 의도 9)."""
+        with connect(self.path) as c:
+            c.execute("BEGIN IMMEDIATE")
+            try:
+                row = c.execute("SELECT bts FROM reports WHERE id = ?", (rid,)).fetchone()
+                if row is None:
+                    raise KeyError(rid)
+                old = json.loads(row["bts"]) if row["bts"] else None
+                if old is None or old["status"] != bts["status"]:
+                    c.execute("INSERT INTO bts_changes (report_id, at, src, dst) VALUES (?, ?, ?, ?)",
+                              (rid, bts["synced_at"], old and old["status"], bts["status"]))
+                c.execute("UPDATE reports SET bts = ? WHERE id = ?", (json.dumps(bts, ensure_ascii=False), rid))
+                c.execute("COMMIT")
+            except BaseException:
+                c.execute("ROLLBACK")
+                raise
+
+    def bts_history(self) -> dict:   # list 이름을 이 클래스의 list() 가 가려 타입을 적지 않는다
+        """리포트 번호 → [(발견한 시각, 이전 BTS 상태, 다음 BTS 상태)] 시간순 (설계 의도 9)."""
+        out: dict = {}
+        with connect(self.path) as c:
+            for r in c.execute("SELECT report_id, at, src, dst FROM bts_changes ORDER BY rowid"):
+                out.setdefault(r["report_id"], []).append((r["at"], r["src"], r["dst"]))
+        return out
 
     def move(self, rid: int, dst: str, **columns) -> dict:
         """상태를 dst 로 바꾸고 columns 를 함께 쓴다. 허용되지 않은 전이면 flow.FlowError (설계 의도 1)."""

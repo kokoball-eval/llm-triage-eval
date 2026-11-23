@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}QA{% endblock %}
+{% macro rows(items) %}
+  <tr><th>제목</th><th>티켓</th><th>BTS 상태</th><th>BTS 담당자</th><th>배정 팀</th></tr>
+  {% for r in items %}
+  <tr>
+    <td><a href="/reports/{{ r.id }}">{{ r.report.title }}</a></td>
+    <td style="white-space:nowrap"><a href="{{ r.ticket_url }}" target="_blank" rel="noopener">{{ r.ticket_key }}</a></td>
+    <td>{{ r.bts.status }}</td>
+    <td>{{ r.bts.assignee or "없음" }}</td>
+    <td>{{ (r.assignment or {}).get("team") or "배정 없음" }}</td>
+  </tr>
+  {% endfor %}
+{% endmacro %}
+{% block body %}
+<h1>QA</h1>
+{% if not board %}
+<div class="box">이 BTS 연결에는 상태 대응이 없어 동기화하지 않습니다. <code>설정/bts_매핑.toml</code>의 <code>[jira.status]</code>·<code>[redmine.status]</code>에
+  검증 대기(verify)와 완료(done)에 해당하는 BTS 상태 이름을 적으면 쓸 수 있습니다.</div>
+{% else %}
+<form method="post" action="/qa/sync" class="row" style="margin-top:0">
+  <button class="primary" type="submit">지금 동기화</button>
+  <span class="muted">마지막 동기화: {{ board.synced_at or "아직 없음" }}{% if board.unsynced %} · 아직 읽지 않은 티켓 {{ board.unsynced }}건{% endif %}</span>
+</form>
+{% if result %}
+<div class="box{% if result.errors or result.missing %} error{% endif %}">
+  <strong>{{ result.synced }}건을 읽었습니다.</strong>
+  {% if result.missing %}<br>BTS에서 찾지 못한 티켓: {{ result.missing | join(", ") }} (지워졌거나 접근 권한 밖일 수 있습니다. 이전에 읽은 값은 그대로 둡니다.){% endif %}
+  {% for e in result.errors %}<br>읽지 못했습니다 — {{ e }} (이전에 읽은 값은 그대로 둡니다.){% endfor %}
+</div>
+{% endif %}
+
+<h2>검증 대기 <span class="badge">{{ board.verify | length }}</span></h2>
+{% if board.verify %}
+<table>
+  <tr><th>제목</th><th>티켓</th><th>BTS 담당자</th><th>배정 팀</th><th>대기</th></tr>
+  {% for r, waited in board.verify %}
+  <tr>
+    <td><a href="/reports/{{ r.id }}">{{ r.report.title }}</a></td>
+    <td style="white-space:nowrap"><a href="{{ r.ticket_url }}" target="_blank" rel="noopener">{{ r.ticket_key }}</a></td>
+    <td>{{ r.bts.assignee or "없음" }}</td>
+    <td>{{ (r.assignment or {}).get("team") or "배정 없음" }}</td>
+    <td>{{ waited }}</td>
+  </tr>
+  {% endfor %}
+</table>
+<p class="muted">대기는 BTS가 그 티켓을 마지막으로 바꾼 뒤 경과 시간입니다(코멘트가 달려도 줄어듭니다).</p>
+{% else %}<p class="muted">검증 대기인 티켓이 없습니다.</p>{% endif %}
+
+<h2>재현 대기 {% if qa_team %}<span class="muted">(배정 팀 {{ qa_team }})</span>{% endif %} <span class="badge">{{ board.repro | length }}</span></h2>
+{% if not qa_team %}<p class="muted">자동 배정을 쓰지 않아 재현 대기를 가릴 수 없습니다.</p>
+{% elif board.repro %}<table>{{ rows(board.repro) }}</table>
+{% else %}<p class="muted">재현을 기다리는 티켓이 없습니다.</p>{% endif %}
+
+<h2>팀별 미해결</h2>
+{% if board.teams %}
+<table class="bars">{% for team, n in board.teams.items() %}<tr><th>{{ team }}</th><td class="num">{{ n }}</td></tr>{% endfor %}</table>
+<p class="muted">완료가 아닌 티켓 수입니다(검증 대기 포함).</p>
+{% else %}<p class="muted">미해결 티켓이 없습니다.</p>{% endif %}
+
+<p class="muted">읽어 본 BTS 상태 이름: {{ board.known | join(", ") or "없음" }}. 검증 대기·완료로 잡혀야 할 이름이 여기 있는데 위 목록에 안 나오면 상태 대응 설정을 확인하세요.</p>
+{% endif %}
+{% endblock %}

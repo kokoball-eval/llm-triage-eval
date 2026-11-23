@@ -262,5 +262,57 @@
       "limit": 100
     }
   },
-  "memberships_source": "Redmine REST API 문서 형식(/projects/:id/memberships.json)으로 만든 응답 — 실제 서버 녹화 아님. 컨테이너를 지운 뒤라 S5-1 에서는 실제 Redmine 으로 확인하지 않음"
+  "memberships_source": "Redmine REST API 문서 형식(/projects/:id/memberships.json)으로 만든 응답 — 실제 서버 녹화 아님. 컨테이너를 지운 뒤라 S5-1 에서는 실제 Redmine 으로 확인하지 않음",
+  "snapshot": {
+    "status": 200,
+    "body": {
+      "issues": [
+        {
+          "id": 1,
+          "project": {
+            "id": 1,
+            "name": "Triage"
+          },
+          "tracker": {
+            "id": 1,
+            "name": "Bug"
+          },
+          "status": {
+            "id": 3,
+            "name": "Resolved",
+            "is_closed": false
+          },
+          "priority": {
+            "id": 5,
+            "name": "Immediate"
+          },
+          "author": {
+            "id": 1,
+            "name": "Redmine Admin"
+          },
+          "subject": "[녹화용] 길드 상점 구매 후 강화석 미지급",
+          "description": "[요약]: [녹화용] 길드 상점 구매 후 강화석 미지급\r\n[분류]: 결함\r\n[모듈]: 결제·재화 / UI·텍스트\r\n[우선순위]: Critical\r\n[재현 정보]: 충분\r\n[발생 빈도]: 항상\r\n[처리]: 긴급 사인 요청\r\n[누락 정보 및 권장 조치]: 구매 로그 확인\r\n\r\n── 원문 (커뮤니티 제보 · 공식 홈페이지 > 버그 제보 · 2026-11-19 15:00 · 출처 paste) ──\r\n제목: [녹화용] 길드 상점 강화석 미지급\r\n녹화용 지어낸 리포트입니다.\r\n두 번째 줄.\r\n\r\n트리아지 서비스 표식: triage-add24d93-1",
+          "start_date": "2026-11-19",
+          "due_date": null,
+          "done_ratio": 0,
+          "is_private": false,
+          "estimated_hours": null,
+          "total_estimated_hours": null,
+          "spent_hours": 0.0,
+          "total_spent_hours": 0.0,
+          "created_on": "2026-11-19T05:34:14Z",
+          "updated_on": "2026-11-19T05:34:14Z",
+          "closed_on": null,
+          "assigned_to": {
+            "id": 5,
+            "name": "QA 담당"
+          }
+        }
+      ],
+      "total_count": 1,
+      "offset": 0,
+      "limit": 100
+    }
+  },
+  "snapshot_source": "녹화한 단건 응답(status)의 이슈로 만든 목록. 상태 이름과 담당자(assigned_to)는 Redmine API 문서 형식으로 바꿨다. 실제 서버 녹화가 아니다(컨테이너 삭제 후)"
 }

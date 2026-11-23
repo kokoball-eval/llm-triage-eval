@@ -46,12 +46,13 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         teams = assign.teams(loaded["assign"])
         print(f"자동 배정: 팀 {', '.join(teams)} — 담당자 계정 확인" if teams else "자동 배정: 쓰지 않음([assign] 없음)")
+        print("BTS 상태 동기화: " + ("상태 대응 있음 — QA 화면에서 사용" if loaded["status"] else "쓰지 않음([<bts>.status] 없음)"))
         on = [s.name for s in intake.make_sources(loaded_sources)]
         print(f"링크 출처: 켜짐 {on or '없음'}" + "".join(f" · {k} 꺼짐({v})" for k, v in loaded_sources["off"].items()))
         return 0
     print(f"작업 페이지: http://{config.HOST}:{config.PORT}  · BTS: {loaded['use']} ({config.mapping_path().name})  (종료: Ctrl+C)")
     app = create_app(store, tracker=make_tracker(loaded, store), sources=intake.make_sources(loaded_sources),
-                     sources_off=loaded_sources["off"], assign_rules=loaded["assign"])
+                     sources_off=loaded_sources["off"], assign_rules=loaded["assign"], status_rules=loaded["status"])
     uvicorn.run(app, host=config.HOST, port=config.PORT)
     return 0
 

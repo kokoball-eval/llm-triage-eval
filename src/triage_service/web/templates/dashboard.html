@@ -12,18 +12,6 @@
   {% endfor %}
   </table>
 {% endmacro %}
-{% block head %}<style>
-  .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:12px; }
-  .card { border:1px solid var(--line); border-radius:6px; padding:12px 16px; }
-  .card h2 { font-size:15px; margin:0 0 8px; }
-  .big { font-size:24px; font-weight:700; }
-  table.bars th { width:38%; font-weight:400; color:var(--fg); padding:3px 8px 3px 0; border:0; }
-  table.bars td { padding:3px 0; border:0; }
-  table.bars td.num { width:3em; text-align:right; }
-  .bar { display:inline-block; height:10px; background:var(--accent); border-radius:2px; }
-  .states { display:grid; grid-template-columns:repeat(auto-fit, minmax(96px, 1fr)); gap:8px; }
-  .states .card { text-align:center; text-decoration:none; color:var(--fg); padding:8px; }
-</style>{% endblock %}
 {% block body %}
 <h1>대시보드</h1>
 <nav class="filter">기간:
@@ -32,6 +20,13 @@
   {% endfor %}
   <span class="muted"> · 접수 {{ m.total }}건{% if m.since %} ({{ m.since }}부터){% endif %}</span>
 </nav>
+
+<div class="kpis">
+  <div class="card"><span class="muted">접수</span><br><span class="big">{{ m.total }}</span> <span class="muted">건</span></div>
+  <div class="card"><span class="muted">검토 대기</span><br><span class="big">{{ m.states[REVIEW] }}</span> <span class="muted">건</span></div>
+  <div class="card"><span class="muted">사람 수정 비율</span><br>{% if m.edited.pct is none %}<span class="muted">데이터 없음</span>{% else %}<span class="big">{{ m.edited.pct }}%</span> <span class="muted">({{ m.edited.n }} / {{ m.edited.d }}건)</span>{% endif %}</div>
+  <div class="card"><span class="muted">접수 → 등록 (중앙값)</span><br>{% if m.times.total_min.n %}<span class="big">{{ "%.1f"|format(m.times.total_min.p50) }}</span> <span class="muted">분 ({{ m.times.total_min.n }}건)</span>{% else %}<span class="muted">데이터 없음</span>{% endif %}</div>
+</div>
 
 <h2>상태</h2>
 <div class="states">{% for s, n in m.states.items() %}<a class="card" href="/reports?state={{ s }}"><span class="muted">{{ s }}</span><br><span class="big">{{ n }}</span></a>{% endfor %}</div>

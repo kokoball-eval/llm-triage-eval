@@ -70,6 +70,7 @@ QA = "your-qa-account-id"
 base_url = "http://127.0.0.1:3000"   # 로컬 Docker Redmine
 project_id = "triage"                # 프로젝트 식별자
 tracker_id = 1                       # 유형 번호 (영문 기본 데이터: 1 = Bug)
+# module_field_id = 1                # 모듈을 넣을 사용자 정의 필드 번호(목록·여러 값, 선택지는 8칸 모듈 이름). 관리자가 만든 뒤 번호를 적는다. 없으면 설명에만 남긴다
 timeout_sec = 10
 
 [redmine.priority]  # 8칸 [우선순위] → Redmine 우선순위 번호 (영문 기본 데이터 번호 1 Low · 2 Normal · 3 High · 5 Immediate 의 이름을 Trivial · Minor · Major · Critical 로 바꿔 씀)
@@ -81,6 +82,7 @@ Trivial = 1
 "해당 없음" = 1
 
 [redmine.teams]     # 팀 → 담당자 번호 (사용자 또는 그룹. 그룹은 관리 설정 "그룹에 일감 할당 허용" 필요, 프로젝트 구성원이어야 함)
+                    # 프로젝트에 팀 이름과 같은 일감 범주도 만들어 둔다(Jira 의 "팀_" 라벨 대신, --check 가 확인)
 QA = 5
 "운영" = 6
 "클라" = 7

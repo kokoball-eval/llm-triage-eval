@@ -37,7 +37,7 @@ TITLE_MAX = 100
 BODY_MAX = 1000
 STATUS_REFRESH_SEC = 1    # 트리아지가 끝날 때까지 상세 화면을 다시 읽는 간격
 SYNC_LIMIT = 200          # BTS 에서 상태를 읽는 등록 리포트 수의 상한 (설계 의도 8)
-SYNC_CHUNK = 50           # 한 번의 BTS 요청에 담는 티켓 수 (Jira 검색 maxResults 100, Redmine limit 100 이하)
+SYNC_CHUNK = 50           # 한 번의 BTS 요청에 담는 티켓 수 (50 이하: Jira 검색의 reconcileIssues 가 ID 50개까지만 받는다. Redmine limit 100)
 
 
 def load_env(path: Path = ENV_PATH) -> None:

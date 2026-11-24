@@ -84,7 +84,8 @@ def test_redmine_update_is_one_put(store):
     tracker.update("1", status=IN_DEV, team="서버", comment="코멘트")
     put = rec.requests[-1]
     assert (put.method, put.url.path) == ("PUT", "/issues/1.json")
-    assert json.loads(put.content) == {"issue": {"status_id": 8, "assigned_to_id": MAPPING["redmine"]["teams"]["서버"], "notes": "코멘트"}}
+    assert json.loads(put.content) == {"issue": {"status_id": 8, "assigned_to_id": MAPPING["redmine"]["teams"]["서버"],
+                                                 "category_id": 4, "notes": "코멘트"}}   # 녹화: 서버 범주 = 4
     tracker.update("1", comment="코멘트만")
     assert json.loads(rec.requests[-1].content) == {"issue": {"notes": "코멘트만"}}
 

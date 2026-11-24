@@ -23,6 +23,10 @@
    실패하면 상태만 바뀐 채 남는다. 이를 숨기지 않도록 qa.py 가 쓴 뒤 상태를 다시 읽어 화면에 보인다. 상태는 전환 목록에서
    목표 상태로 가는 전환을 찾아 보낸다(전환 번호는 워크플로마다 달라 설정에 두지 않는다). 팀을 바꿀 때는 다른 팀 라벨을 지우고
    새 팀 라벨을 붙인다(설계 의도 6).
+10. Jira 검색은 색인이라 방금 바뀐 티켓이 늦게 보일 수 있다. 검색에 reconcileIssues(이슈 숫자 ID)를 주면 그 이슈는 최신 값으로
+   읽는다(2026-11-24 KAN 에서 받아들여짐을 확인). Redmine 은 목록 조회가 DB 를 바로 읽어 지연이 없으므로, 이것으로 두 BTS 의
+   읽기가 같아진다. 숫자 ID 는 등록·단건 조회·검색 응답에서 얻어 어댑터 안에 기억한다(표에 칸을 더하지 않는다). 서버를 다시
+   켜면 비지만, 다음 동기화 검색 결과로 다시 채워진다.
 """
 
 import httpx2
@@ -39,6 +43,7 @@ class JiraTracker:
     def __init__(self, settings: dict, secrets: dict, http: httpx2.Client | None = None):
         self.s = settings
         self.http = http or clients.jira(settings["base_url"], secrets, settings["timeout_sec"])
+        self.ids: dict[str, str] = {}   # 티켓 키 → 숫자 ID (설계 의도 10)
 
     def ticket(self, key: str) -> Ticket:
         return Ticket(key=key, url=f"{self.s['base_url']}/browse/{key}")
@@ -62,20 +67,25 @@ class JiraTracker:
         if issue.team:   # 설계 의도 6
             fields["assignee"] = {"accountId": self.s["teams"][issue.team]}
             fields["labels"].append(team_label(issue.team))
-        resp = call(self.http, "POST", "/rest/api/3/issue", json={"fields": fields}, creating=True)
-        return self.ticket(resp.json()["key"])
+        resp = call(self.http, "POST", "/rest/api/3/issue", json={"fields": fields}, creating=True).json()
+        self.ids[resp["key"]] = resp["id"]
+        return self.ticket(resp["key"])
 
     def status(self, key: str) -> str:
-        resp = call(self.http, "GET", f"/rest/api/3/issue/{key}", params={"fields": "status"})
-        return name(resp.json()["fields"]["status"])
+        resp = call(self.http, "GET", f"/rest/api/3/issue/{key}", params={"fields": "status"}).json()
+        self.ids[key] = resp["id"]
+        return name(resp["fields"]["status"])
 
     def snapshot(self, keys: list[str]) -> dict[str, BtsState]:   # 설계 의도 7
         listed = ", ".join(f'"{k}"' for k in keys)
+        known = [self.ids[k] for k in keys if k in self.ids]   # 설계 의도 10
         resp = call(self.http, "GET", "/rest/api/3/search/jql", params={
             "jql": f'project = "{self.s["project_key"]}" AND key in ({listed})',
-            "fields": "status,assignee,updated", "maxResults": len(keys)})
+            "fields": "status,assignee,updated", "maxResults": len(keys), **({"reconcileIssues": known} if known else {})})
+        issues = resp.json().get("issues", [])
+        self.ids.update({i["key"]: i["id"] for i in issues})
         return {i["key"]: BtsState(name(i["fields"]["status"]), (i["fields"].get("assignee") or {}).get("displayName", ""),
-                                   i["fields"].get("updated", "")) for i in resp.json().get("issues", [])}
+                                   i["fields"].get("updated", "")) for i in issues}
 
     def update(self, key: str, status: str = "", team: str = "", comment: str = "") -> None:   # 설계 의도 9
         if team:

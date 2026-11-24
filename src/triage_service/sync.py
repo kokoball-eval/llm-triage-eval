@@ -16,12 +16,18 @@
    섞이지 않게).
 7. 팀은 재현 확인으로 바꾼 팀(QA 기록의 마지막 팀)이 있으면 그것, 없으면 등록 때 배정한 팀이다(store 설계 의도 10). 기록의
    팀은 BTS 가 쓰기 요청을 받은 경우에만 채워진다(qa 설계 의도 3). 상태 확인에서만 실패한 기록도 팀은 바뀐 것이라 센다.
+8. 같은 버튼으로 마일스톤도 읽는다: BTS 버전 목록을 저장하고, 출시 전 버전마다 그 버전의 티켓 전체를 읽는다(마일스톤당
+   config.MILESTONE_LIMIT 건까지). 출시한 버전은 마지막에 읽은 값을 그대로 둔다. 버전 목록·한 버전 읽기가 실패해도 나머지는 계속한다.
+9. 현재 마일스톤은 출시 전 버전 중 출시일이 가장 이른 것이다(출시일이 지났어도 출시 처리 전이면 현재). 마일스톤 성과는 그
+   버전의 BTS 티켓 전체로 센다: Closed 수·완료율, 남은 상태별 건수, 재오픈(Resolve → In Dev 를 본 티켓) 수, QA 가 서비스에서
+   회귀 테스트 통과로 닫은 수(QA 기록). 상태 변화는 발견한 시각 기준이라 동기화 사이에 오간 것은 놓칠 수 있다.
 """
 
-from datetime import datetime
+from collections import Counter
+from datetime import date, datetime
 
-from triage_service import config, flow
-from triage_service.contracts import CHECK, CLOSED, QA_REVIEW, RESOLVE, STATUSES
+from triage_service import config, flow, qa
+from triage_service.contracts import CHECK, CLOSED, IN_DEV, QA_REVIEW, RESOLVE, STATUSES
 from triage_service.store import Store, now
 
 
@@ -31,8 +37,9 @@ def targets(store: Store) -> list[dict]:
 
 
 def run(store: Store, tracker) -> dict:
-    """BTS 에서 상태를 읽어 저장한다. {"synced": 건수, "missing": [BTS 에서 못 찾은 키], "errors": [묶음 실패 이유]}."""
-    out = {"synced": 0, "missing": [], "errors": []}
+    """BTS 에서 상태를 읽어 저장한다. {"synced": 건수, "missing": [BTS 에서 못 찾은 키], "errors": [묶음 실패 이유],
+    "milestones": [(마일스톤, 읽은 티켓 수)]} (설계 의도 8)."""
+    out = {"synced": 0, "missing": [], "errors": [], "milestones": []}
     records, at = targets(store), now()
     for i in range(0, len(records), config.SYNC_CHUNK):
         chunk = records[i:i + config.SYNC_CHUNK]
@@ -48,7 +55,53 @@ def run(store: Store, tracker) -> dict:
                 continue
             store.save_bts(r["id"], {"status": state.status, "assignee": state.assignee, "updated": state.updated, "synced_at": at})
             out["synced"] += 1
+    try:   # 설계 의도 8
+        milestones = tracker.versions()
+    except Exception as e:
+        out["errors"].append(f"마일스톤 목록: {e}")
+        return out
+    store.save_milestones(milestones, at)
+    for m in milestones:
+        if m.released:
+            continue
+        try:
+            tickets = tracker.milestone_tickets(m.name)
+        except Exception as e:
+            out["errors"].append(f"마일스톤 {m.name}: {e}")
+            continue
+        store.save_tickets(m.name, tickets, at)
+        out["milestones"].append((m.name, len(tickets)))
+        if len(tickets) >= config.MILESTONE_LIMIT:
+            out["errors"].append(f"마일스톤 {m.name}: {config.MILESTONE_LIMIT}건까지만 읽었습니다 — 성과가 실제보다 적게 보일 수 있습니다(config.MILESTONE_LIMIT)")
     return out
+
+
+def current(milestones: list[dict]) -> str:
+    """설계 의도 9 — 현재 마일스톤 이름(없으면 빈 문자열). milestones 는 store.milestones()(출시일 순)."""
+    return next((m["name"] for m in milestones if not m["released"]), "")
+
+
+def milestone_summary(store: Store, name: str, today: date | None = None) -> dict | None:
+    """설계 의도 9 — 마일스톤 성과. 모르는 마일스톤이면 None."""
+    m = next((m for m in store.milestones() if m["name"] == name), None)
+    if m is None:
+        return None
+    today = today or date.today()
+    tickets, changes = store.tickets(name), store.ticket_changes()
+    counts = Counter(t["status"] for t in tickets)
+    passed = qa.ACTIONS["pass"][0]
+    log = store.qa_log()
+    qa_closed_keys = {r["ticket_key"] for r in store.list(flow.REGISTERED)
+                      if any(a["action"] == passed and not a["error"] for a in log.get(r["id"], []))}
+    total, closed = len(tickets), counts[CLOSED]
+    return {"name": name, "release": m["release"], "released": m["released"],
+            "d_day": (date.fromisoformat(m["release"]) - today).days if m["release"] else None,
+            "total": total, "closed": closed, "rate": round(closed / total * 100, 1) if total else None,
+            "left": {s: counts[s] for s in (QA_REVIEW, IN_DEV, RESOLVE, CHECK)},
+            "other": {s: n for s, n in counts.items() if s not in STATUSES},
+            "reopened": sum(1 for t in tickets if any(s == RESOLVE and d == IN_DEV for _, s, d in changes.get(t["key"], []))),
+            "qa_closed": sum(1 for t in tickets if t["status"] == CLOSED and t["key"] in qa_closed_keys),
+            "synced_at": max((t["synced_at"] for t in tickets), default=m["synced_at"])}
 
 
 def ago(minutes: float) -> str:

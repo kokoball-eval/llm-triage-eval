@@ -21,7 +21,12 @@
    합쳐진다). BTS 가 원본이라 이 기록은 리포트 흐름(state·transitions)에 영향을 주지 않는다.
 10. 서비스가 BTS 에 쓴 것(qa.py 의 QA 동작, 등록 직후의 첫 상태)은 qa_actions 에 한 줄씩 남긴다: 동작, 쓰기 전·후 BTS 상태,
    바꾼 팀, 코멘트, 오류. 실패하거나 일부만 된 것도 남겨, BTS 와 서비스 화면이 다를 때 무엇을 보냈는지 확인할 수 있게 한다.
-   재현 확인으로 바꾼 팀은 이 기록의 마지막 팀이 현재 팀이다(assignment 는 등록 때 배정으로 두어 S5-4 의 "사람이 바꾼 비율"을 지킨다).
+   재현 확인으로 바꾼 팀은 이 기록의 마지막 팀이 현재 팀이다(assignment 는 등록 때 배정으로 두어 S5-4c 의 "사람이 바꾼 비율"을 지킨다).
+11. 마일스톤(BTS 버전) 목록은 bts_milestones 에, 마일스톤에 속한 BTS 티켓 전체(서비스가 등록하지 않은 것 포함)는 bts_tickets 에
+   티켓 키로 둔다. 리포트(reports)와는 티켓 키로만 이어진다. 상태가 처음이거나 바뀐 것을 발견하면 bts_ticket_changes 에 한 줄
+   남긴다(설계 의도 9 와 같은 방식, 재오픈 수의 근거). 동기화에서 그 마일스톤 검색에 더는 나오지 않는 티켓은 마일스톤을 비운다
+   (BTS 에서 다른 버전으로 옮겼거나 버전을 뺀 경우). shortcut: 티켓 하나에 마일스톤 하나 — Jira 는 버전을 여러 개 걸 수 있지만
+   마지막에 읽은 마일스톤에만 센다. 한 티켓을 여러 마일스톤에 거는 운영을 하게 되면 키를 (티켓, 마일스톤)으로 올린다.
 """
 
 import json
@@ -64,6 +69,27 @@ CREATE TABLE IF NOT EXISTS transitions (
 );
 CREATE TABLE IF NOT EXISTS bts_changes (
     report_id INTEGER NOT NULL,
+    at TEXT NOT NULL,
+    src TEXT,
+    dst TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS bts_milestones (
+    name TEXT PRIMARY KEY,
+    release TEXT NOT NULL,
+    released INTEGER NOT NULL,
+    synced_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS bts_tickets (
+    key TEXT PRIMARY KEY,
+    milestone TEXT NOT NULL,
+    title TEXT NOT NULL,
+    status TEXT NOT NULL,
+    assignee TEXT NOT NULL,
+    updated TEXT NOT NULL,
+    synced_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS bts_ticket_changes (
+    key TEXT NOT NULL,
     at TEXT NOT NULL,
     src TEXT,
     dst TEXT NOT NULL
@@ -185,6 +211,76 @@ class Store:
         with connect(self.path) as c:
             for r in c.execute("SELECT report_id, at, src, dst FROM bts_changes ORDER BY rowid"):
                 out.setdefault(r["report_id"], []).append((r["at"], r["src"], r["dst"]))
+        return out
+
+    def save_milestones(self, milestones, at: str) -> None:
+        """BTS 버전 목록을 통째로 바꾼다(BTS 에서 지운 버전은 사라진다, 설계 의도 11)."""
+        with connect(self.path) as c:
+            c.execute("BEGIN IMMEDIATE")
+            try:
+                c.execute("DELETE FROM bts_milestones")
+                c.executemany("INSERT INTO bts_milestones (name, release, released, synced_at) VALUES (?, ?, ?, ?)",
+                              [(m.name, m.release, int(m.released), at) for m in milestones])
+                c.execute("COMMIT")
+            except BaseException:
+                c.execute("ROLLBACK")
+                raise
+
+    def milestones(self):   # list 이름을 이 클래스의 list() 가 가려 타입을 적지 않는다
+        """출시일 순(출시일 없는 버전은 뒤로)."""
+        with connect(self.path) as c:
+            rows = c.execute("SELECT * FROM bts_milestones ORDER BY release = '', release, name").fetchall()
+        return [{**dict(r), "released": bool(r["released"])} for r in rows]
+
+    def save_tickets(self, milestone: str, tickets, at: str) -> None:
+        """마일스톤 하나의 BTS 티켓 전체를 저장하고 상태 변화를 남긴다 (설계 의도 11)."""
+        with connect(self.path) as c:
+            c.execute("BEGIN IMMEDIATE")
+            try:
+                for t in tickets:
+                    self._ticket_status(c, t.key, t.state.status, at)
+                    c.execute("INSERT INTO bts_tickets (key, milestone, title, status, assignee, updated, synced_at) "
+                              "VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(key) DO UPDATE SET milestone = excluded.milestone, "
+                              "title = excluded.title, status = excluded.status, assignee = excluded.assignee, "
+                              "updated = excluded.updated, synced_at = excluded.synced_at",
+                              (t.key, milestone, t.title, t.state.status, t.state.assignee, t.state.updated, at))
+                keys = [t.key for t in tickets]
+                c.execute(f"UPDATE bts_tickets SET milestone = '' WHERE milestone = ? AND key NOT IN ({','.join('?' * len(keys))})",
+                          (milestone, *keys))
+                c.execute("COMMIT")
+            except BaseException:
+                c.execute("ROLLBACK")
+                raise
+
+    def ticket_status(self, key: str, status: str, at: str) -> None:
+        """서비스가 쓴 뒤 읽은 상태를 마일스톤 티켓에도 반영한다(그 티켓이 있을 때만, qa.py)."""
+        with connect(self.path) as c:
+            c.execute("BEGIN IMMEDIATE")
+            try:
+                if c.execute("SELECT 1 FROM bts_tickets WHERE key = ?", (key,)).fetchone():
+                    self._ticket_status(c, key, status, at)
+                    c.execute("UPDATE bts_tickets SET status = ?, synced_at = ? WHERE key = ?", (status, at, key))
+                c.execute("COMMIT")
+            except BaseException:
+                c.execute("ROLLBACK")
+                raise
+
+    @staticmethod
+    def _ticket_status(c, key: str, status: str, at: str) -> None:
+        row = c.execute("SELECT status FROM bts_tickets WHERE key = ?", (key,)).fetchone()
+        if row is None or row["status"] != status:
+            c.execute("INSERT INTO bts_ticket_changes (key, at, src, dst) VALUES (?, ?, ?, ?)", (key, at, row and row["status"], status))
+
+    def tickets(self, milestone: str):
+        with connect(self.path) as c:
+            return [dict(r) for r in c.execute("SELECT * FROM bts_tickets WHERE milestone = ? ORDER BY key", (milestone,))]
+
+    def ticket_changes(self) -> dict:
+        """티켓 키 → [(발견한 시각, 이전 상태, 다음 상태)] 시간순 (설계 의도 11)."""
+        out: dict = {}
+        with connect(self.path) as c:
+            for r in c.execute("SELECT key, at, src, dst FROM bts_ticket_changes ORDER BY rowid"):
+                out.setdefault(r["key"], []).append((r["at"], r["src"], r["dst"]))
         return out
 
     def save_qa(self, rid: int, action: str, before: str | None, after: str | None, team: str = "", comment: str = "",

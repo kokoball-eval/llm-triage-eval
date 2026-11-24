@@ -89,6 +89,16 @@
       {% for k in REPRO_CHOICES %}<option value="{{ k }}" {% if repro == k %}selected{% endif %}>{{ k }}</option>{% endfor %}
     </select>
     </div>
+  {% if open_milestones %}
+    <div class="wide">
+    <label for="milestone">마일스톤 <span class="muted">(BTS 버전 · 마지막 동기화로 읽은 출시 전 버전)</span></label>
+    <select id="milestone" name="milestone">
+      {% if milestone and milestone not in open_milestones | map(attribute="name") | list %}<option value="{{ milestone }}" selected>{{ milestone }} — 출시 전 마일스톤 아님, 다시 고르세요</option>{% endif %}
+      {% for m in open_milestones %}<option value="{{ m.name }}" {% if milestone == m.name %}selected{% endif %}>{{ m.name }}{% if m.release %} — 출시 {{ m.release }}{% endif %}</option>{% endfor %}
+      <option value="" {% if milestone == "" %}selected{% endif %}>없음</option>
+    </select>
+    </div>
+  {% endif %}
   </div>
   <div class="row">
     <button class="primary" type="submit">BTS 등록</button>
@@ -103,6 +113,7 @@
 <h2>확정한 8칸</h2>
 <table>{% for f in FIELDS %}<tr><th>{{ f }}</th><td>{{ rec.final_fields.get(f) }}</td></tr>{% endfor %}</table>
 {% if rec.assignment %}<p class="muted">배정 팀: {{ rec.assignment.team or "배정 안 함" }}{% if rec.assignment.team != rec.assignment.suggested %} (규칙: {{ rec.assignment.suggested or "배정 안 함" }} → 사람이 바꿈){% endif %}{% if rec.assignment.linked_existing %} — 이미 있던 티켓에 연결해 담당자는 바꾸지 않음{% endif %}</p>{% endif %}
+{% if rec.assignment and rec.assignment.milestone %}<p class="muted">마일스톤: {{ rec.assignment.milestone }}</p>{% endif %}
 {% if rec.edits %}<p class="muted">사람이 고친 칸: {% for e in rec.edits %}{{ e.field }}({{ e.before or "없음" }} → {{ e.after }}){% if not loop.last %}, {% endif %}{% endfor %}</p>{% endif %}
 {% endif %}
 {% if rec.ticket_key %}

@@ -24,14 +24,17 @@
    Redmine 이 등록을 거절해 실패로 드러난다). 번호가 틀렸거나 그 트래커에서 쓰지 않는 필드면 Redmine 이 조용히 무시해 모듈이
    설명에만 남는다. 필드 정의는 관리자 권한으로만 읽을 수 있어 --check 가 확인하지 않는다(shortcut: 번호는 사람이 맞춘다,
    여러 Redmine 에 붙일 때 관리자 키로 확인하는 검사를 올림).
+10. 마일스톤은 목표 버전(fixed_version)이다. 버전 번호는 이름으로 찾고, 상태가 open 이 아니면(locked·closed) 출시한 것으로 본다.
+   한 버전의 티켓은 fixed_version_id 목록 조회를 offset 으로 끝까지 읽는다(status_id=* 로 닫힌 티켓 포함).
 """
 
 import httpx2
 
 from triage_eval.contracts import NO_MODULE, split_modules
+from triage_service import config
 from triage_service.bts import clients
 from triage_service.bts.common import call, description_lines, marker_line
-from triage_service.contracts import STATUSES, BtsState, Issue, Ticket, TrackerError
+from triage_service.contracts import STATUSES, BtsState, BtsTicket, Issue, Milestone, Ticket, TrackerError
 
 
 class RedmineTracker:
@@ -63,6 +66,8 @@ class RedmineTracker:
         if issue.team:   # 설계 의도 5·8
             body["issue"]["assigned_to_id"] = self.s["teams"][issue.team]
             body["issue"]["category_id"] = self.category(issue.team)
+        if issue.milestone:   # 설계 의도 10
+            body["issue"]["fixed_version_id"] = self.version_id(issue.milestone)
         modules = [m for m in split_modules(issue.fields.get("모듈", "")) if m != NO_MODULE]
         if modules and self.s.get("module_field_id"):   # 설계 의도 9
             body["issue"]["custom_fields"] = [{"id": self.s["module_field_id"], "value": modules}]
@@ -93,6 +98,29 @@ class RedmineTracker:
         if comment:
             body["notes"] = comment
         call(self.http, "PUT", f"/issues/{key}.json", json={"issue": body})
+
+    def _versions(self) -> list[dict]:
+        return call(self.http, "GET", f"/projects/{self.s['project_id']}/versions.json").json()["versions"]
+
+    def versions(self) -> list[Milestone]:   # 설계 의도 10
+        return [Milestone(v["name"], v.get("due_date") or "", v.get("status") != "open") for v in self._versions()]
+
+    def version_id(self, name: str) -> int:
+        found = next((v["id"] for v in self._versions() if v["name"] == name), None)
+        if found is None:
+            raise TrackerError(f"Redmine {self.s['project_id']} 프로젝트에 버전 {name} 이 없습니다")
+        return found
+
+    def milestone_tickets(self, name: str) -> list[BtsTicket]:   # 설계 의도 10
+        vid, out, offset, total = self.version_id(name), [], 0, 1
+        while offset < total and len(out) < config.MILESTONE_LIMIT:
+            page = call(self.http, "GET", "/issues.json", params={
+                "project_id": self.s["project_id"], "fixed_version_id": vid, "status_id": "*", "limit": 100, "offset": offset}).json()
+            batch = page.get("issues", [])
+            out += [BtsTicket(str(i["id"]), i.get("subject", ""), BtsState(
+                i["status"]["name"], (i.get("assigned_to") or {}).get("name", ""), i.get("updated_on", ""))) for i in batch]
+            offset, total = offset + len(batch), page.get("total_count", 0) if batch else 0
+        return out[:config.MILESTONE_LIMIT]
 
     def categories(self) -> dict[str, int]:
         resp = call(self.http, "GET", f"/projects/{self.s['project_id']}/issue_categories.json")

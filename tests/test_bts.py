@@ -34,11 +34,13 @@ ROUTES = {   # (방법, 경로) → 녹화 응답 이름. {key} 는 녹화한 �
              ("GET", "/rest/api/3/issue/{key}"): "status", ("GET", "/rest/api/3/user/assignable/search"): "assignable",
              ("PUT", "/rest/api/3/issue/{key}"): "edit", ("GET", "/rest/api/3/issue/{key}/transitions"): "transitions",
              ("POST", "/rest/api/3/issue/{key}/transitions"): "transition_done", ("POST", "/rest/api/3/issue/{key}/comment"): "comment",
-             ("GET", "/rest/api/3/project/{project}/statuses"): "project_statuses"},
+             ("GET", "/rest/api/3/project/{project}/statuses"): "project_statuses",
+             ("GET", "/rest/api/3/project/{project}/versions"): "versions"},
     "redmine": {("POST", "/issues.json"): "create", ("GET", "/issues.json"): "find",
                 ("GET", "/issues/{key}.json"): "status", ("GET", "/projects/triage/memberships.json"): "memberships",
                 ("GET", "/issue_statuses.json"): "issue_statuses", ("PUT", "/issues/{key}.json"): "update",
-                ("GET", "/projects/triage/issue_categories.json"): "issue_categories"},
+                ("GET", "/projects/triage/issue_categories.json"): "issue_categories",
+                ("GET", "/projects/triage/versions.json"): "versions"},
 }
 
 
@@ -127,6 +129,8 @@ class Recorder:
         what = routes[(request.method, request.url.path)]
         if what == "find" and ("issue_id" in request.url.params or "status" in request.url.params.get("fields", "")):
             what = "snapshot"   # 같은 검색 주소로 여러 티켓의 상태를 읽는 요청 (jira.py 설계 의도 7, redmine.py 설계 의도 6)
+        if what in ("find", "snapshot") and ("fixVersion" in request.url.params.get("jql", "") or "fixed_version_id" in request.url.params):
+            what = "milestone"   # 한 버전의 티켓 전체 (jira.py 설계 의도 11, redmine.py 설계 의도 10)
         mode = self.fail.get(what)
         if mode == "timeout":
             raise httpx2.ReadTimeout("timed out", request=request)

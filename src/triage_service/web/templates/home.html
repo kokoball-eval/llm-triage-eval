@@ -4,6 +4,33 @@
   <h1>지금 어떤 일이 필요하세요?</h1>
   <p class="muted">리포트를 넣으면 모델이 8칸으로 정리하고, 사람이 확인한 뒤 BTS에 등록합니다. 모든 응답은 사람이 확인합니다.</p>
 </section>
+{% if summary %}
+{% set s = summary %}
+<section class="card" style="margin-bottom:16px">
+  <div class="row" style="justify-content:space-between; align-items:baseline; margin-top:0">
+    <h2 style="margin:0">마일스톤 {{ s.name }}</h2>
+    <span class="muted">{% if s.release %}출시 {{ s.release }} · {% if s.d_day >= 0 %}D-{{ s.d_day }}{% else %}출시일 {{ -s.d_day }}일 지남{% endif %}{% endif %}{% if s.released %} · 출시함{% endif %}</span>
+  </div>
+  {% if s.total %}
+  <div class="kpis">
+    <div class="card"><span class="muted">Closed</span><br><span class="big">{{ s.closed }}</span> <span class="muted">/ {{ s.total }}건 ({{ s.rate }}%)</span></div>
+    <div class="card"><span class="muted">QA 회귀 통과로 닫음</span><br><span class="big">{{ s.qa_closed }}</span> <span class="muted">건</span></div>
+    <div class="card"><span class="muted">회귀 실패(재오픈)</span><br><span class="big">{{ s.reopened }}</span> <span class="muted">건</span></div>
+    <div class="card"><span class="muted">남은 이슈</span><br><span class="big">{{ s.total - s.closed }}</span> <span class="muted">건</span></div>
+  </div>
+  <table class="bars">{% for st, n in s.left.items() %}
+    <tr><th>{{ st }}</th><td><span class="bar" style="width: {{ (n / s.total * 100) | round(1) }}%"></span></td><td class="num">{{ n }}</td></tr>
+  {% endfor %}</table>
+  {% if s.other %}<p class="muted">다섯 상태 밖: {% for st, n in s.other.items() %}{{ st }} {{ n }}건{% if not loop.last %}, {% endif %}{% endfor %} — BTS 워크플로를 확인하세요.</p>{% endif %}
+  {% else %}
+  <p class="muted">이 마일스톤에 티켓이 없거나 아직 읽지 않았습니다. <a href="/qa">QA 화면</a>에서 [지금 동기화]를 누르세요.</p>
+  {% endif %}
+  <p class="muted">BTS 티켓 전체 기준(BTS에 직접 등록한 이슈 포함) · 마지막 동기화 {{ s.synced_at }}{% if milestones | length > 1 %} · 다른 마일스톤:
+    {% for m in milestones if m.name != s.name %}<a href="/?milestone={{ m.name | urlencode }}">{{ m.name }}</a>{% if not loop.last %} · {% endif %}{% endfor %}{% endif %}</p>
+</section>
+{% elif not milestones %}
+<p class="muted">마일스톤(BTS 버전)을 아직 읽지 않았습니다. <a href="/qa">QA 화면</a>에서 [지금 동기화]를 누르면 여기에 마일스톤 성과가 보입니다.</p>
+{% endif %}
 <div class="entries">
   <a class="entry" href="/new">
     <h2>리포트 한 건 넣기</h2><span class="muted">제목과 본문을 붙여 넣어 바로 정리합니다.</span>

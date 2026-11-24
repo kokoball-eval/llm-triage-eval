@@ -411,5 +411,126 @@
       "total_count": 6
     }
   },
-  "categories_source": "실제 Redmine 6.0(로컬 Docker, 2026-11-24)의 /projects/triage/issue_categories.json — 팀 이름과 같은 일감 범주 6개(S5-4a). 모듈은 사용자 정의 필드 1번(여러 값)"
+  "categories_source": "실제 Redmine 6.0(로컬 Docker, 2026-11-24)의 /projects/triage/issue_categories.json — 팀 이름과 같은 일감 범주 6개(S5-4a). 모듈은 사용자 정의 필드 1번(여러 값)",
+  "versions": {
+    "status": 200,
+    "body": {
+      "versions": [
+        {
+          "id": 1,
+          "project": {
+            "id": 1,
+            "name": "LLM-Triage"
+          },
+          "name": "0.0.1",
+          "description": "",
+          "status": "open",
+          "due_date": "2027-01-13",
+          "sharing": "none",
+          "wiki_page_title": null,
+          "created_on": "2026-11-24T08:37:21Z",
+          "updated_on": "2026-11-24T08:37:21Z"
+        },
+        {
+          "id": 2,
+          "project": {
+            "id": 1,
+            "name": "LLM-Triage"
+          },
+          "name": "0.1.0",
+          "description": "",
+          "status": "open",
+          "due_date": "2027-03-10",
+          "sharing": "none",
+          "wiki_page_title": null,
+          "created_on": "2026-11-24T08:37:21Z",
+          "updated_on": "2026-11-24T08:37:21Z"
+        },
+        {
+          "id": 3,
+          "project": {
+            "id": 1,
+            "name": "LLM-Triage"
+          },
+          "name": "0.2.0",
+          "description": "",
+          "status": "open",
+          "due_date": "2027-05-12",
+          "sharing": "none",
+          "wiki_page_title": null,
+          "created_on": "2026-11-24T08:37:21Z",
+          "updated_on": "2026-11-24T08:37:21Z"
+        }
+      ],
+      "total_count": 3
+    }
+  },
+  "milestone": {
+    "status": 200,
+    "body": {
+      "issues": [
+        {
+          "id": 3,
+          "project": {
+            "id": 1,
+            "name": "LLM-Triage"
+          },
+          "tracker": {
+            "id": 1,
+            "name": "Bug"
+          },
+          "status": {
+            "id": 7,
+            "name": "QA Review",
+            "is_closed": false
+          },
+          "priority": {
+            "id": 2,
+            "name": "Minor"
+          },
+          "author": {
+            "id": 1,
+            "name": "Redmine Admin"
+          },
+          "assigned_to": {
+            "id": 1,
+            "name": "Redmine Admin"
+          },
+          "category": {
+            "id": 1,
+            "name": "QA"
+          },
+          "fixed_version": {
+            "id": 1,
+            "name": "0.0.1"
+          },
+          "subject": "[실제 확인] S5-4b 마일스톤 등록",
+          "description": "[요약]: [실제 확인] S5-4b 마일스톤 등록\r\n[분류]: 결함\r\n[모듈]: UI·텍스트\r\n[우선순위]: Minor\r\n[재현 정보]: 충분\r\n[발생 빈도]: 항상\r\n[처리]: 등록(재현 대기)\r\n[누락 정보 및 권장 조치]: 없음\r\n\r\n── 원문 (QA 이슈 · 내부 QA · 출처 paste) ──\r\n제목: S5-4b 마일스톤 확인\r\n마일스톤(버전) 등록·읽기 확인용 티켓입니다.\r\n\r\n트리아지 서비스 표식: triage-s54blive-2",
+          "start_date": "2026-11-24",
+          "due_date": null,
+          "done_ratio": 0,
+          "is_private": false,
+          "estimated_hours": null,
+          "total_estimated_hours": null,
+          "custom_fields": [
+            {
+              "id": 1,
+              "name": "모듈",
+              "multiple": true,
+              "value": [
+                "UI·텍스트"
+              ]
+            }
+          ],
+          "created_on": "2026-11-24T08:42:03Z",
+          "updated_on": "2026-11-24T08:42:03Z",
+          "closed_on": null
+        }
+      ],
+      "total_count": 1,
+      "offset": 0,
+      "limit": 100
+    }
+  },
+  "milestone_source": "실제 Redmine 6.0(로컬 Docker, 2026-11-24)에서 녹화: 버전 목록(/projects/triage/versions.json)과 목표 버전 0.0.1(1번)의 일감 목록(시험 일감 #3 한 건). 시험 일감이라 가릴 값이 없다"
 }

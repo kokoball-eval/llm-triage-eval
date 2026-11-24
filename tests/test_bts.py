@@ -37,7 +37,8 @@ ROUTES = {   # (방법, 경로) → 녹화 응답 이름. {key} 는 녹화한 �
              ("GET", "/rest/api/3/project/{project}/statuses"): "project_statuses"},
     "redmine": {("POST", "/issues.json"): "create", ("GET", "/issues.json"): "find",
                 ("GET", "/issues/{key}.json"): "status", ("GET", "/projects/triage/memberships.json"): "memberships",
-                ("GET", "/issue_statuses.json"): "issue_statuses", ("PUT", "/issues/{key}.json"): "update"},
+                ("GET", "/issue_statuses.json"): "issue_statuses", ("PUT", "/issues/{key}.json"): "update",
+                ("GET", "/projects/triage/issue_categories.json"): "issue_categories"},
 }
 
 

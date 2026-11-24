@@ -11,7 +11,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from conftest import FakeClient
-from test_bts import MAPPING, adapter, write_mapping
+from test_bts import MAPPING, adapter, an_issue, write_mapping
 from test_service import DEV_ITEMS, triaged
 from triage_service import config, review, sync
 from triage_service.bts import settings
@@ -51,6 +51,20 @@ def test_committed_mapping_has_no_status_section():
 
 
 # ── 어댑터가 읽는 상태 ──────────────────────────────────
+
+def test_jira_search_reconciles_known_ids(store):
+    """Jira 검색은 색인이라 늦을 수 있다 — 아는 이슈 숫자 ID 를 reconcileIssues 로 함께 보낸다(jira 설계 의도 10, S5-4a)."""
+    tracker, rec = adapter("jira", store)
+    key = rec.data["ticket_key"]
+    tracker.snapshot([key])
+    assert "reconcileIssues" not in rec.requests[-1].url.params   # 처음에는 모른다
+    tracker.snapshot([key])
+    assert rec.requests[-1].url.params.get_list("reconcileIssues") == [rec.data["snapshot"]["body"]["issues"][0]["id"]]
+    ticket = tracker.create(an_issue(store))   # 등록 응답의 ID 도 기억한다
+    tracker.snapshot([key, ticket.key])
+    assert rec.requests[-1].url.params.get_list("reconcileIssues") == [
+        rec.data["snapshot"]["body"]["issues"][0]["id"], rec.data["create"]["body"]["id"]]
+
 
 def test_jira_snapshot_reads_status_assignee_updated(store):
     tracker, rec = adapter("jira", store)

@@ -354,5 +354,62 @@
     "status": 204,
     "body": null
   },
-  "write_source": "실제 Redmine 6.0(로컬 Docker, 2026-11-24 다시 띄움, 상태를 QA Review·In Dev·Resolve·Check·Closed 다섯으로 만든 프로젝트 LLM-Triage)에서 녹화: 상태 목록(/issue_statuses.json)과 상태·담당자·코멘트를 함께 보낸 PUT(204, 본문 없음)"
+  "write_source": "실제 Redmine 6.0(로컬 Docker, 2026-11-24 다시 띄움, 상태를 QA Review·In Dev·Resolve·Check·Closed 다섯으로 만든 프로젝트 LLM-Triage)에서 녹화: 상태 목록(/issue_statuses.json)과 상태·담당자·코멘트를 함께 보낸 PUT(204, 본문 없음)",
+  "issue_categories": {
+    "status": 200,
+    "body": {
+      "issue_categories": [
+        {
+          "id": 1,
+          "project": {
+            "id": 1,
+            "name": "LLM-Triage"
+          },
+          "name": "QA"
+        },
+        {
+          "id": 6,
+          "project": {
+            "id": 1,
+            "name": "LLM-Triage"
+          },
+          "name": "기획"
+        },
+        {
+          "id": 4,
+          "project": {
+            "id": 1,
+            "name": "LLM-Triage"
+          },
+          "name": "서버"
+        },
+        {
+          "id": 5,
+          "project": {
+            "id": 1,
+            "name": "LLM-Triage"
+          },
+          "name": "아트"
+        },
+        {
+          "id": 2,
+          "project": {
+            "id": 1,
+            "name": "LLM-Triage"
+          },
+          "name": "운영"
+        },
+        {
+          "id": 3,
+          "project": {
+            "id": 1,
+            "name": "LLM-Triage"
+          },
+          "name": "클라"
+        }
+      ],
+      "total_count": 6
+    }
+  },
+  "categories_source": "실제 Redmine 6.0(로컬 Docker, 2026-11-24)의 /projects/triage/issue_categories.json — 팀 이름과 같은 일감 범주 6개(S5-4a). 모듈은 사용자 정의 필드 1번(여러 값)"
 }

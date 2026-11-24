@@ -27,7 +27,8 @@ SCHEMA = {
              "priority": dict},
     "redmine": {"base_url": str, "project_id": str, "tracker_id": int, "timeout_sec": (int, float), "priority": dict},
 }
-OPTIONAL = {"teams": dict}   # 자동 배정(설계 의도 4)을 쓸 때만
+OPTIONAL = {"jira": {"teams": dict},   # 자동 배정(설계 의도 4)을 쓸 때만
+            "redmine": {"teams": dict, "module_field_id": int}}   # 모듈 사용자 정의 필드 번호(redmine.py 설계 의도 9)
 PRIORITY_TYPE = {"jira": str, "redmine": int}   # 팀 → 계정 값의 형식도 같다(Jira 는 글자, Redmine 은 번호)
 SECRETS = {"fake": (), "jira": ("JIRA_EMAIL", "JIRA_API_TOKEN"), "redmine": ("REDMINE_API_KEY",)}
 
@@ -76,8 +77,9 @@ def load(path: Path, env=os.environ) -> dict:
 
 
 def _check_section(name: str, section: dict, schema: dict) -> list[str]:
-    out = [f"[{name}] 모르는 키: {k}" for k in section if k not in schema and k not in OPTIONAL]
-    for key, typ in {**schema, **{k: t for k, t in OPTIONAL.items() if k in section}}.items():
+    optional = OPTIONAL[name]
+    out = [f"[{name}] 모르는 키: {k}" for k in section if k not in schema and k not in optional]
+    for key, typ in {**schema, **{k: t for k, t in optional.items() if k in section}}.items():
         if key not in section:
             out.append(f"[{name}] {key} 가 없습니다")
         elif not isinstance(section[key], typ) or isinstance(section[key], bool):
@@ -88,6 +90,9 @@ def _check_section(name: str, section: dict, schema: dict) -> list[str]:
     for key, typ in schema.items():
         if typ is str and isinstance(section.get(key), str) and not section[key].strip():
             out.append(f"[{name}] {key} 가 비어 있습니다")
+    field = section.get("module_field_id")
+    if isinstance(field, int) and not isinstance(field, bool) and field <= 0:
+        out.append(f"[{name}] module_field_id 는 1 이상의 필드 번호여야 합니다")
     timeout = section.get("timeout_sec")
     if isinstance(timeout, (int, float)) and not isinstance(timeout, bool) and timeout <= 0:
         out.append(f"[{name}] timeout_sec 는 0보다 커야 합니다")

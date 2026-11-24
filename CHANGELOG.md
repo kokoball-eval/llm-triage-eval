@@ -9,6 +9,12 @@
 
 ## [Unreleased]
 
+### 변경 (서비스 S5-4a: Jira·Redmine 동기화 차이 줄이기)
+- Jira 검색(`/search/jql`)에 아는 이슈의 숫자 ID를 `reconcileIssues`로 함께 보낸다. 색인이라 방금 바뀐 값이 늦게 보일 수 있는 것을 막아, DB를 바로 읽는 Redmine과 읽기가 같아진다. ID는 등록·단건 조회·검색 응답에서 얻어 어댑터가 기억한다
+- Redmine에 팀을 일감 범주(팀 이름과 같은 이름)로, 모듈을 사용자 정의 필드(`[redmine] module_field_id`, 목록·여러 값)로 넣는다. Jira의 `팀_`·`모듈_` 라벨과 같은 구실이다. 자동 배정을 쓰면 `--check`가 팀마다 범주가 있는지 확인한다. 예시 설정의 `module_field_id`는 사이트마다 달라 주석으로 둔다(필드 번호가 틀리면 Redmine이 조용히 무시한다)
+- 설정의 선택 키를 BTS별로 나눴다(`module_field_id`는 Redmine만)
+- 시험 8개 추가(451개). 실제 Redmine(범주 6개·모듈 필드)과 Jira KAN에서 확인하고 범주 목록 응답을 녹화했다
+
 ### 추가 (서비스 S5-3: QA 동작)
 - BTS 상태 다섯 단계 통일 — QA Review(QA 재현 확인 중) · In Dev(개발 대응 중) · Resolve(수정 완료, 회귀 테스트 필요) · Check(대응 보류, 사유 코멘트) · Closed(종료). `contracts.STATUSES`에 고정하고, `--check`가 BTS 워크플로에 다섯 상태가 있는지 확인한다. Jira는 완료 범주 상태를 Closed로 읽는다(한국어 계정은 "종료"로 번역해 돌려준다)
 - 계약 — `Tracker.update(key, status, team, comment)`와 `check_statuses()`. Jira는 전환 목록에서 목표 상태로 가는 전환을 찾아 보내고(담당자·라벨, 상태, 코멘트를 따로 요청), Redmine은 PUT 한 번에 상태·담당자·코멘트(notes)

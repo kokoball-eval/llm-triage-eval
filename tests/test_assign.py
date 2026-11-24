@@ -147,6 +147,59 @@ def test_redmine_sends_assigned_to(store):
     assert sent_issue(rec)["issue"]["assigned_to_id"] == MAPPING["redmine"]["teams"]["기획"]
 
 
+def test_redmine_sends_team_category_and_module_field(store):
+    """Jira 의 팀·모듈 라벨 대신 Redmine 은 팀 범주와 모듈 사용자 정의 필드 (redmine 설계 의도 8·9, S5-4a)."""
+    tracker, rec = adapter("redmine", store)
+    tracker.s["module_field_id"] = 1   # 녹화한 Redmine 의 모듈 필드 번호(예시 설정에는 주석)
+    issue = an_issue(store)   # 모듈: 결제·재화 / UI·텍스트
+    tracker.create(issue.__class__(**{**issue.__dict__, "team": "기획"}))
+    body = sent_issue(rec)["issue"]
+    assert body["category_id"] == 6   # 녹화: 기획 범주 = 6
+    assert body["custom_fields"] == [{"id": 1, "value": ["결제·재화", "UI·텍스트"]}]
+
+
+def test_redmine_without_module_field_keeps_description_only(store):
+    tracker, rec = adapter("redmine", store)
+    assert "module_field_id" not in tracker.s
+    tracker.create(an_issue(store))
+    body = sent_issue(rec)["issue"]
+    assert "custom_fields" not in body and "category_id" not in body   # 팀이 없으면 범주도 없다
+
+
+def test_redmine_no_module_sends_no_field(store):
+    tracker, rec = adapter("redmine", store)
+    tracker.s["module_field_id"] = 1
+    issue = an_issue(store)
+    tracker.create(issue.__class__(**{**issue.__dict__, "fields": {**issue.fields, "모듈": "해당 없음"}}))
+    assert "custom_fields" not in sent_issue(rec)["issue"]
+
+
+def test_redmine_missing_team_category(store):
+    tracker, rec = adapter("redmine", store)
+    rec.data["issue_categories"]["body"]["issue_categories"] = [
+        c for c in rec.data["issue_categories"]["body"]["issue_categories"] if c["name"] != "아트"]
+    issue = an_issue(store)
+    with pytest.raises(TrackerError, match="팀 범주 아트 가 없습니다"):
+        tracker.create(issue.__class__(**{**issue.__dict__, "team": "아트"}))
+    assert not any(r.method == "POST" for r in rec.requests)   # 보내기 전에 멈춘다
+    assert "아트: triage 프로젝트에 같은 이름의 일감 범주가 없습니다" in tracker.check_assignees()
+
+
+@pytest.mark.parametrize("name, extra, message", [
+    ("jira", "module_field_id = 1\n", "모르는 키: module_field_id"),
+    ("redmine", 'module_field_id = "1"\n', "module_field_id 의 형식"),
+    ("redmine", "module_field_id = 0\n", "1 이상의 필드 번호"),
+])
+def test_module_field_id_only_for_redmine(tmp_path, name, extra, message):
+    from test_bts import write_mapping
+    from triage_service import config
+    from triage_service.bts import settings
+    text = config.MAPPING_PATH.read_text(encoding="utf-8")
+    text = text.replace(f"[{name}]\n", f"[{name}]\n{extra}", 1)
+    with pytest.raises(settings.SettingsError, match=message):
+        settings.load(write_mapping(tmp_path, text), env={})
+
+
 @pytest.mark.parametrize("name", ["jira", "redmine"])
 def test_no_team_sends_no_assignee(name, store):
     tracker, rec = adapter(name, store)
@@ -249,6 +302,8 @@ def test_redmine_reads_every_member_page(store):
     people = [{"user": {"id": n}} for n in range(1, 151)]
 
     def pages(request):
+        if request.url.path.endswith("issue_categories.json"):   # 팀 범주 (redmine 설계 의도 8)
+            return httpx2.Response(200, json={"issue_categories": [{"id": 1, "name": "QA"}, {"id": 4, "name": "서버"}]})
         off, lim = int(request.url.params["offset"]), int(request.url.params["limit"])
         return httpx2.Response(200, json={"memberships": people[off:off + lim], "total_count": len(people)})
     s = {**MAPPING["redmine"], "teams": {"QA": 5, "서버": 140}}

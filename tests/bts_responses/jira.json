@@ -240,5 +240,62 @@
     "status": 204,
     "body": null
   },
-  "write_source": "실제 KAN 공간에서 녹화(2026-11-24, KAN-8): 워크플로를 QA Review·In Dev·Resolve·Check·Closed 로 바꾼 뒤 프로젝트 상태 목록(/project/<키>/statuses, Task 유형만), 전환 목록(/issue/<키>/transitions, QA Review 에서 읽음), 전환(204), 코멘트(201, 응답은 id 만), 담당자·라벨 변경(PUT 204). 계정·이메일·아바타·사이트 주소는 지웠고 상태 객체는 name·id·statusCategory.key 만 남겼다. 한국어 계정이라 Closed 는 '종료'(untranslatedName 'Closed', 완료 범주)로 온다. 전환 이름(해야 할 일·진행 중·완료)은 바꾸기 전 워크플로의 이름이 남은 것"
+  "write_source": "실제 KAN 공간에서 녹화(2026-11-24, KAN-8): 워크플로를 QA Review·In Dev·Resolve·Check·Closed 로 바꾼 뒤 프로젝트 상태 목록(/project/<키>/statuses, Task 유형만), 전환 목록(/issue/<키>/transitions, QA Review 에서 읽음), 전환(204), 코멘트(201, 응답은 id 만), 담당자·라벨 변경(PUT 204). 계정·이메일·아바타·사이트 주소는 지웠고 상태 객체는 name·id·statusCategory.key 만 남겼다. 한국어 계정이라 Closed 는 '종료'(untranslatedName 'Closed', 완료 범주)로 온다. 전환 이름(해야 할 일·진행 중·완료)은 바꾸기 전 워크플로의 이름이 남은 것",
+  "versions": {
+    "status": 200,
+    "body": [
+      {
+        "id": "10000",
+        "name": "0.0.1",
+        "archived": false,
+        "released": false,
+        "startDate": "2026-11-24",
+        "releaseDate": "2027-01-13"
+      },
+      {
+        "id": "10001",
+        "name": "0.1.0",
+        "archived": false,
+        "released": false,
+        "startDate": "2027-01-14",
+        "releaseDate": "2027-03-10"
+      },
+      {
+        "id": "10002",
+        "name": "0.2.0",
+        "archived": false,
+        "released": false,
+        "startDate": "2027-03-11",
+        "releaseDate": "2027-05-12"
+      }
+    ]
+  },
+  "milestone": {
+    "status": 200,
+    "body": {
+      "isLast": true,
+      "issues": [
+        {
+          "id": "10018",
+          "key": "KAN-9",
+          "fields": {
+            "summary": "[실제 확인] S5-4b 마일스톤 등록",
+            "status": {
+              "name": "QA Review",
+              "id": "10003",
+              "statusCategory": {
+                "key": "new"
+              }
+            },
+            "assignee": {
+              "accountId": "qa-account-id",
+              "displayName": "QA 담당"
+            },
+            "updated": "2026-11-24T17:43:23.491+0900"
+          }
+        }
+      ]
+    }
+  },
+  "milestone_source": "실제 KAN 공간에서 녹화(2026-11-24): 버전 목록(/project/<키>/versions, 0.0.1·0.1.0·0.2.0 — 출시일 2027-01-13·03-10·05-12)과 fixVersion = \"0.0.1\" 검색(시험 티켓 KAN-9 한 건). 계정·이름은 가렸고 상태 객체는 name·id·statusCategory.key 만 남겼다"
 }

@@ -17,6 +17,8 @@
    (linked_existing) 남긴다. 그래야 사람이 바꾼 비율 같은 지표에 실제로 배정하지 않은 건이 섞이지 않는다.
 8. 새로 만든 티켓은 확정한 [처리]에 맞는 첫 상태(assign.first_status)로 바꾼다(qa.py 설계 의도 6). 바꾸지 못해도 티켓은
    이미 있어 등록 완료로 두고, 실패는 QA 기록에 남겨 상세 화면에 보인다. 이미 있던 티켓에 연결할 때는 상태도 바꾸지 않는다.
+9. 마일스톤은 마지막 동기화로 읽어 둔 BTS 버전 중 출시 전인 것만 받는다(화면 입력은 신뢰 경계라 여기서 확인한다). 고른
+   마일스톤은 배정 기록(assignment)에 함께 남긴다. 이미 있던 티켓에 연결할 때는 그 티켓의 버전을 바꾸지 않는다.
 """
 
 import threading
@@ -57,25 +59,27 @@ def edits(model_fields: dict | None, final: dict[str, str]) -> list[dict]:
 
 
 def register(store: Store, tracker, rid: int, fields: dict[str, str], rules: dict | None = None,
-             team: str = assign.AUTO, repro: str = assign.AUTO) -> dict:
+             team: str = assign.AUTO, repro: str = assign.AUTO, milestone: str = "") -> dict:
     """검토 대기 → 등록 완료. 입력 문제가 있으면 ValueError(문제 목록), 상태가 맞지 않으면 flow.FlowError.
     rules·team 은 자동 배정 규칙과 검토 화면에서 고른 팀(설계 의도 7), repro 는 CS 응대 건의 QA 재현 필요 선택(assign 설계 의도 7)."""
     found = problems(fields)
     if found:
         raise ValueError(found)
+    if milestone and milestone not in {m["name"] for m in store.milestones() if not m["released"]}:   # 설계 의도 9
+        raise ValueError([f"출시 전 마일스톤이 아닙니다: {milestone!r} (QA 화면에서 동기화하면 목록이 새로 읽힙니다)"])
     final = {f: fields[f].strip() for f in FIELDS}
     needs_repro = assign.cs_repro(final, repro)
-    assignment = assign.resolve(rules, team, final, needs_repro)
+    assignment = {**assign.resolve(rules, team, final, needs_repro), "milestone": milestone}
     with _decision_lock:
         rec = store.get(rid)
         flow.check(rec["state"], flow.REGISTERED)
         changed = edits(rec["model_fields"], final)
         ref = store.ref(rid)
-        issue = Issue(report=rec["report"], fields=final, ref=ref, team=assignment["team"])
+        issue = Issue(report=rec["report"], fields=final, ref=ref, team=assignment["team"], milestone=milestone)
         try:   # 설계 의도 5 — 같은 리포트의 티켓이 이미 있으면 새로 만들지 않는다
             ticket = tracker.find(ref)
-            if ticket:   # 설계 의도 7
-                assignment = {**assignment, "linked_existing": True}
+            if ticket:   # 설계 의도 7·9 — 그 티켓의 담당자·버전은 바꾸지 않았으니 남기지 않는다
+                assignment = {**assignment, "linked_existing": True, "milestone": ""}
             else:
                 ticket = tracker.create(issue)
         except Exception as e:   # 설계 의도 4

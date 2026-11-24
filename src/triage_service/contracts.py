@@ -13,6 +13,9 @@
    돌려주되, BTS 가 사용자 언어로 번역해 보여 주는 이름은 어댑터가 이 이름으로 되돌린다(jira.py 설계 의도 8).
 5. BTS 에 쓰는 것(update)은 상태·담당 팀·코멘트 세 가지다. 무엇을 언제 쓸지(허용 조건, 쓰기 전후 확인)는 qa.py 가 정하고
    어댑터는 받은 대로 보낸다.
+6. 마일스톤은 BTS 의 버전이다(Jira 릴리스 fixVersions, Redmine 목표 버전). 두 BTS 에 공통으로 있는 단위가 버전뿐이라서다.
+   어댑터는 버전 목록(versions)과 한 버전에 속한 티켓 전체(milestone_tickets)를 읽고, 등록할 때 Issue.milestone 을 넣는다.
+   마일스톤 성과는 서비스가 등록한 티켓만이 아니라 그 버전의 BTS 티켓 전체로 센다(BTS 에 직접 등록한 이슈도 QA 업무다).
 """
 
 from dataclasses import dataclass
@@ -57,6 +60,7 @@ class Issue:
     fields: dict[str, str]
     ref: str = ""
     team: str = ""
+    milestone: str = ""   # BTS 버전 이름 (설계 의도 6, 빈 문자열이면 넣지 않음)
 
 
 @dataclass(frozen=True)
@@ -71,6 +75,22 @@ class BtsState:
     status: str
     assignee: str = ""
     updated: str = ""
+
+
+@dataclass(frozen=True)
+class Milestone:
+    """BTS 버전 하나 (설계 의도 6). release 는 출시일(YYYY-MM-DD, 없으면 빈 문자열)."""
+    name: str
+    release: str = ""
+    released: bool = False
+
+
+@dataclass(frozen=True)
+class BtsTicket:
+    """마일스톤에 속한 BTS 티켓 하나 — 서비스가 등록하지 않은 티켓도 있다."""
+    key: str
+    title: str
+    state: BtsState
 
 
 class Source(Protocol):
@@ -101,6 +121,10 @@ class Tracker(Protocol):
     def update(self, key: str, status: str = "", team: str = "", comment: str = "") -> None: ...   # 빈 값은 바꾸지 않는다 (설계 의도 5)
 
     def check_statuses(self) -> list[str]: ...   # BTS 에 없는 STATUSES 이름 (연결 확인 --check)
+
+    def versions(self) -> list[Milestone]: ...   # 프로젝트의 버전(마일스톤) 목록 (설계 의도 6)
+
+    def milestone_tickets(self, name: str) -> list[BtsTicket]: ...   # 그 버전의 티켓 전체(config.MILESTONE_LIMIT 까지)
 
 
 class TrackerError(Exception):

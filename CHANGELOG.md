@@ -9,6 +9,14 @@
 
 ## [Unreleased]
 
+### 추가 (서비스 S5-4b: 마일스톤 성과)
+- 마일스톤 = BTS 버전(Jira 릴리스 `fixVersions`, Redmine 목표 버전). 계약 `Tracker.versions()`·`milestone_tickets(name)`, `Milestone`·`BtsTicket`, `Issue.milestone`
+- [지금 동기화]가 버전 목록과 출시 전 버전마다 그 버전의 BTS 티켓 전체(서비스가 등록하지 않은 것 포함)를 읽어 `bts_milestones`·`bts_tickets`에 두고 상태 변화를 `bts_ticket_changes`에 쌓는다. 마일스톤당 `config.MILESTONE_LIMIT`(500)건
+- 첫 화면 맨 위 마일스톤 카드 — Closed 수·완료율, QA가 회귀 통과로 닫은 수, 재오픈 수, 남은 건수(상태별), 출시일까지 남은 날. 다른 마일스톤 고르기. 검토 화면 마일스톤 칸(기본값 현재 마일스톤, 출시 전 버전만 받음)
+- Jira 마일스톤 검색에도 최근에 다룬 이슈 ID를 `reconcileIssues`로 붙인다 — 등록·버전 변경 직후 검색에 몇 초 늦게 나타나는 것을 실제로 보고, 이 매개변수로 바로 보이는 것을 확인했다
+- 실제 Jira KAN·Redmine에 버전 0.0.1(2027-01-13)·0.1.0(2027-03-10)·0.2.0(2027-05-12)을 만들고, 시험 티켓(KAN-9, Redmine #3)을 0.0.1로 등록해 확인했다. 버전 목록·마일스톤 검색 응답을 녹화했다
+- 시험 25개 추가(476개)
+
 ### 변경 (서비스 S5-4a: Jira·Redmine 동기화 차이 줄이기)
 - Jira 검색(`/search/jql`)에 아는 이슈의 숫자 ID를 `reconcileIssues`로 함께 보낸다. 색인이라 방금 바뀐 값이 늦게 보일 수 있는 것을 막아, DB를 바로 읽는 Redmine과 읽기가 같아진다. ID는 등록·단건 조회·검색 응답에서 얻어 어댑터가 기억한다
 - Redmine에 팀을 일감 범주(팀 이름과 같은 이름)로, 모듈을 사용자 정의 필드(`[redmine] module_field_id`, 목록·여러 값)로 넣는다. Jira의 `팀_`·`모듈_` 라벨과 같은 구실이다. 자동 배정을 쓰면 `--check`가 팀마다 범주가 있는지 확인한다. 예시 설정의 `module_field_id`는 사이트마다 달라 주석으로 둔다(필드 번호가 틀리면 Redmine이 조용히 무시한다)

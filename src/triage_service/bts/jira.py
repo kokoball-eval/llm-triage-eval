@@ -27,14 +27,19 @@
    읽는다(2026-11-24 KAN 에서 받아들여짐을 확인). Redmine 은 목록 조회가 DB 를 바로 읽어 지연이 없으므로, 이것으로 두 BTS 의
    읽기가 같아진다. 숫자 ID 는 등록·단건 조회·검색 응답에서 얻어 어댑터 안에 기억한다(표에 칸을 더하지 않는다). 서버를 다시
    켜면 비지만, 다음 동기화 검색 결과로 다시 채워진다.
+11. 마일스톤은 릴리스(fixVersions)다. 팀 관리형 공간은 스페이스의 보기(+)에서 "릴리스"를 추가해야 이 칸이 생긴다(2026-11-24 KAN
+   에서 확인, 기능 설정에는 스위치가 없다). 한 버전의 티켓은 fixVersion 검색을 페이지(nextPageToken)로 끝까지 읽는다. 방금
+   등록하거나 버전을 바꾼 티켓은 검색에 몇 초 늦게 나타나므로(KAN-9 로 확인), 최근에 다룬 이슈 ID 를 reconcileIssues 로 함께
+   보낸다(설계 의도 10, 한도 50개). 버전을 바꾼 직후 검색에서 이 매개변수가 있으면 바로 보이고 없으면 안 보이는 것을 확인했다.
 """
 
 import httpx2
 
 from triage_eval.contracts import NO_MODULE, split_modules
+from triage_service import config
 from triage_service.bts import clients
 from triage_service.bts.common import call, description_lines
-from triage_service.contracts import CLOSED, STATUSES, BtsState, Issue, Ticket, TrackerError
+from triage_service.contracts import CLOSED, STATUSES, BtsState, BtsTicket, Issue, Milestone, Ticket, TrackerError
 
 
 class JiraTracker:
@@ -44,6 +49,11 @@ class JiraTracker:
         self.s = settings
         self.http = http or clients.jira(settings["base_url"], secrets, settings["timeout_sec"])
         self.ids: dict[str, str] = {}   # 티켓 키 → 숫자 ID (설계 의도 10)
+
+    def seen(self, key: str, issue_id: str) -> None:
+        """설계 의도 10 — 숫자 ID 를 기억한다. 최근에 다룬 것이 뒤로 가게 다시 넣는다(마일스톤 검색은 뒤에서 50개를 쓴다)."""
+        self.ids.pop(key, None)
+        self.ids[key] = issue_id
 
     def ticket(self, key: str) -> Ticket:
         return Ticket(key=key, url=f"{self.s['base_url']}/browse/{key}")
@@ -64,16 +74,18 @@ class JiraTracker:
             "priority": {"name": self.s["priority"][issue.fields["우선순위"]]},
             "labels": [*self.s["labels"], issue.ref, *(f"모듈_{m}" for m in modules)],
         }
+        if issue.milestone:   # 설계 의도 11
+            fields["fixVersions"] = [{"name": issue.milestone}]
         if issue.team:   # 설계 의도 6
             fields["assignee"] = {"accountId": self.s["teams"][issue.team]}
             fields["labels"].append(team_label(issue.team))
         resp = call(self.http, "POST", "/rest/api/3/issue", json={"fields": fields}, creating=True).json()
-        self.ids[resp["key"]] = resp["id"]
+        self.seen(resp["key"], resp["id"])
         return self.ticket(resp["key"])
 
     def status(self, key: str) -> str:
         resp = call(self.http, "GET", f"/rest/api/3/issue/{key}", params={"fields": "status"}).json()
-        self.ids[key] = resp["id"]
+        self.seen(key, resp["id"])
         return name(resp["fields"]["status"])
 
     def snapshot(self, keys: list[str]) -> dict[str, BtsState]:   # 설계 의도 7
@@ -83,7 +95,8 @@ class JiraTracker:
             "jql": f'project = "{self.s["project_key"]}" AND key in ({listed})',
             "fields": "status,assignee,updated", "maxResults": len(keys), **({"reconcileIssues": known} if known else {})})
         issues = resp.json().get("issues", [])
-        self.ids.update({i["key"]: i["id"] for i in issues})
+        for i in issues:
+            self.seen(i["key"], i["id"])
         return {i["key"]: BtsState(name(i["fields"]["status"]), (i["fields"].get("assignee") or {}).get("displayName", ""),
                                    i["fields"].get("updated", "")) for i in issues}
 
@@ -101,6 +114,29 @@ class JiraTracker:
             call(self.http, "POST", f"/rest/api/3/issue/{key}/transitions", json={"transition": {"id": move["id"]}})
         if comment:
             call(self.http, "POST", f"/rest/api/3/issue/{key}/comment", json={"body": adf(comment.splitlines())})
+
+    def versions(self) -> list[Milestone]:   # 설계 의도 11
+        found = call(self.http, "GET", f"/rest/api/3/project/{self.s['project_key']}/versions").json()
+        return [Milestone(v["name"], v.get("releaseDate", ""), bool(v.get("released") or v.get("archived"))) for v in found]
+
+    def milestone_tickets(self, name: str) -> list[BtsTicket]:   # 설계 의도 11
+        quoted = name.replace("\\", "\\\\").replace('"', '\\"')   # 버전 이름의 따옴표가 JQL 을 깨지 않게
+        jql = f'project = "{self.s["project_key"]}" AND fixVersion = "{quoted}" ORDER BY key'
+        recent = list(self.ids.values())[-config.SYNC_CHUNK:]   # 설계 의도 10·11 — 50개까지, 페이지 토큰이 첫 질의에 묶여 한 번만 정한다
+        out, token = [], None
+        while len(out) < config.MILESTONE_LIMIT:
+            params = {"jql": jql, "fields": "summary,status,assignee,updated", "maxResults": 100,
+                      **({"reconcileIssues": recent} if recent else {}), **({"nextPageToken": token} if token else {})}
+            page = call(self.http, "GET", "/rest/api/3/search/jql", params=params).json()
+            for i in page.get("issues", []):
+                self.seen(i["key"], i["id"])
+                f = i["fields"]
+                out.append(BtsTicket(i["key"], f.get("summary", ""), BtsState(
+                    name_of(f["status"]), (f.get("assignee") or {}).get("displayName", ""), f.get("updated", ""))))
+            token = page.get("nextPageToken")
+            if page.get("isLast", True) or not token:
+                break
+        return out[:config.MILESTONE_LIMIT]
 
     def check_statuses(self) -> list[str]:
         """설계 의도 8 — 프로젝트 워크플로에 다섯 상태가 있고 완료 범주는 하나인지.
@@ -127,6 +163,9 @@ class JiraTracker:
 def name(status: dict) -> str:
     """설계 의도 8 — 완료 범주는 CLOSED, 나머지는 이름 그대로."""
     return CLOSED if (status.get("statusCategory") or {}).get("key") == "done" else status["name"]
+
+
+name_of = name
 
 
 def team_label(team: str) -> str:

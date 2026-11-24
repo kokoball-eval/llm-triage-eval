@@ -30,6 +30,9 @@
    (POST /qa/sync)뿐이고, 네트워크를 기다리는 동안 다른 요청을 막지 않도록 스레드에서 실행한다(설계 의도 6).
 12. QA 동작은 상세 화면에서만 누른다(POST /reports/{id}/qa). 원문과 확정한 8칸을 보며 판단하게 하려는 것이다. 버튼은 마지막으로
    읽은 BTS 상태에서 할 수 있는 동작만 보이고, 실제 허용 여부는 qa.act 가 BTS 를 다시 읽어 정한다. 결과는 QA 기록 표로 보인다.
+13. 첫 화면 맨 위에 마일스톤 성과 카드를 둔다(QA 성과는 마일스톤 단위로 몇 건을 Closed 했는가다). 마일스톤 목록과 티켓은
+   [지금 동기화]로 읽어 둔 값이라 첫 화면을 열어도 BTS 를 부르지 않는다. 검토 화면의 마일스톤 칸도 읽어 둔 출시 전 버전만
+   보이고 기본값은 현재 마일스톤이다(sync 설계 의도 9).
 """
 
 from contextlib import asynccontextmanager
@@ -94,14 +97,17 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
         return templates.TemplateResponse(request, name, ctx, status_code=status_code)
 
     def detail_page(request: Request, rec: dict, values: dict, problems: list, status_code: int = 200,
-                    team: str = assign.AUTO, repro: str = assign.AUTO, **ctx) -> HTMLResponse:
+                    team: str = assign.AUTO, repro: str = assign.AUTO, milestone: str | None = None, **ctx) -> HTMLResponse:
         repro_now = assign.cs_repro(values, repro)
+        milestones = store.milestones()   # 설계 의도 13
         return page(request, "detail.html", status_code=status_code, rec=rec, values=values, problems=problems,
                     teams=assign.teams(assign_rules), team=team, AUTO=assign.AUTO, repro=repro, REPRO_CHOICES=assign.REPRO_CHOICES,
                     repro_default=assign.cs_repro(values), suggested=assign.suggest(assign_rules, values, repro_now),
                     allowed=qa.allowed, ACTIONS=qa.ACTIONS,
                     dev_team=assign.dev_team(assign_rules, rec["final_fields"] or {}),
-                    qa_log=store.qa_log().get(rec["id"], []), **ctx)
+                    qa_log=store.qa_log().get(rec["id"], []),
+                    open_milestones=[m for m in milestones if not m["released"]],
+                    milestone=sync.current(milestones) if milestone is None else milestone, **ctx)
 
     def get_or_404(rid: int) -> dict:
         rec = store.get(rid)
@@ -116,8 +122,11 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
         return {s: len(store.list(s)) for s in flow.STATES}
 
     @app.get("/", response_class=HTMLResponse)
-    def home(request: Request):   # 설계 의도 8
-        return page(request, "home.html", counts=counts(), recent=store.list()[:5])
+    def home(request: Request, milestone: str = ""):   # 설계 의도 8·13
+        milestones = store.milestones()
+        name = milestone if milestone in {m["name"] for m in milestones} else sync.current(milestones)
+        return page(request, "home.html", counts=counts(), recent=store.list()[:5], milestones=milestones,
+                    summary=sync.milestone_summary(store, name) if name else None)
 
     @app.get("/reports", response_class=HTMLResponse)
     def index(request: Request, state: str | None = None):
@@ -191,10 +200,11 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
         values["모듈"] = " / ".join(m for m in form.getlist("모듈") if isinstance(m, str))
         team = t if isinstance(t := form.get("team", assign.AUTO), str) else assign.AUTO
         repro = t if isinstance(t := form.get("repro", assign.AUTO), str) else assign.AUTO
+        milestone = t if isinstance(t := form.get("milestone", ""), str) else ""
         try:   # DB·BTS 호출은 기다리는 동안 다른 요청을 막지 않게 스레드에서 (설계 의도 6)
-            await run_in_threadpool(review.register, store, tracker, rid, values, assign_rules, team, repro)
+            await run_in_threadpool(review.register, store, tracker, rid, values, assign_rules, team, repro, milestone)
         except ValueError as e:
-            return detail_page(request, store.get(rid), values, e.args[0], 422, team, repro)
+            return detail_page(request, store.get(rid), values, e.args[0], 422, team, repro, milestone)
         except flow.FlowError as e:
             return refused(request, rid, e)
         return go(rid)

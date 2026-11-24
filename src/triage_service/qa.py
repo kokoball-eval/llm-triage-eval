@@ -109,6 +109,8 @@ def _remember(store: Store, tracker, rid: int) -> str | None:
         state = tracker.snapshot([key]).get(key)
     except Exception:
         state = None
+    at = now()
     store.save_bts(rid, {"status": status, "assignee": state.assignee if state else old.get("assignee", ""),
-                         "updated": state.updated if state else old.get("updated", ""), "synced_at": now()})
+                         "updated": state.updated if state else old.get("updated", ""), "synced_at": at})
+    store.ticket_status(key, status, at)   # 마일스톤 성과도 다음 동기화를 기다리지 않는다 (store 설계 의도 11)
     return status

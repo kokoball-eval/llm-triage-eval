@@ -117,7 +117,7 @@ def test_fake_snapshot_and_set_status(store, monkeypatch):
 def test_sync_saves_state_and_records_changes_once(store):
     tracker = FakeTracker(store.path)
     key = register(store, tracker, 처리="등록(재현 대기)")["ticket_key"]
-    assert sync.run(store, tracker) == {"synced": 1, "missing": [], "errors": []}
+    assert sync.run(store, tracker) == {"synced": 1, "missing": [], "errors": [], "milestones": []}
     rid = store.list()[0]["id"]
     assert store.get(rid)["bts"]["status"] == QA_REVIEW
     sync.run(store, tracker)   # 그대로면 변화 기록을 더하지 않는다
@@ -141,7 +141,7 @@ def test_sync_reports_missing_tickets_and_keeps_old_value(store):
     with sqlite3.connect(store.path) as c:   # BTS 에서 지워진 티켓
         c.execute("DELETE FROM fake_tickets")
     out = sync.run(store, tracker)
-    assert out == {"synced": 0, "missing": [key], "errors": []}
+    assert out == {"synced": 0, "missing": [key], "errors": [], "milestones": []}
     assert store.list()[0]["bts"]["status"] == IN_DEV
 
 

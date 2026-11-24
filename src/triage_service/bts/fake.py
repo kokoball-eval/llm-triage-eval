@@ -8,13 +8,15 @@
    표에 칸을 더하면 이미 만든 DB 를 고쳐야 해서다.
 4. 새 티켓은 QA Review 로 만든다(실제 Jira·Redmine 프로젝트의 첫 상태와 같다). update 는 상태·팀을 바꾸고 코멘트를 등록
    내용 JSON 의 comments 목록에 쌓는다. 전환 규칙은 없다(실제 BTS 의 워크플로도 다섯 상태끼리 모두 오갈 수 있게 뒀다).
+5. 버전(마일스톤)은 별도 표 fake_versions 에 두고 add_version 으로 만든다(시험·화면 확인용). 티켓의 마일스톤은 등록 내용 JSON 의
+   milestone 이다.
 """
 
 import json
 from dataclasses import asdict
 from pathlib import Path
 
-from triage_service.contracts import QA_REVIEW, BtsState, Issue, Ticket, TrackerError
+from triage_service.contracts import QA_REVIEW, BtsState, BtsTicket, Issue, Milestone, Ticket, TrackerError
 from triage_service.store import connect, now
 
 
@@ -26,10 +28,13 @@ class FakeTracker:
         with connect(self.path) as c:
             c.execute("CREATE TABLE IF NOT EXISTS fake_tickets (n INTEGER PRIMARY KEY AUTOINCREMENT, "
                       "created_at TEXT NOT NULL, status TEXT NOT NULL, issue TEXT NOT NULL)")
+            c.execute("CREATE TABLE IF NOT EXISTS fake_versions (name TEXT PRIMARY KEY, release TEXT NOT NULL, released INTEGER NOT NULL)")
 
     def create(self, issue: Issue) -> Ticket:
-        payload = json.dumps({"report": asdict(issue.report), "fields": issue.fields, "ref": issue.ref, "team": issue.team},
-                             ensure_ascii=False)
+        if issue.milestone and issue.milestone not in {v.name for v in self.versions()}:
+            raise TrackerError(f"버전이 없습니다: {issue.milestone}")
+        payload = json.dumps({"report": asdict(issue.report), "fields": issue.fields, "ref": issue.ref, "team": issue.team,
+                              "milestone": issue.milestone}, ensure_ascii=False)
         with connect(self.path) as c:
             n = c.execute("INSERT INTO fake_tickets (created_at, status, issue) VALUES (?, ?, ?)",
                           (now(), QA_REVIEW, payload)).lastrowid
@@ -76,6 +81,23 @@ class FakeTracker:
 
     def check_statuses(self) -> list[str]:
         return []
+
+    def add_version(self, name: str, release: str = "", released: bool = False) -> None:   # 설계 의도 5
+        with connect(self.path) as c:
+            c.execute("INSERT OR REPLACE INTO fake_versions (name, release, released) VALUES (?, ?, ?)", (name, release, int(released)))
+
+    def versions(self) -> list[Milestone]:
+        with connect(self.path) as c:
+            return [Milestone(r["name"], r["release"], bool(r["released"])) for r in c.execute("SELECT * FROM fake_versions ORDER BY release")]
+
+    def milestone_tickets(self, name: str) -> list[BtsTicket]:
+        with connect(self.path) as c:
+            keys = [f"FAKE-{r['n']}" for r in c.execute("SELECT n, issue FROM fake_tickets ORDER BY n") if json.loads(r["issue"]).get("milestone") == name]
+        out = []
+        for key in keys:
+            t = self.get(key)
+            out.append(BtsTicket(key, t["fields"].get("요약", ""), BtsState(t["status"], t.get("team", ""), t.get("updated", t["created_at"]))))
+        return out
 
     def get(self, key: str) -> dict:
         n = int(key.removeprefix("FAKE-")) if key.startswith("FAKE-") and key[5:].isdigit() else -1

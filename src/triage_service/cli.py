@@ -40,6 +40,7 @@ def main(argv: list[str] | None = None) -> int:
             tracker.find("triage-connection-check")
             missing = tracker.check_assignees() if loaded["assign"] else []   # 설계 의도 3
             no_status = tracker.check_statuses()   # 설계 의도 4
+            versions = tracker.versions()
         except Exception as e:
             print(f"BTS 연결 실패 ({loaded['use']}): {e}")
             return 1
@@ -53,6 +54,8 @@ def main(argv: list[str] | None = None) -> int:
             print("BTS 상태 문제:\n- " + "\n- ".join(no_status))
             return 1
         print(f"BTS 상태: {' · '.join(STATUSES)} 확인")
+        print("마일스톤(BTS 버전): " + (" · ".join(f"{v.name}({v.release or '출시일 없음'}{', 출시함' if v.released else ''})" for v in versions)
+                                      or "없음 — BTS 에 버전을 만들면 첫 화면에 마일스톤 성과가 보입니다"))
         on = [s.name for s in intake.make_sources(loaded_sources)]
         print(f"링크 출처: 켜짐 {on or '없음'}" + "".join(f" · {k} 꺼짐({v})" for k, v in loaded_sources["off"].items()))
         return 0

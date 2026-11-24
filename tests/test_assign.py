@@ -237,7 +237,7 @@ def test_register_assigns_by_confirmed_fields(store):
     rid = triaged(store)
     values = {**store.get(rid)["model_fields"], "처리": "개발 배정", "모듈": "그래픽·사운드"}
     rec = review.register(store, tracker, rid, values, RULES)
-    assert rec["assignment"] == {"suggested": "아트", "team": "아트"}
+    assert rec["assignment"] == {"suggested": "아트", "team": "아트", "milestone": ""}
     assert tracker.get(rec["ticket_key"])["team"] == "아트"
 
 
@@ -246,7 +246,7 @@ def test_register_keeps_human_choice(store):
     rid = triaged(store)
     values = {**store.get(rid)["model_fields"], "처리": "개발 배정", "모듈": "그래픽·사운드"}
     rec = review.register(store, tracker, rid, values, RULES, "기획")
-    assert rec["assignment"] == {"suggested": "아트", "team": "기획"}
+    assert rec["assignment"] == {"suggested": "아트", "team": "기획", "milestone": ""}
 
 
 def test_register_failure_keeps_assignment(store):

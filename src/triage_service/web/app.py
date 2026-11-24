@@ -26,9 +26,10 @@
 10. 검토 화면은 원문(왼쪽)과 8칸 폼(오른쪽)을 두 단으로 놓아 원문을 보며 바로 고친다. 좁은 화면에서는 한 단이 된다. 모델이
    낸 값과 달라진 칸은 테두리로 표시하고, 모델 원본 응답이 든 처리 기록은 검토에 필요한 정보가 아니라 접는다. 대시보드의
    카드·막대 스타일은 base.html 로 옮겨 첫 화면과 같은 틀을 쓰고, 맨 위 핵심 숫자는 metrics.compute() 결과를 그대로 보인다.
-11. QA 화면(/qa)은 BTS 에서 읽어 둔 상태(sync.py)를 세 목록으로 보여 주기만 한다. BTS 를 부르는 것은 [지금 동기화]
-   (POST /qa/sync)뿐이고, 네트워크를 기다리는 동안 다른 요청을 막지 않도록 스레드에서 실행한다(설계 의도 6). 상태 대응이 없는
-   설정이면 동기화하지 않고 이유와 설정 방법을 안내한다.
+11. QA 화면(/qa)은 BTS 에서 읽어 둔 상태(sync.py)를 목록으로 보여 주기만 한다. BTS 를 부르는 것은 [지금 동기화]
+   (POST /qa/sync)뿐이고, 네트워크를 기다리는 동안 다른 요청을 막지 않도록 스레드에서 실행한다(설계 의도 6).
+12. QA 동작은 상세 화면에서만 누른다(POST /reports/{id}/qa). 원문과 확정한 8칸을 보며 판단하게 하려는 것이다. 버튼은 마지막으로
+   읽은 BTS 상태에서 할 수 있는 동작만 보이고, 실제 허용 여부는 qa.act 가 BTS 를 다시 읽어 정한다. 결과는 QA 기록 표로 보인다.
 """
 
 from contextlib import asynccontextmanager
@@ -42,7 +43,7 @@ from starlette.concurrency import run_in_threadpool
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from triage_eval.contracts import ENUMS, FIELDS, MODULES, NO_MODULE, split_modules
-from triage_service import assign, config, flow, metrics, review, sync
+from triage_service import assign, config, flow, metrics, qa, review, sync
 from triage_service.bts import make_tracker, settings
 from triage_service.contracts import REPORTERS, TRACKS
 from triage_service import intake
@@ -60,15 +61,13 @@ templates.env.globals.update(TITLE_MAX=config.TITLE_MAX, BODY_MAX=config.BODY_MA
 
 def create_app(store: Store | None = None, worker: Worker | None = None, tracker=None,
                start_worker: bool = True, allowed_hosts=config.ALLOWED_HOSTS,
-               sources: list | None = None, sources_off: dict | None = None, assign_rules: dict | None = None,
-               status_rules: dict | None = None) -> FastAPI:
-    """assign_rules: 자동 배정 규칙(설정 [assign], 없으면 배정하지 않음). status_rules: BTS 상태 대응(없으면 동기화하지 않음).
-    tracker 를 넘기지 않으면 설정 파일에서 둘 다 읽는다."""
+               sources: list | None = None, sources_off: dict | None = None, assign_rules: dict | None = None) -> FastAPI:
+    """assign_rules: 자동 배정 규칙(설정 [assign], 없으면 배정하지 않음). tracker 를 넘기지 않으면 설정 파일에서 둘 다 읽는다."""
     store = store or Store(config.DB_PATH)
     worker = worker or Worker(store)
     if tracker is None:
         loaded = settings.load(config.mapping_path())
-        tracker, assign_rules, status_rules = make_tracker(loaded, store), loaded["assign"], loaded["status"]
+        tracker, assign_rules = make_tracker(loaded, store), loaded["assign"]
     if sources is None:
         loaded = intake_settings.load(config.sources_path(), config.mapping_path())
         sources, sources_off = intake.make_sources(loaded), loaded["off"]
@@ -95,10 +94,14 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
         return templates.TemplateResponse(request, name, ctx, status_code=status_code)
 
     def detail_page(request: Request, rec: dict, values: dict, problems: list, status_code: int = 200,
-                    team: str = assign.AUTO) -> HTMLResponse:
+                    team: str = assign.AUTO, repro: str = assign.AUTO, **ctx) -> HTMLResponse:
+        repro_now = assign.cs_repro(values, repro)
         return page(request, "detail.html", status_code=status_code, rec=rec, values=values, problems=problems,
-                    teams=assign.teams(assign_rules), team=team, AUTO=assign.AUTO,
-                    suggested=assign.suggest(assign_rules, values))
+                    teams=assign.teams(assign_rules), team=team, AUTO=assign.AUTO, repro=repro, REPRO_CHOICES=assign.REPRO_CHOICES,
+                    repro_default=assign.cs_repro(values), suggested=assign.suggest(assign_rules, values, repro_now),
+                    allowed=qa.allowed, ACTIONS=qa.ACTIONS,
+                    dev_team=assign.dev_team(assign_rules, rec["final_fields"] or {}),
+                    qa_log=store.qa_log().get(rec["id"], []), **ctx)
 
     def get_or_404(rid: int) -> dict:
         rec = store.get(rid)
@@ -129,16 +132,15 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
                     existing=existing, sources_on=on, sources_off=sources_off, mode=mode)
 
     def qa_page(request: Request, result=None):   # 설계 의도 11
-        board = sync.board(status_rules, assign_rules, sync.targets(store)) if status_rules else None
-        return page(request, "qa.html", board=board, result=result, qa_team=(assign_rules or {}).get("qa"))
+        return page(request, "qa.html", board=sync.board(sync.targets(store), store.qa_log()), result=result)
 
     @app.get("/qa", response_class=HTMLResponse)
-    def qa(request: Request):
+    def qa_board(request: Request):
         return qa_page(request)
 
     @app.post("/qa/sync")
     async def qa_sync(request: Request):
-        result = await run_in_threadpool(sync.run, store, tracker, status_rules) if status_rules else None
+        result = await run_in_threadpool(sync.run, store, tracker)
         return qa_page(request, result)
 
     @app.get("/dashboard", response_class=HTMLResponse)
@@ -188,10 +190,11 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
         values = {f: v if isinstance(v := form.get(f, ""), str) else "" for f in FIELDS if f != "모듈"}
         values["모듈"] = " / ".join(m for m in form.getlist("모듈") if isinstance(m, str))
         team = t if isinstance(t := form.get("team", assign.AUTO), str) else assign.AUTO
+        repro = t if isinstance(t := form.get("repro", assign.AUTO), str) else assign.AUTO
         try:   # DB·BTS 호출은 기다리는 동안 다른 요청을 막지 않게 스레드에서 (설계 의도 6)
-            await run_in_threadpool(review.register, store, tracker, rid, values, assign_rules, team)
+            await run_in_threadpool(review.register, store, tracker, rid, values, assign_rules, team, repro)
         except ValueError as e:
-            return detail_page(request, store.get(rid), values, e.args[0], 422, team)
+            return detail_page(request, store.get(rid), values, e.args[0], 422, team, repro)
         except flow.FlowError as e:
             return refused(request, rid, e)
         return go(rid)
@@ -199,6 +202,26 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
     def refused(request: Request, rid: int, e: Exception) -> HTMLResponse:
         rec = store.get(rid)
         return detail_page(request, rec, rec["final_fields"] or rec["model_fields"] or {}, [str(e)], 409)
+
+    @app.post("/reports/{rid}/qa")
+    async def qa_action(request: Request, rid: int):   # 설계 의도 12
+        get_or_404(rid)
+        form = await request.form()
+        action, comment, team = (v if isinstance(v := form.get(k, d), str) else d
+                                 for k, d in (("action", ""), ("comment", ""), ("team", assign.AUTO)))
+        try:
+            result = await run_in_threadpool(qa.act, store, tracker, rid, action, comment, team, assign_rules)
+        except ValueError as e:
+            return qa_refused(request, rid, e.args[0], 422, comment, team)
+        except qa.Conflict as e:
+            return qa_refused(request, rid, [str(e)], 409, comment, team)
+        if not result["ok"]:
+            return qa_refused(request, rid, [result["error"]], 502, comment, team)
+        return go(rid)
+
+    def qa_refused(request: Request, rid: int, problems: list, status_code: int, comment: str, team: str) -> HTMLResponse:
+        rec = store.get(rid)   # 쓴 코멘트와 고른 팀을 그대로 돌려준다
+        return detail_page(request, rec, rec["final_fields"] or {}, problems, status_code, comment=comment, qa_team=team)
 
     @app.post("/reports/{rid}/discard")
     def discard(request: Request, rid: int):
@@ -227,8 +250,7 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
             status, problems = tracker.status(rec["ticket_key"]), []
         except Exception as e:
             status, problems = None, [f"BTS 상태를 가져오지 못했습니다: {e}"]
-        return page(request, "detail.html", rec=rec, values=rec["final_fields"] or {}, problems=problems,
-                    bts_status=status)
+        return detail_page(request, rec, rec["final_fields"] or {}, problems, bts_status=status)
 
     @app.post("/reports/{rid}/retry")
     def retry(request: Request, rid: int):

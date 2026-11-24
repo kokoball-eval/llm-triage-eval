@@ -15,12 +15,14 @@
 7. 배정 팀(assign.py)은 확정한 8칸과 함께 정하고, 등록이 실패해도 고른 팀을 남긴다(검토로 되돌리면 화면이 그 팀을 다시
    보인다). 이미 있는 티켓에 연결할 때(설계 의도 5)는 그 티켓의 담당자를 바꾸지 않고, 배정이 적용되지 않았다고
    (linked_existing) 남긴다. 그래야 사람이 바꾼 비율 같은 지표에 실제로 배정하지 않은 건이 섞이지 않는다.
+8. 새로 만든 티켓은 확정한 [처리]에 맞는 첫 상태(assign.first_status)로 바꾼다(qa.py 설계 의도 6). 바꾸지 못해도 티켓은
+   이미 있어 등록 완료로 두고, 실패는 QA 기록에 남겨 상세 화면에 보인다. 이미 있던 티켓에 연결할 때는 상태도 바꾸지 않는다.
 """
 
 import threading
 
 from triage_eval.contracts import FIELDS, FREE_TEXT_FIELDS, check_format, enum_errors, language_errors
-from triage_service import assign, flow
+from triage_service import assign, flow, qa
 from triage_service.contracts import Issue
 from triage_service.store import Store
 
@@ -55,14 +57,15 @@ def edits(model_fields: dict | None, final: dict[str, str]) -> list[dict]:
 
 
 def register(store: Store, tracker, rid: int, fields: dict[str, str], rules: dict | None = None,
-             team: str = assign.AUTO) -> dict:
+             team: str = assign.AUTO, repro: str = assign.AUTO) -> dict:
     """검토 대기 → 등록 완료. 입력 문제가 있으면 ValueError(문제 목록), 상태가 맞지 않으면 flow.FlowError.
-    rules·team 은 자동 배정 규칙과 검토 화면에서 고른 팀(설계 의도 7)."""
+    rules·team 은 자동 배정 규칙과 검토 화면에서 고른 팀(설계 의도 7), repro 는 CS 응대 건의 QA 재현 필요 선택(assign 설계 의도 7)."""
     found = problems(fields)
     if found:
         raise ValueError(found)
     final = {f: fields[f].strip() for f in FIELDS}
-    assignment = assign.resolve(rules, team, final)
+    needs_repro = assign.cs_repro(final, repro)
+    assignment = assign.resolve(rules, team, final, needs_repro)
     with _decision_lock:
         rec = store.get(rid)
         flow.check(rec["state"], flow.REGISTERED)
@@ -78,8 +81,23 @@ def register(store: Store, tracker, rid: int, fields: dict[str, str], rules: dic
         except Exception as e:   # 설계 의도 4
             return store.move(rid, flow.FAILED, final_fields=final, edits=changed, assignment=assignment,
                               failed_step="등록", error=f"BTS 등록 실패: {e}")
-        return store.move(rid, flow.REGISTERED, final_fields=final, edits=changed, assignment=assignment,
-                          ticket_key=ticket.key, ticket_url=ticket.url, error=None, failed_step=None)
+        rec = store.move(rid, flow.REGISTERED, final_fields=final, edits=changed, assignment=assignment,
+                         ticket_key=ticket.key, ticket_url=ticket.url, error=None, failed_step=None)
+        if not assignment.get("linked_existing"):
+            first_status(store, tracker, rid, assign.first_status(final, needs_repro))
+        return rec
+
+
+def first_status(store: Store, tracker, rid: int, target: str) -> None:
+    """설계 의도 8 — 새 티켓의 상태가 target 이 아니면 바꾼다. 보류(Check)는 사유 코멘트가 필요해 CS 응대라고 남긴다."""
+    try:
+        before = tracker.status(store.get(rid)["ticket_key"])
+    except Exception as e:
+        store.save_qa(rid, qa.FIRST, None, None, error=f"BTS 상태를 읽지 못해 첫 상태({target})로 바꾸지 못했습니다: {e}")
+        return
+    if before != target:
+        note = "[트리아지 서비스 · 첫 상태] CS 응대 건 — QA 재현이 필요 없어 개발 대응은 보류합니다" if target == qa.CHECK else ""
+        qa.write(store, tracker, rid, qa.FIRST, before, target, "", note)
 
 
 def discard(store: Store, rid: int) -> dict:

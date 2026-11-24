@@ -29,11 +29,15 @@ RESPONSES = Path(__file__).parent / "bts_responses"
 MAPPING = tomllib.loads(config.MAPPING_PATH.read_text(encoding="utf-8"))
 SECRETS = {"jira": {"JIRA_EMAIL": "qa@example.com", "JIRA_API_TOKEN": "SECRET-TOKEN-123"},
            "redmine": {"REDMINE_API_KEY": "SECRET-TOKEN-123"}}
-ROUTES = {   # (방법, 경로) → 녹화 응답 이름. {key} 는 녹화한 티켓 키
+ROUTES = {   # (방법, 경로) → 녹화 응답 이름. {key} 는 녹화한 티켓 키, {project} 는 예시 설정의 프로젝트 키
     "jira": {("POST", "/rest/api/3/issue"): "create", ("GET", "/rest/api/3/search/jql"): "find",
-             ("GET", "/rest/api/3/issue/{key}"): "status", ("GET", "/rest/api/3/user/assignable/search"): "assignable"},
+             ("GET", "/rest/api/3/issue/{key}"): "status", ("GET", "/rest/api/3/user/assignable/search"): "assignable",
+             ("PUT", "/rest/api/3/issue/{key}"): "edit", ("GET", "/rest/api/3/issue/{key}/transitions"): "transitions",
+             ("POST", "/rest/api/3/issue/{key}/transitions"): "transition_done", ("POST", "/rest/api/3/issue/{key}/comment"): "comment",
+             ("GET", "/rest/api/3/project/{project}/statuses"): "project_statuses"},
     "redmine": {("POST", "/issues.json"): "create", ("GET", "/issues.json"): "find",
-                ("GET", "/issues/{key}.json"): "status", ("GET", "/projects/triage/memberships.json"): "memberships"},
+                ("GET", "/issues/{key}.json"): "status", ("GET", "/projects/triage/memberships.json"): "memberships",
+                ("GET", "/issue_statuses.json"): "issue_statuses", ("PUT", "/issues/{key}.json"): "update"},
 }
 
 
@@ -66,7 +70,7 @@ def test_selected_tracker_needs_its_tokens(tmp_path):
 @pytest.mark.parametrize("old, new, message", [
     ('use = "fake"', 'use = "trello"', "use 는"),
     ('project_key = "TRI"', 'projekt_key = "TRI"', "projekt_key"),
-    ('Critical = "Highest"\n', "", "대응이 없는 우선순위: Critical"),
+    ('Critical = "Critical"', "", "대응이 없는 우선순위: Critical"),
     ('Critical = 5', 'Critical = "5"', "Critical 의 값 형식"),
     ('base_url = "http://127.0.0.1:3000"', 'base_url = "127.0.0.1:3000"', "http://"),
     ('tracker_id = 1', 'tracker_id = true', "tracker_id 의 형식"),
@@ -117,7 +121,8 @@ class Recorder:
 
     def __call__(self, request: httpx2.Request) -> httpx2.Response:
         self.requests.append(request)
-        routes = {(m, p.format(key=self.data["ticket_key"])): v for (m, p), v in ROUTES[self.name].items()}
+        routes = {(m, p.format(key=self.data["ticket_key"], project=MAPPING["jira"]["project_key"])): v
+                  for (m, p), v in ROUTES[self.name].items()}
         what = routes[(request.method, request.url.path)]
         if what == "find" and ("issue_id" in request.url.params or "status" in request.url.params.get("fields", "")):
             what = "snapshot"   # 같은 검색 주소로 여러 티켓의 상태를 읽는 요청 (jira.py 설계 의도 7, redmine.py 설계 의도 6)
@@ -132,6 +137,8 @@ class Recorder:
         if what == "assignable":   # 녹화한 계정(qa-account-id)만 담당자가 될 수 있다
             key = "assignable_hit" if request.url.params.get("accountId") == "qa-account-id" else "assignable_none"
         body = json.loads(json.dumps(self.data[key]["body"]))
+        if body is None:   # 본문 없는 응답(204)
+            return httpx2.Response(self.data[key]["status"])
         if key == "find_hit" and self.name == "redmine" and self.created:
             # 녹화한 검색 응답의 모양 그대로, 설명만 이 시험에서 등록한 내용으로 (Redmine 은 설명의 표식 줄을 비교한다)
             body["issues"][0]["description"] = self.created["issue"]["description"].replace("\n", "\r\n")
@@ -352,4 +359,4 @@ def test_web_back_to_review_and_status(web, store):
     web.post(f"/reports/{rid}/register", data=data)
     rec = store.get(rid)
     assert rec["state"] == flow.REGISTERED
-    assert "신규" in web.get(f"/reports/{rid}/bts-status").text
+    assert f"<strong>{web.tracker.status(rec['ticket_key'])}</strong>" in web.get(f"/reports/{rid}/bts-status").text

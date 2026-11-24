@@ -95,23 +95,150 @@
           "key": "KAN-4",
           "fields": {
             "status": {
-              "name": "검토 중",
-              "id": "10002",
+              "name": "In Dev",
+              "id": "3",
               "statusCategory": {
-                "key": "indeterminate",
-                "name": "In Progress"
+                "key": "indeterminate"
               }
             },
             "assignee": {
               "accountId": "qa-account-id",
               "displayName": "QA 담당"
             },
-            "updated": "2026-11-23T10:06:47.530+0900"
+            "updated": "2026-11-24T16:41:26.613+0900"
           }
         }
       ],
       "isLast": true
     }
   },
-  "snapshot_source": "실제 KAN 공간의 /rest/api/3/search/jql 응답 모양(2026-11-23, fields=status,assignee,updated). 키·계정·이름은 가렸고 한 건으로 줄였다. 상태 이름은 팀 관리형 공간의 '검토 중'"
+  "snapshot_source": "실제 KAN 공간의 /rest/api/3/search/jql 응답(2026-11-24, fields=status,assignee,updated, 재현 확인 직후 In Dev). 키는 녹화 티켓 키로, 계정·이름은 가렸고 상태 객체는 name·id·statusCategory.key 만 남겼다",
+  "project_statuses": {
+    "status": 200,
+    "body": [
+      {
+        "id": "10008",
+        "name": "Task",
+        "statuses": [
+          {
+            "name": "종료",
+            "id": "10005",
+            "statusCategory": {
+              "key": "done"
+            },
+            "untranslatedName": "Closed"
+          },
+          {
+            "name": "Check",
+            "id": "10006",
+            "statusCategory": {
+              "key": "indeterminate"
+            },
+            "untranslatedName": "Check"
+          },
+          {
+            "name": "In Dev",
+            "id": "3",
+            "statusCategory": {
+              "key": "indeterminate"
+            },
+            "untranslatedName": "In Dev"
+          },
+          {
+            "name": "QA Review",
+            "id": "10003",
+            "statusCategory": {
+              "key": "new"
+            },
+            "untranslatedName": "QA Review"
+          },
+          {
+            "name": "Resolve",
+            "id": "10004",
+            "statusCategory": {
+              "key": "indeterminate"
+            },
+            "untranslatedName": "Resolve"
+          }
+        ]
+      }
+    ]
+  },
+  "transitions": {
+    "status": 200,
+    "body": {
+      "transitions": [
+        {
+          "id": "2",
+          "name": "Check",
+          "to": {
+            "name": "Check",
+            "id": "10006",
+            "statusCategory": {
+              "key": "indeterminate"
+            }
+          }
+        },
+        {
+          "id": "11",
+          "name": "해야 할 일",
+          "to": {
+            "name": "QA Review",
+            "id": "10003",
+            "statusCategory": {
+              "key": "new"
+            }
+          }
+        },
+        {
+          "id": "21",
+          "name": "진행 중",
+          "to": {
+            "name": "In Dev",
+            "id": "3",
+            "statusCategory": {
+              "key": "indeterminate"
+            }
+          }
+        },
+        {
+          "id": "31",
+          "name": "Resolve",
+          "to": {
+            "name": "Resolve",
+            "id": "10004",
+            "statusCategory": {
+              "key": "indeterminate"
+            }
+          }
+        },
+        {
+          "id": "41",
+          "name": "완료",
+          "to": {
+            "name": "종료",
+            "id": "10005",
+            "statusCategory": {
+              "key": "done"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "transition_done": {
+    "status": 204,
+    "body": null
+  },
+  "comment": {
+    "status": 201,
+    "body": {
+      "id": "10000"
+    }
+  },
+  "edit": {
+    "status": 204,
+    "body": null
+  },
+  "write_source": "실제 KAN 공간에서 녹화(2026-11-24, KAN-8): 워크플로를 QA Review·In Dev·Resolve·Check·Closed 로 바꾼 뒤 프로젝트 상태 목록(/project/<키>/statuses, Task 유형만), 전환 목록(/issue/<키>/transitions, QA Review 에서 읽음), 전환(204), 코멘트(201, 응답은 id 만), 담당자·라벨 변경(PUT 204). 계정·이메일·아바타·사이트 주소는 지웠고 상태 객체는 name·id·statusCategory.key 만 남겼다. 한국어 계정이라 Closed 는 '종료'(untranslatedName 'Closed', 완료 범주)로 온다. 전환 이름(해야 할 일·진행 중·완료)은 바꾸기 전 워크플로의 이름이 남은 것"
 }

@@ -10,9 +10,8 @@
 4. 자동 배정([assign], assign.py)은 쓰지 않아도 된다. 쓰면 10개 모듈이 모두 팀에 대응해야 하고, 고른 BTS 의 [<bts>.teams]
    가 그 팀을 모두 BTS 계정(Jira 계정 ID, Redmine 사용자·그룹 번호)에 대응해야 한다. 빠진 모듈은 매번 QA팀으로,
    빠진 팀은 매번 등록 실패로 이어지므로 시작 시점에 막는다.
-5. 상태 대응([jira.status]·[redmine.status], sync.py)은 쓰지 않아도 된다. 쓰면 "검증 대기"(verify)와 "완료"(done)에 해당하는
-   BTS 상태 이름을 모두 적어야 하고 두 목록이 겹치면 안 된다. 이름이 틀리면 대기 건이 조용히 "진행 중"으로 묻히므로 형식은
-   시작할 때 막지만, 이름이 그 BTS 에 실제로 있는지는 동기화 때 화면에 보인다. 가짜 BTS 의 상태 이름은 FAKE_STATUS 로 정해 둔다.
+5. BTS 상태 이름은 설정에 두지 않는다. 서비스와 BTS 가 같은 다섯 이름을 쓰기로 해서(contracts 설계 의도 4) S5-2 의
+   [jira.status]·[redmine.status] 는 없앴다. 남아 있으면 "모르는 키"로 서버를 멈춰 지운 설정이 조용히 무시되지 않게 한다.
 """
 
 import os
@@ -28,8 +27,7 @@ SCHEMA = {
              "priority": dict},
     "redmine": {"base_url": str, "project_id": str, "tracker_id": int, "timeout_sec": (int, float), "priority": dict},
 }
-OPTIONAL = {"teams": dict, "status": dict}   # 자동 배정(설계 의도 4)·상태 동기화(설계 의도 5)를 쓸 때만
-FAKE_STATUS = {"verify": ["검증 대기"], "done": ["완료"]}
+OPTIONAL = {"teams": dict}   # 자동 배정(설계 의도 4)을 쓸 때만
 PRIORITY_TYPE = {"jira": str, "redmine": int}   # 팀 → 계정 값의 형식도 같다(Jira 는 글자, Redmine 은 번호)
 SECRETS = {"fake": (), "jira": ("JIRA_EMAIL", "JIRA_API_TOKEN"), "redmine": ("REDMINE_API_KEY",)}
 
@@ -39,8 +37,7 @@ class SettingsError(Exception):
 
 
 def load(path: Path, env=os.environ) -> dict:
-    """{"use": 이름, "settings": 그 BTS 의 설정(없으면 {}), "secrets": 토큰, "assign": 자동 배정 규칙(없으면 None),
-    "status": 상태 대응(없으면 None)}."""
+    """{"use": 이름, "settings": 그 BTS 의 설정(없으면 {}), "secrets": 토큰, "assign": 자동 배정 규칙(없으면 None)}."""
     try:
         data = tomllib.loads(Path(path).read_text(encoding="utf-8"))
     except FileNotFoundError:
@@ -75,8 +72,7 @@ def load(path: Path, env=os.environ) -> dict:
     settings = dict(data.get(use, {}))
     if "base_url" in settings:
         settings["base_url"] = settings["base_url"].rstrip("/")
-    return {"use": use, "settings": settings, "secrets": secrets, "assign": rules,
-            "status": settings.get("status") if use in SCHEMA else FAKE_STATUS}
+    return {"use": use, "settings": settings, "secrets": secrets, "assign": rules}
 
 
 def _check_section(name: str, section: dict, schema: dict) -> list[str]:
@@ -106,20 +102,6 @@ def _check_section(name: str, section: dict, schema: dict) -> list[str]:
         out += [f"[{name}.priority] 대응이 없는 우선순위: {p}" for p in missing]
         out += [f"[{name}.priority] 허용 값이 아닌 우선순위: {p}" for p in extra]
         out += [f"[{name}.priority] {p} 의 값 형식이 맞지 않습니다" for p in bad]
-    if isinstance(section.get("status"), dict):
-        out += _check_status(name, section["status"])
-    return out
-
-
-def _check_status(name: str, status: dict) -> list[str]:
-    """설계 의도 5 — 검증 대기(verify)·완료(done)에 해당하는 BTS 상태 이름 목록."""
-    out = [f"[{name}.status] 모르는 키: {k}" for k in status if k not in ("verify", "done")]
-    for key in ("verify", "done"):
-        names = status.get(key)
-        if not isinstance(names, list) or not names or any(not isinstance(x, str) or not x.strip() for x in names):
-            out.append(f"[{name}.status] {key} 는 상태 이름 목록이어야 합니다")
-    if not out and set(status["verify"]) & set(status["done"]):
-        out.append(f"[{name}.status] verify 와 done 에 같은 상태가 있습니다: {sorted(set(status['verify']) & set(status['done']))}")
     return out
 
 

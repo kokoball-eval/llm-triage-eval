@@ -14,14 +14,16 @@
    연결 확인은 구성원 목록을 끝 페이지까지 읽어 구성원인지만 본다. 목록을 읽으려면 API 키에 구성원 관리 권한이 필요하고,
    그 구성원의 역할이 "일감 할당 가능"인지는 보지 않는다(shortcut: 역할 확인 없음, 실제 Redmine 으로 다시 확인할 때 올림).
 6. 상태 읽기(snapshot)는 목록 한 번(issue_id 쉼표 목록)으로 가져온다. status_id=* 를 주지 않으면 닫힌 티켓이 빠진다.
-   응답 모양은 녹화한 단건 응답과 Redmine API 문서를 따랐고 실제 서버로는 확인하지 않았다(Redmine 컨테이너를 지운 뒤).
+   응답 모양은 실제 Redmine 6.0(로컬 Docker, 2026-11-24 다시 띄움)에서 녹화한 응답으로 확인한다.
+7. 쓰기(update)는 PUT 한 번에 상태·담당자·코멘트(notes)를 함께 보낸다. Redmine 은 상태를 번호로 받으므로 상태 목록
+   (/issue_statuses.json)에서 이름으로 번호를 찾는다. 상태 이름은 관리자가 만든 그대로라 번역되지 않는다.
 """
 
 import httpx2
 
 from triage_service.bts import clients
 from triage_service.bts.common import call, description_lines, marker_line
-from triage_service.contracts import BtsState, Issue, Ticket, TrackerError
+from triage_service.contracts import STATUSES, BtsState, Issue, Ticket, TrackerError
 
 
 class RedmineTracker:
@@ -62,6 +64,26 @@ class RedmineTracker:
         resp = call(self.http, "GET", "/issues.json", params={"issue_id": ",".join(keys), "status_id": "*", "limit": len(keys)})
         return {str(i["id"]): BtsState(i["status"]["name"], (i.get("assigned_to") or {}).get("name", ""), i.get("updated_on", ""))
                 for i in resp.json().get("issues", [])}
+
+    def statuses(self) -> dict[str, int]:
+        return {s["name"]: s["id"] for s in call(self.http, "GET", "/issue_statuses.json").json()["issue_statuses"]}
+
+    def update(self, key: str, status: str = "", team: str = "", comment: str = "") -> None:   # 설계 의도 7
+        body = {}
+        if status:
+            ids = self.statuses()
+            if status not in ids:
+                raise TrackerError(f"Redmine 에 {status} 상태가 없습니다")
+            body["status_id"] = ids[status]
+        if team:
+            body["assigned_to_id"] = self.s["teams"][team]
+        if comment:
+            body["notes"] = comment
+        call(self.http, "PUT", f"/issues/{key}.json", json={"issue": body})
+
+    def check_statuses(self) -> list[str]:
+        have = self.statuses()
+        return [f"Redmine 에 {s} 상태가 없습니다" for s in STATUSES if s not in have]
 
     def check_assignees(self) -> list[str]:
         """[redmine.teams] 의 번호가 이 프로젝트의 구성원(사용자·그룹)인지 (연결 확인 --check, 설계 의도 5)."""

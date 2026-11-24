@@ -5,14 +5,16 @@
    S2 의 Jira·Redmine 어댑터도 같은 계약 시험을 통과해야 한다.
 2. 등록 내용(8칸과 원문)을 그대로 저장해, 화면에서 "BTS 에 실제로 무엇이 들어갔는지" 확인할 수 있게 한다.
 3. set_status 는 BTS 쪽에서 상태가 바뀐 것을 흉내 낸다(시험·화면 확인용). 마지막 변경 시각은 등록 내용 JSON 의 updated 에 둔다 —
-   표에 칸을 더하면 이미 만든 DB 를 고쳐야 해서다. 상태 이름은 settings.FAKE_STATUS 가 정한다.
+   표에 칸을 더하면 이미 만든 DB 를 고쳐야 해서다.
+4. 새 티켓은 QA Review 로 만든다(실제 Jira·Redmine 프로젝트의 첫 상태와 같다). update 는 상태·팀을 바꾸고 코멘트를 등록
+   내용 JSON 의 comments 목록에 쌓는다. 전환 규칙은 없다(실제 BTS 의 워크플로도 다섯 상태끼리 모두 오갈 수 있게 뒀다).
 """
 
 import json
 from dataclasses import asdict
 from pathlib import Path
 
-from triage_service.contracts import BtsState, Issue, Ticket, TrackerError
+from triage_service.contracts import QA_REVIEW, BtsState, Issue, Ticket, TrackerError
 from triage_service.store import connect, now
 
 
@@ -30,7 +32,7 @@ class FakeTracker:
                              ensure_ascii=False)
         with connect(self.path) as c:
             n = c.execute("INSERT INTO fake_tickets (created_at, status, issue) VALUES (?, ?, ?)",
-                          (now(), "신규", payload)).lastrowid
+                          (now(), QA_REVIEW, payload)).lastrowid
         key = f"FAKE-{n}"
         return Ticket(key=key, url=f"/fake-bts/{key}")
 
@@ -59,11 +61,21 @@ class FakeTracker:
         return out
 
     def set_status(self, key: str, status: str) -> None:   # 설계 의도 3
+        self.update(key, status)
+
+    def update(self, key: str, status: str = "", team: str = "", comment: str = "") -> None:   # 설계 의도 4
         t = self.get(key)
         issue = {k: v for k, v in t.items() if k not in ("key", "created_at", "status")} | {"updated": now()}
+        if team:
+            issue["team"] = team
+        if comment:
+            issue["comments"] = [*t.get("comments", []), comment]
         with connect(self.path) as c:
             c.execute("UPDATE fake_tickets SET status = ?, issue = ? WHERE n = ?",
-                      (status, json.dumps(issue, ensure_ascii=False), int(key.removeprefix("FAKE-"))))
+                      (status or t["status"], json.dumps(issue, ensure_ascii=False), int(key.removeprefix("FAKE-"))))
+
+    def check_statuses(self) -> list[str]:
+        return []
 
     def get(self, key: str) -> dict:
         n = int(key.removeprefix("FAKE-")) if key.startswith("FAKE-") and key[5:].isdigit() else -1

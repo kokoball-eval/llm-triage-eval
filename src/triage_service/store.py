@@ -19,6 +19,9 @@
    한 줄 남긴다(처음 읽은 상태도 한 줄). 재오픈률·검증 대기 시간(S5-4)은 이 기록이 있어야 셀 수 있고, 지난 변화는 나중에
    되살릴 수 없어서 지금부터 쌓는다. 시각은 BTS 가 바뀐 때가 아니라 우리가 읽다가 발견한 때다(동기화 사이의 변화는 한 번으로
    합쳐진다). BTS 가 원본이라 이 기록은 리포트 흐름(state·transitions)에 영향을 주지 않는다.
+10. 서비스가 BTS 에 쓴 것(qa.py 의 QA 동작, 등록 직후의 첫 상태)은 qa_actions 에 한 줄씩 남긴다: 동작, 쓰기 전·후 BTS 상태,
+   바꾼 팀, 코멘트, 오류. 실패하거나 일부만 된 것도 남겨, BTS 와 서비스 화면이 다를 때 무엇을 보냈는지 확인할 수 있게 한다.
+   재현 확인으로 바꾼 팀은 이 기록의 마지막 팀이 현재 팀이다(assignment 는 등록 때 배정으로 두어 S5-4 의 "사람이 바꾼 비율"을 지킨다).
 """
 
 import json
@@ -64,6 +67,16 @@ CREATE TABLE IF NOT EXISTS bts_changes (
     at TEXT NOT NULL,
     src TEXT,
     dst TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS qa_actions (
+    report_id INTEGER NOT NULL,
+    at TEXT NOT NULL,
+    action TEXT NOT NULL,
+    before TEXT,
+    after TEXT,
+    team TEXT NOT NULL DEFAULT '',
+    comment TEXT NOT NULL DEFAULT '',
+    error TEXT
 );
 """
 FAILED_STEPS = ("트리아지", "등록")
@@ -172,6 +185,21 @@ class Store:
         with connect(self.path) as c:
             for r in c.execute("SELECT report_id, at, src, dst FROM bts_changes ORDER BY rowid"):
                 out.setdefault(r["report_id"], []).append((r["at"], r["src"], r["dst"]))
+        return out
+
+    def save_qa(self, rid: int, action: str, before: str | None, after: str | None, team: str = "", comment: str = "",
+                error: str | None = None) -> None:
+        """BTS 에 쓴 것 한 줄 (설계 의도 10)."""
+        with connect(self.path) as c:
+            c.execute("INSERT INTO qa_actions (report_id, at, action, before, after, team, comment, error) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                      (rid, now(), action, before, after, team, comment, error))
+
+    def qa_log(self) -> dict:
+        """리포트 번호 → [{at, action, before, after, team, comment, error}] 시간순 (설계 의도 10)."""
+        out: dict = {}
+        with connect(self.path) as c:
+            for r in c.execute("SELECT * FROM qa_actions ORDER BY rowid"):
+                out.setdefault(r["report_id"], []).append({k: r[k] for k in r.keys() if k != "report_id"})
         return out
 
     def move(self, rid: int, dst: str, **columns) -> dict:

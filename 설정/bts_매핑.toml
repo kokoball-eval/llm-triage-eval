@@ -7,6 +7,13 @@
 #   Redmine — REDMINE_API_KEY
 # 검사에 걸리면(모르는 키, 빠진 우선순위 대응, 토큰 없음) 서버가 시작하지 않는다. 대응이 빠진 채 돌면
 # 등록할 때마다 엉뚱한 값이 BTS 에 조용히 들어가기 때문이다.
+#
+# BTS 쪽에서 맞춰 둘 것 (설정 파일이 아니라 BTS 관리 화면에서):
+#   티켓 상태 다섯 개 — QA Review(QA 재현 확인 중) · In Dev(개발 대응 중) · Resolve(수정 완료, QA 회귀 테스트 필요)
+#                       · Check(대응 보류, 사유 코멘트) · Closed(종료). 서로 모두 오갈 수 있게 두고, 새 티켓은 QA Review.
+#                       Jira 는 완료 범주 상태 하나를 Closed 로 읽는다(한국어 계정에서 "종료"로 보여도 된다).
+#   우선순위 이름 — 8칸과 같은 Critical · Major · Minor · Trivial.
+#   연결 확인(uv run triage-serve --check)이 다섯 상태가 있는지 본다.
 # ─────────────────────────────────────────────────────────────
 
 [bts]
@@ -42,13 +49,13 @@ issue_type = "Bug"                              # 회사 관리형 프로젝트�
 labels = ["triage"]                             # 모든 티켓에 붙일 라벨. 모듈은 라벨로 붙는다(공백은 _)
 timeout_sec = 10
 
-[jira.priority]     # 8칸 [우선순위] → Jira 우선순위 이름 (Jira Cloud 기본값)
-Critical = "Highest"
-Major = "High"
-Minor = "Medium"
-Trivial = "Low"
-"판단보류" = "Medium"
-"해당 없음" = "Lowest"
+[jira.priority]     # 8칸 [우선순위] → Jira 우선순위 이름. 사이트 우선순위를 8칸 이름으로 바꿔 둔다
+Critical = "Critical"   # (Jira 기본값 Highest·High·Medium·Low 를 그대로 쓰면 Critical = "Highest" 처럼 적는다)
+Major = "Major"
+Minor = "Minor"
+Trivial = "Trivial"
+"판단보류" = "Minor"
+"해당 없음" = "Trivial"
 
 [jira.teams]        # 팀 → 담당자 계정 ID (accountId — Jira 사용자 프로필 주소의 /people/<ID> 부분). 연결 확인(--check)이 검사한다
 QA = "your-qa-account-id"
@@ -58,10 +65,6 @@ QA = "your-qa-account-id"
 "아트" = "your-art-account-id"
 "기획" = "your-design-account-id"
 
-[jira.status]       # QA 화면(상태 동기화, src/triage_service/sync.py)이 읽는 상태 이름. 이 섹션을 지우면 동기화하지 않는다
-verify = ["검토 중", "In Review"]   # 검증 대기로 볼 Jira 상태 이름 (팀 관리형 한국어 기본값 / 영어 기본값)
-done = ["완료", "Done"]             # 끝난 것으로 볼 상태 이름. 두 목록에 같은 이름이 있으면 안 된다
-
 # ── Redmine (REST API) ─────────────────────────────────────
 [redmine]
 base_url = "http://127.0.0.1:3000"   # 로컬 Docker Redmine
@@ -69,7 +72,7 @@ project_id = "triage"                # 프로젝트 식별자
 tracker_id = 1                       # 유형 번호 (영문 기본 데이터: 1 = Bug)
 timeout_sec = 10
 
-[redmine.priority]  # 8칸 [우선순위] → Redmine 우선순위 번호 (영문 기본 데이터: 1 Low · 2 Normal · 3 High · 4 Urgent · 5 Immediate)
+[redmine.priority]  # 8칸 [우선순위] → Redmine 우선순위 번호 (영문 기본 데이터 번호 1 Low · 2 Normal · 3 High · 5 Immediate 의 이름을 Trivial · Minor · Major · Critical 로 바꿔 씀)
 Critical = 5
 Major = 3
 Minor = 2
@@ -84,7 +87,3 @@ QA = 5
 "서버" = 8
 "아트" = 9
 "기획" = 10
-
-[redmine.status]    # QA 화면(상태 동기화)이 읽는 상태 이름. 이 섹션을 지우면 동기화하지 않는다 (영문 기본 데이터 기준)
-verify = ["Resolved"]
-done = ["Closed", "Rejected"]

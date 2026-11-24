@@ -82,6 +82,13 @@
     </select>
     </div>
   {% endif %}
+    <div class="wide">
+    <label for="repro">QA 재현 필요 <span class="muted">([처리]가 CS 응대일 때만 씀 — 필요하면 QA Review·QA팀, 아니면 Check·CS팀. 규칙: [분류]가 결함이면 필요)</span></label>
+    <select id="repro" name="repro">
+      <option value="{{ AUTO }}" {% if repro == AUTO %}selected{% endif %}>{{ AUTO }} — 지금 값으로는 {{ "필요" if repro_default else "필요 없음" }}</option>
+      {% for k in REPRO_CHOICES %}<option value="{{ k }}" {% if repro == k %}selected{% endif %}>{{ k }}</option>{% endfor %}
+    </select>
+    </div>
   </div>
   <div class="row">
     <button class="primary" type="submit">BTS 등록</button>
@@ -97,6 +104,37 @@
 <table>{% for f in FIELDS %}<tr><th>{{ f }}</th><td>{{ rec.final_fields.get(f) }}</td></tr>{% endfor %}</table>
 {% if rec.assignment %}<p class="muted">배정 팀: {{ rec.assignment.team or "배정 안 함" }}{% if rec.assignment.team != rec.assignment.suggested %} (규칙: {{ rec.assignment.suggested or "배정 안 함" }} → 사람이 바꿈){% endif %}{% if rec.assignment.linked_existing %} — 이미 있던 티켓에 연결해 담당자는 바꾸지 않음{% endif %}</p>{% endif %}
 {% if rec.edits %}<p class="muted">사람이 고친 칸: {% for e in rec.edits %}{{ e.field }}({{ e.before or "없음" }} → {{ e.after }}){% if not loop.last %}, {% endif %}{% endfor %}</p>{% endif %}
+{% endif %}
+{% if rec.ticket_key %}
+{% set now_status = bts_status or (rec.bts.status if rec.bts else None) %}
+{% set actions = allowed(now_status) %}
+<h2>QA 동작</h2>
+{% if not now_status %}<p class="muted">BTS 상태를 아직 읽지 않았습니다. QA 화면의 [지금 동기화]나 위의 [BTS 상태 확인]을 누르면 할 수 있는 동작이 보입니다.</p>
+{% elif not actions %}<p class="muted">BTS 상태 {{ now_status }} 에서는 서비스에서 할 동작이 없습니다.</p>
+{% else %}
+<form method="post" action="/reports/{{ rec.id }}/qa" class="box">
+  <label for="comment">코멘트 <span class="muted">(회귀 테스트 통과 외에는 필수 · BTS 에 "[트리아지 서비스 · 동작]"을 붙여 남깁니다)</span></label>
+  <textarea id="comment" name="comment" rows="3">{{ comment or "" }}</textarea>
+  {% if "repro" in actions and teams %}
+  <label for="qa-team">재현 확인 시 넘길 팀</label>
+  <select id="qa-team" name="team">
+    <option value="{{ AUTO }}">{{ AUTO }} — {{ dev_team or "배정 안 함" }}</option>
+    {% for t in teams %}<option value="{{ t }}" {% if qa_team == t %}selected{% endif %}>{{ t }}</option>{% endfor %}
+  </select>
+  {% endif %}
+  <div class="row">{% for a in actions %}<button type="submit" name="action" value="{{ a }}"{% if loop.first %} class="primary"{% endif %}>{{ ACTIONS[a][0] }}{% if ACTIONS[a][2] %} → {{ ACTIONS[a][2] }}{% endif %}</button>{% endfor %}</div>
+  <p class="muted">BTS 상태 {{ now_status }} 기준입니다. 보내기 직전에 BTS 상태를 다시 읽어, 그사이 바뀌었으면 보내지 않습니다.</p>
+</form>
+{% endif %}
+{% if qa_log %}
+<table>
+  <tr><th>시각</th><th>동작</th><th>BTS 상태</th><th>코멘트 · 결과</th></tr>
+  {% for a in qa_log %}
+  <tr><td>{{ a.at | replace("T", " ") }}</td><td>{{ a.action }}{% if a.team %} → {{ a.team }}{% endif %}</td><td>{{ a.before or "?" }} → {{ a.after or "?" }}</td>
+      <td>{{ a.comment }}{% if a.error %} <span class="state 실패">실패</span> {{ a.error }}{% else %} <span class="muted">완료</span>{% endif %}</td></tr>
+  {% endfor %}
+</table>
+{% endif %}
 {% endif %}
 {% endif %}
 

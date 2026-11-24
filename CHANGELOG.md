@@ -9,6 +9,18 @@
 
 ## [Unreleased]
 
+### 추가 (서비스 S5-3: QA 동작)
+- BTS 상태 다섯 단계 통일 — QA Review(QA 재현 확인 중) · In Dev(개발 대응 중) · Resolve(수정 완료, 회귀 테스트 필요) · Check(대응 보류, 사유 코멘트) · Closed(종료). `contracts.STATUSES`에 고정하고, `--check`가 BTS 워크플로에 다섯 상태가 있는지 확인한다. Jira는 완료 범주 상태를 Closed로 읽는다(한국어 계정은 "종료"로 번역해 돌려준다)
+- 계약 — `Tracker.update(key, status, team, comment)`와 `check_statuses()`. Jira는 전환 목록에서 목표 상태로 가는 전환을 찾아 보내고(담당자·라벨, 상태, 코멘트를 따로 요청), Redmine은 PUT 한 번에 상태·담당자·코멘트(notes)
+- `qa.py` — 재현 확인(→ In Dev, 첫 모듈의 팀으로), 회귀 테스트 통과(→ Closed)·실패(→ In Dev), 보류(→ Check), 코멘트. 사유가 필요한 동작은 코멘트 없이 보내지 않는다. 쓰기 직전에 BTS 상태를 다시 읽어 바뀌었으면 보내지 않고, 쓴 뒤 다시 읽어 목표 상태가 아니면 실패로 남긴다
+- 첫 상태 — 새 티켓을 [처리]에 맞는 상태로 바꾼다(재현 필요 QA Review, 개발 배정 In Dev). CS 응대는 "QA 재현 필요"(기본값: [분류]가 결함이면 필요, 검토 화면에서 바꿈)일 때만 QA Review·QA팀, 아니면 Check·CS팀(예시 설정의 "운영")
+- 저장 — `qa_actions`(동작, 쓰기 전·후 상태, 팀, 코멘트, 오류). 상세 화면에 QA 동작 버튼(마지막으로 읽은 상태에서 할 수 있는 것만)과 QA 기록 표, QA 화면은 재현 대기·회귀 테스트 대기·보류·팀별 미해결
+- 시험 39개 추가(443개). 실제 Jira KAN(KAN-8)과 Redmine 6.0(로컬 Docker, 프로젝트 LLM-Triage)에 동작 순서를 모두 보내 확인하고 응답을 녹화해 계약 시험에 넣었다
+
+### 변경 (서비스 S5-3)
+- S5-2의 상태 대응 설정(`[jira.status]`·`[redmine.status]`)을 없앴다. 남아 있으면 서버가 시작하지 않는다. 예시 설정의 우선순위 이름을 8칸과 같은 Critical·Major·Minor·Trivial로 바꿨다
+- 녹화 응답의 상태 읽기(snapshot)를 다섯 상태 워크플로의 실제 응답으로 바꿨다(Redmine은 S5-2 때 문서 형식이었다)
+
 ### 추가 (서비스 S5-2: BTS 상태 동기화와 QA 보드)
 - 계약 — `Tracker.snapshot(keys)`와 `BtsState`(상태 이름·담당자·BTS 마지막 변경 시각). Jira는 `/search/jql` 검색 한 번(예전 `/search`는 삭제돼 410), Redmine은 `issue_id` 쉼표 목록(`status_id=*`), 가짜 BTS는 저장된 상태. 어댑터는 이름을 해석하지 않는다
 - 설정 — `[jira.status]`·`[redmine.status]`(verify·done 상태 이름 목록). 없으면 동기화하지 않고, 형식이 틀리거나 두 목록이 겹치면 서버가 시작하지 않는다

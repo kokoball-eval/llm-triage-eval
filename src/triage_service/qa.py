@@ -32,6 +32,7 @@ from triage_service.contracts import CHECK, CLOSED, IN_DEV, QA_REVIEW, RESOLVE
 from triage_service.store import Store, now
 
 OPEN = (QA_REVIEW, IN_DEV, RESOLVE, CHECK)
+INTAKE = "회귀 접수"   # 동기화가 하는 유일한 BTS 쓰기의 기록 이름 (sync 설계 의도 14)
 # 동작 → (화면 이름, 할 수 있는 BTS 상태, 목표 상태, 코멘트 필수) — 설계 의도 2·4
 ACTIONS = {
     "repro": ("재현 확인", (QA_REVIEW,), IN_DEV, True),

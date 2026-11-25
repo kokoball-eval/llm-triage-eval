@@ -37,6 +37,14 @@
    In Dev·Check 다. 머문 시간은 상태 변화 기록에서 그 상태로 들어온 것을 본 시각(없으면 BTS 가 마지막으로 바꾼 시각)부터 센다.
    기준(config.BOTTLENECK_DAYS)을 넘기면 병목이다. shortcut: 이름이 같은 사람이 둘이면 구분하지 못한다. 그런 계정이 생기면 담당자
    ID 도 저장한다.
+14. 동기화가 BTS 에 쓰는 것은 이것 하나다(그 밖의 쓰기는 QA 가 누른 동작뿐, 설계 의도 1): 서비스가 등록했지만 QA 담당이 없는
+   건(바로 개발 배정 — qa_owner 없음, 기존 이슈에 연결한 건 제외)이 Resolve 가 된 것을 발견하면 담당자를 QA팀장으로 바꾼다
+   (2026-11-25 경민 결정: 회귀 테스트가 아무에게도 오지 않는 구멍을 막는다). 접수 기록은 QA 동작 기록(qa.INTAKE)에 남기고,
+   그 기록이 성공했으면 다시 하지 않는다 — 팀장이 BTS 에서 다른 QA 구성원으로 바꿔도 되돌리지 않는다. 쓰기에 실패하면 기록에
+   오류가 남아 다음 동기화에서 다시 시도하고, 실패 이유는 동기화 결과에 보인다. 팀장 설정이 없으면 하지 않는다. BTS 에서 직접 만든
+   이슈는 서비스 기록이 없어 대상이 아니다. 처음 배정 팀이 QA팀인 건(S5-5a 이전 기록 포함)과 쓰기 직전에 BTS 상태가 Resolve 가 아닌 건도 건너뛴다.
+   shortcut: 쓰기 중 코멘트만 실패하면 재시도가 그 사이 사람이 바꾼 담당자를 팀장으로 되돌릴 수 있고, 계속 실패하면 동기화마다 오류
+   기록이 쌓인다. 팀장이 QA팀 구성원인지는 --check 만 본다. 사람이 병목이라 긴급 사인 요청이 아니면 사람 손 없이 배정한다는 원칙(경민)의 연장이다.
 """
 
 import threading
@@ -94,6 +102,38 @@ def run(store: Store, tracker) -> dict:
 
 
 
+def intake(store: Store, tracker, qa_team: str, result: dict) -> dict:
+    """설계 의도 14 — 방금 읽은 상태에서 Resolve 가 된 QA 담당 없는 서비스 등록 건을 QA팀장에게 넘긴다. result 에
+    "intake": [넘긴 티켓 키] 를 더하고, 실패 이유는 result["errors"] 에 보탠다. 쓰기는 한 건이 실패해도 나머지를 계속한다."""
+    result = {**result, "errors": list(result["errors"]), "intake": []}
+    done = {rid for rid, log in store.qa_log().items() if any(a["action"] == qa.INTAKE and not a["error"] for a in log)}
+    todo = [r for r in targets(store) if r["bts"] and r["bts"]["status"] == RESOLVE and r["id"] not in done and r["assignment"]
+            and r["assignment"].get("team") != qa_team and not r["assignment"].get("qa_owner") and not r["assignment"].get("linked_existing")]
+    if not todo:
+        return result
+    try:
+        lead = tracker.lead(qa_team)
+    except Exception as e:
+        result["errors"].append(f"회귀 접수: 팀장을 읽지 못했습니다 — {e}")
+        return result
+    if not lead:   # 팀장 설정이 없으면 하지 않는다
+        return result
+    note = f"[트리아지 서비스 · {qa.INTAKE}] 개발 배정 건이 Resolve 가 되어 회귀 테스트를 QA팀장에게 배정했습니다"
+    for r in todo:
+        try:
+            if tracker.status(r["ticket_key"]) != RESOLVE:   # 읽어 둔 상태가 묶음 실패로 오래됐을 수 있다 — 지금 상태를 다시 본다
+                continue
+            done_ = qa.write(store, tracker, r["id"], qa.INTAKE, RESOLVE, "", "", note, lead)
+        except Exception as e:
+            result["errors"].append(f"{r['ticket_key']} 회귀 접수: {e}")
+            continue
+        if done_["ok"]:
+            result["intake"].append(r["ticket_key"])
+        else:
+            result["errors"].append(f"{r['ticket_key']} 회귀 접수: {done_['error']}")
+    return result
+
+
 class Syncer:
     """설계 의도 10~12 — 동기화를 한 번에 하나만 돌리고 마지막 결과를 기억한다."""
 
@@ -143,6 +183,8 @@ class Syncer:
     def _run(self) -> dict:
         try:
             result = run(self.store, self.tracker)
+            if self.qa_team:
+                result = intake(self.store, self.tracker, self.qa_team, result)
         except Exception as e:   # run 은 묶음별 실패를 모으지만, 저장 실패 같은 것도 표시에 남긴다
             result = {"synced": 0, "missing": [], "errors": [f"동기화 실패: {e}"], "milestones": []}
         if self.qa_team:   # 설계 의도 13 — 실패하면 이전 값을 그대로 둔다

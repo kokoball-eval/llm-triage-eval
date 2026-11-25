@@ -74,12 +74,24 @@
   {% endfor %}
   {% if teams %}
     <div class="wide">
-    <label for="team">배정 팀 <span class="muted">(규칙: [처리]가 재현·정보 보완이면 QA, 개발 배정·긴급이면 첫 모듈의 팀)</span></label>
+    <label for="team">배정 팀 <span class="muted">(규칙: [처리]가 재현·정보 보완·긴급 사인 요청이면 QA, 개발 배정이면 첫 모듈의 팀)</span></label>
     <select id="team" name="team">
       <option value="{{ AUTO }}" {% if team == AUTO %}selected{% endif %}>{{ AUTO }} — 지금 값으로는 {{ suggested or "배정 안 함" }}</option>
       {% for t in teams %}<option value="{{ t }}" {% if team == t %}selected{% endif %}>{{ t }}</option>{% endfor %}
       <option value="" {% if team == "" %}selected{% endif %}>배정 안 함</option>
     </select>
+    </div>
+    <div class="wide">
+    <label for="member">담당자 <span class="muted">(팀 그룹 구성원 중 미해결이 가장 적은 사람)</span></label>
+    {% if values.get("처리") == URGENT %}<p class="muted">{{ suggested }}팀장 — 긴급 사인 요청은 위에서 고른 팀과 관계없이 리드 QA 가 받아 사인한 뒤 개발팀에 넘깁니다(판정 기준서 §0).</p>
+    {% elif cands %}
+    <select id="member" name="member">
+      <option value="{{ AUTO }}" {% if member == AUTO %}selected{% endif %}>{{ AUTO }} — {{ rule_member.name }}</option>
+      {% for m, n in cands %}<option value="{{ m.id }}" {% if member == m.id %}selected{% endif %}>{{ m.name }} (미해결 {{ n }}건)</option>{% endfor %}
+    </select>
+    <p class="muted">{{ suggested }}팀 구성원입니다. 배정 팀을 바꾸면 그 팀에서 규칙대로 정합니다.</p>
+    {% elif cands_error %}<p class="muted">구성원을 읽지 못했습니다. 등록할 때 다시 읽습니다 — {{ cands_error }}</p>
+    {% endif %}
     </div>
   {% endif %}
     <div class="wide">
@@ -113,12 +125,13 @@
 <h2>확정한 8칸</h2>
 <table>{% for f in FIELDS %}<tr><th>{{ f }}</th><td>{{ rec.final_fields.get(f) }}</td></tr>{% endfor %}</table>
 {% if rec.assignment %}<p class="muted">배정 팀: {{ rec.assignment.team or "배정 안 함" }}{% if rec.assignment.team != rec.assignment.suggested %} (규칙: {{ rec.assignment.suggested or "배정 안 함" }} → 사람이 바꿈){% endif %}{% if rec.assignment.linked_existing %} — 이미 있던 티켓에 연결해 담당자는 바꾸지 않음{% endif %}</p>{% endif %}
+{% if rec.assignment and rec.assignment.member %}<p class="muted">담당자: {{ rec.assignment.member.name }}{% if rec.assignment.member_rule and rec.assignment.member_rule != rec.assignment.member.id %} (사람이 고름){% endif %}{% if rec.assignment.qa_owner %} · QA 담당: {{ rec.assignment.qa_owner.name }}{% endif %}</p>{% endif %}
 {% if rec.assignment and rec.assignment.milestone %}<p class="muted">마일스톤: {{ rec.assignment.milestone }}</p>{% endif %}
 {% if rec.edits %}<p class="muted">사람이 고친 칸: {% for e in rec.edits %}{{ e.field }}({{ e.before or "없음" }} → {{ e.after }}){% if not loop.last %}, {% endif %}{% endfor %}</p>{% endif %}
 {% endif %}
 {% if rec.ticket_key %}
 {% set now_status = bts_status or (rec.bts.status if rec.bts else None) %}
-{% set actions = allowed(now_status) %}
+{% set actions = allowed(now_status, urgent) %}
 <h2>QA 동작</h2>
 {% if not now_status %}<p class="muted">BTS 상태를 아직 읽지 않았습니다. QA 화면의 [지금 동기화]나 위의 [BTS 상태 확인]을 누르면 할 수 있는 동작이 보입니다.</p>
 {% elif not actions %}<p class="muted">BTS 상태 {{ now_status }} 에서는 서비스에서 할 동작이 없습니다.</p>
@@ -126,8 +139,8 @@
 <form method="post" action="/reports/{{ rec.id }}/qa" class="box">
   <label for="comment">코멘트 <span class="muted">(회귀 테스트 통과 외에는 필수 · BTS 에 "[트리아지 서비스 · 동작]"을 붙여 남깁니다)</span></label>
   <textarea id="comment" name="comment" rows="3">{{ comment or "" }}</textarea>
-  {% if "repro" in actions and teams %}
-  <label for="qa-team">재현 확인 시 넘길 팀</label>
+  {% if ("repro" in actions or "sign" in actions) and teams %}
+  <label for="qa-team">{{ "사인 후" if urgent else "재현 확인 시" }} 넘길 팀 <span class="muted">(그 팀 그룹에서 미해결이 가장 적은 사람에게 배정)</span></label>
   <select id="qa-team" name="team">
     <option value="{{ AUTO }}">{{ AUTO }} — {{ dev_team or "배정 안 함" }}</option>
     {% for t in teams %}<option value="{{ t }}" {% if qa_team == t %}selected{% endif %}>{{ t }}</option>{% endfor %}

@@ -40,11 +40,11 @@ def register(store, tracker, 처리="개발 배정", 모듈="결제·재화", �
 def test_jira_update_sends_assignee_transition_comment(store):
     tracker, rec = adapter("jira", store)
     key = rec.data["ticket_key"]
-    tracker.update(key, status=IN_DEV, team="서버", comment="[트리아지 서비스 · 재현 확인] 1줄\n2줄")
+    tracker.update(key, status=IN_DEV, team="서버", comment="[트리아지 서비스 · 재현 확인] 1줄\n2줄", assignee="dev-account-id")
     sent = [(r.method, r.url.path, json.loads(r.content) if r.content else None) for r in rec.requests]
     edit = sent[0][2]
     assert sent[0][:2] == ("PUT", f"/rest/api/3/issue/{key}")
-    assert edit["fields"]["assignee"] == {"accountId": MAPPING["jira"]["teams"]["서버"]}
+    assert edit["fields"]["assignee"] == {"accountId": "dev-account-id"}   # 팀 그룹에서 고른 구성원 (jira 설계 의도 13)
     assert {"add": "팀_서버"} in edit["update"]["labels"] and {"remove": "팀_QA"} in edit["update"]["labels"]
     assert {"remove": "팀_서버"} not in edit["update"]["labels"]
     assert sent[1][:2] == ("GET", f"/rest/api/3/issue/{key}/transitions")
@@ -81,10 +81,10 @@ def test_jira_check_statuses(store):
 
 def test_redmine_update_is_one_put(store):
     tracker, rec = adapter("redmine", store)
-    tracker.update("1", status=IN_DEV, team="서버", comment="코멘트")
+    tracker.update("1", status=IN_DEV, team="서버", comment="코멘트", assignee="8")
     put = rec.requests[-1]
     assert (put.method, put.url.path) == ("PUT", "/issues/1.json")
-    assert json.loads(put.content) == {"issue": {"status_id": 8, "assigned_to_id": MAPPING["redmine"]["teams"]["서버"],
+    assert json.loads(put.content) == {"issue": {"status_id": 8, "assigned_to_id": 8,   # 구성원(서버 팀장) 번호
                                                  "category_id": 4, "notes": "코멘트"}}   # 녹화: 서버 범주 = 4
     tracker.update("1", comment="코멘트만")
     assert json.loads(rec.requests[-1].content) == {"issue": {"notes": "코멘트만"}}
@@ -120,7 +120,7 @@ def test_fake_update(store):
 
 @pytest.mark.parametrize("처리, repro, status", [
     ("등록(재현 대기)", False, QA_REVIEW), ("정보 요청 후 보류", False, QA_REVIEW),
-    ("개발 배정", False, IN_DEV), ("긴급 사인 요청", False, IN_DEV),
+    ("개발 배정", False, IN_DEV), ("긴급 사인 요청", False, QA_REVIEW),   # 리드 QA 사인 먼저(기준서 §0)
     ("CS 응대", True, QA_REVIEW), ("CS 응대", False, CHECK),
 ])
 def test_first_status(처리, repro, status):
@@ -163,7 +163,7 @@ def test_register_cs_case(store, 분류, repro, status, team):
 
 def test_register_first_status_failure_keeps_registration(store):
     class NoWrite(FakeTracker):
-        def update(self, key, status="", team="", comment=""):
+        def update(self, key, status="", team="", comment="", assignee=""):
             raise TrackerError("BTS 점검 중")
     tracker = NoWrite(store.path)
     rec = register(store, tracker, 처리="개발 배정")
@@ -202,8 +202,8 @@ def test_repro_moves_to_module_team(store):
     out = qa.act(store, tracker, rid, "repro", "재현 절차 1~3, 안드로이드 14", rules=RULES)
     t = tracker.get(key)
     assert out == {"ok": True, "after": IN_DEV, "error": None}
-    assert (t["status"], t["team"]) == (IN_DEV, "아트")
-    assert t["comments"] == ["[트리아지 서비스 · 재현 확인] 재현 절차 1~3, 안드로이드 14"]
+    assert (t["status"], t["team"], t["assignee"]) == (IN_DEV, "아트", "아트팀장")   # 그룹 구성원 중 미해결이 적은 사람
+    assert t["comments"] == ["[트리아지 서비스 · 재현 확인] 재현 절차 1~3, 안드로이드 14 (담당: 아트팀장)"]
     log = store.qa_log()[rid][-1]
     assert (log["action"], log["before"], log["after"], log["team"]) == ("재현 확인", QA_REVIEW, IN_DEV, "아트")
     assert store.get(rid)["bts"]["status"] == IN_DEV and store.get(rid)["assignment"]["team"] == "QA"   # 등록 때 배정은 그대로
@@ -265,9 +265,9 @@ def test_write_failure_and_ignored_change_are_recorded(store):
     class Broken(FakeTracker):
         mode = "ok"
 
-        def update(self, key, status="", team="", comment=""):
+        def update(self, key, status="", team="", comment="", assignee=""):
             if self.mode == "ok":
-                return super().update(key, status, team, comment)
+                return super().update(key, status, team, comment, assignee)
             if self.mode == "raise":
                 raise TrackerError("BTS 가 거절했습니다 (PUT → 422)")
             # mode == "ignore": 응답은 성공인데 상태가 그대로(워크플로가 막은 경우)
@@ -287,7 +287,7 @@ def test_write_failure_and_ignored_change_are_recorded(store):
 def test_failed_write_does_not_claim_team(store):
     """쓰기 요청이 도중에 실패하면 팀이 바뀌었는지 모른다 — 기록의 팀을 비우고 BTS 에서 확인하라고 알린다."""
     class Halfway(FakeTracker):
-        def update(self, key, status="", team="", comment=""):
+        def update(self, key, status="", team="", comment="", assignee=""):
             raise TrackerError("전환 거절")
     tracker = Halfway(store.path)
     rid = register(store, tracker, 처리="등록(재현 대기)")["id"]

@@ -18,6 +18,9 @@
    마일스톤 성과는 서비스가 등록한 티켓만이 아니라 그 버전의 BTS 티켓 전체로 센다(BTS 에 직접 등록한 이슈도 QA 업무다).
 7. 마일스톤 티켓의 팀은 BTS 의 팀 표식에서 읽는다(Jira "팀_<이름>" 라벨, Redmine 일감 범주). 서비스가 등록할 때 붙이는 것과
    같은 표식이라 두 BTS 가 같은 방식으로 팀별 미해결을 센다. 표식이 없으면 빈 문자열이다(BTS 에 직접 만든 티켓).
+8. 팀은 BTS 의 그룹이고 담당자는 그 구성원 한 사람이다(2026-11-25 경민 결정). 어댑터는 그룹 구성원(members), 팀장(lead,
+   설정 [<bts>.leads]), 한 사람의 미해결 수(open_count), 토큰 주인(me)을 알려 주고, 누구에게 줄지는 assign.py 가 정한다.
+   Jira 는 그룹을 담당자로 둘 수 없어 항상 사람에게 배정한다. 구성원 ID 는 BTS 와 상관없이 글자로 다룬다(Redmine 번호도 글자).
 """
 
 from dataclasses import dataclass
@@ -57,12 +60,20 @@ class Report:
 @dataclass(frozen=True)
 class Issue:
     """사람이 확인한 8칸 — BTS 에 등록할 내용. ref 는 서비스 표식(같은 리포트의 티켓을 다시 찾는 데 쓴다).
-    team 은 자동 배정한 팀 이름(assign.py, 빈 문자열이면 배정하지 않음). 팀 → BTS 계정은 어댑터가 설정에서 찾는다."""
+    team 은 자동 배정한 팀 이름(assign.py, 빈 문자열이면 배정하지 않음). 팀 표식(Jira 라벨·Redmine 범주)은 어댑터가 붙인다."""
     report: Report
     fields: dict[str, str]
     ref: str = ""
     team: str = ""
     milestone: str = ""   # BTS 버전 이름 (설계 의도 6, 빈 문자열이면 넣지 않음)
+    assignee: str = ""    # 팀 그룹에서 고른 구성원 ID (설계 의도 8, 빈 문자열이면 담당자를 넣지 않음)
+
+
+@dataclass(frozen=True)
+class Member:
+    """팀 그룹의 구성원 한 사람 (설계 의도 8)."""
+    id: str
+    name: str
 
 
 @dataclass(frozen=True)
@@ -117,11 +128,20 @@ class Tracker(Protocol):
 
     def status(self, key: str) -> str: ...
 
-    def check_assignees(self) -> list[str]: ...   # 자동 배정 계정이 BTS 에서 담당자가 될 수 없으면 문제 목록
+    def check_assignees(self) -> list[str]: ...   # 팀 그룹·구성원·팀장이 담당자가 될 수 없으면 문제 목록 (연결 확인 --check)
+
+    def members(self, team: str) -> list[Member]: ...   # 팀 그룹의 구성원 (설계 의도 8)
+
+    def lead(self, team: str) -> str: ...   # 팀장 구성원 ID (설정에 없으면 빈 문자열)
+
+    def open_count(self, member: str) -> int: ...   # 그 사람이 담당인 이 프로젝트의 미해결(Closed 아님) 수
+
+    def me(self) -> str: ...   # BTS 토큰 주인의 구성원 ID
 
     def snapshot(self, keys: list[str]) -> dict[str, BtsState]: ...   # 티켓 여러 건의 상태(BTS 에 없는 키는 빠진다)
 
-    def update(self, key: str, status: str = "", team: str = "", comment: str = "") -> None: ...   # 빈 값은 바꾸지 않는다 (설계 의도 5)
+    def update(self, key: str, status: str = "", team: str = "", comment: str = "",
+               assignee: str = "") -> None: ...   # 빈 값은 바꾸지 않는다 (설계 의도 5·8)
 
     def check_statuses(self) -> list[str]: ...   # BTS 에 없는 STATUSES 이름 (연결 확인 --check)
 

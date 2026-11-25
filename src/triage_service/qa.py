@@ -17,13 +17,17 @@
 5. 재현 확인은 In Dev 로 넘기면서 담당을 개발팀으로 바꾼다. 기본 팀은 확정한 8칸의 첫 모듈 팀(assign.dev_team)이고 QA 가
    바꿀 수 있다. 자동 배정을 쓰지 않으면 상태만 바꾼다. 개발로 넘기는 동작이라 QA팀으로는 보내지 않는다 — [모듈]이 "해당 없음"
    이라 규칙이 QA팀을 고르면 사람이 팀을 골라야 한다.
+7. 긴급 사인 요청 건은 재현 확인 대신 [사인 후 개발 전달]로 넘긴다(판정 기준서 §0). QA팀장(설정 [<bts>.leads] 의 QA)만 할 수
+   있고, 누르는 사람은 BTS 토큰 주인(tracker.me)으로 확인한다 — 서비스는 각자 PC 에서 자기 토큰으로 쓰기 때문이다. 넘길 때의
+   팀·담당자 규칙은 재현 확인과 같다(설계 의도 5, 담당자는 개발팀 그룹 구성원 중 미해결이 가장 적은 사람). 넘긴 담당자 이름은
+   BTS 코멘트 끝에 붙인다. 자동 배정을 쓰지 않으면([assign] 없음) 팀장이 없으므로 긴급 사인 요청 건도 재현 확인으로 넘긴다.
 6. 등록 직후 첫 상태(assign.first_status)도 같은 길(write)로 쓴다. 새 티켓은 BTS 가 정한 첫 상태(QA Review)로 생기므로 다를
    때만 바꾼다. 실패해도 티켓은 이미 있으니 등록은 성공으로 두고 기록에 실패를 남긴다(review.py).
 """
 
 import threading
 
-from triage_service import assign
+from triage_service import assign, flow
 from triage_service.contracts import CHECK, CLOSED, IN_DEV, QA_REVIEW, RESOLVE
 from triage_service.store import Store, now
 
@@ -31,6 +35,7 @@ OPEN = (QA_REVIEW, IN_DEV, RESOLVE, CHECK)
 # 동작 → (화면 이름, 할 수 있는 BTS 상태, 목표 상태, 코멘트 필수) — 설계 의도 2·4
 ACTIONS = {
     "repro": ("재현 확인", (QA_REVIEW,), IN_DEV, True),
+    "sign": ("사인 후 개발 전달", (QA_REVIEW,), IN_DEV, False),   # 설계 의도 7 — 긴급 사인 요청 건만
     "pass": ("회귀 테스트 통과", (RESOLVE,), CLOSED, False),
     "fail": ("회귀 테스트 실패", (RESOLVE,), IN_DEV, True),
     "hold": ("보류", (QA_REVIEW, IN_DEV, RESOLVE), CHECK, True),
@@ -44,9 +49,14 @@ class Conflict(Exception):
     """BTS 상태가 그 동작을 할 수 없는 상태다 (설계 의도 2)."""
 
 
-def allowed(status: str | None) -> list[str]:
-    """이 BTS 상태에서 할 수 있는 동작 (화면이 버튼을 고를 때)."""
-    return [a for a, (_, ok, _, _) in ACTIONS.items() if status in ok]
+def allowed(status: str | None, urgent: bool = False) -> list[str]:
+    """이 BTS 상태에서 할 수 있는 동작 (화면이 버튼을 고를 때). urgent: 긴급 사인 요청 건(설계 의도 7)."""
+    skip = "repro" if urgent else "sign"
+    return [a for a, (_, ok, _, _) in ACTIONS.items() if status in ok and a != skip]
+
+
+def urgent(rec: dict) -> bool:
+    return (rec.get("final_fields") or {}).get("처리") == assign.URGENT
 
 
 def act(store: Store, tracker, rid: int, action: str, comment: str = "", team: str = assign.AUTO,
@@ -61,14 +71,29 @@ def act(store: Store, tracker, rid: int, action: str, comment: str = "", team: s
     comment = comment.strip()
     if needs_comment and not comment:
         raise ValueError([f"{label}에는 코멘트(사유)가 필요합니다"])
+    signing = urgent(rec) and bool(rules)   # 설계 의도 7
+    if action in ("repro", "sign") and action not in allowed(QA_REVIEW, signing):
+        raise ValueError(["긴급 사인 요청 건은 [사인 후 개발 전달]로 넘깁니다" if signing
+                          else "[사인 후 개발 전달]은 자동 배정을 쓸 때 긴급 사인 요청 건에만 씁니다"])
     new_team = ""
-    if action == "repro" and rules:   # 설계 의도 5
+    if action in ("repro", "sign") and rules:   # 설계 의도 5
         new_team = assign.dev_team(rules, rec["final_fields"]) if team == assign.AUTO else team
         if new_team not in assign.teams(rules):
             raise ValueError([f"설정에 없는 팀입니다: {new_team!r}"])
         if new_team == rules["qa"]:
-            raise ValueError(["재현 확인은 개발팀으로 넘기는 동작입니다. [모듈]로 팀을 정할 수 없으니 넘길 팀을 고르세요"])
+            raise ValueError([f"{label}은(는) 개발팀으로 넘기는 동작입니다. [모듈]로 팀을 정할 수 없으니 넘길 팀을 고르세요"])
     with _lock:
+        who = {}
+        try:
+            if action == "sign" and tracker.me() != tracker.lead(rules["qa"]):
+                raise assign.BadChoice([f"{rules['qa']}팀장만 사인할 수 있습니다 (BTS 토큰 주인이 설정의 팀장이 아님)"])
+            if new_team:   # 설계 의도 5·7 — 개발팀 그룹에서 한 사람
+                who = assign.assignee(tracker, rules, new_team, {**rec["final_fields"], "처리": "개발 배정"},
+                                      assign.recent(store.list(flow.REGISTERED)))
+        except assign.BadChoice:
+            raise
+        except Exception as e:
+            raise Conflict(f"BTS 계정·그룹을 읽지 못해 보내지 않았습니다: {e}")
         try:   # 설계 의도 2
             before = tracker.status(rec["ticket_key"])
         except Exception as e:
@@ -76,16 +101,19 @@ def act(store: Store, tracker, rid: int, action: str, comment: str = "", team: s
         if before not in ok:
             _remember(store, tracker, rid)
             raise Conflict(f"BTS 상태가 지금 {before} 라 {label}을(를) 할 수 없습니다. QA 화면에서 동기화한 뒤 다시 확인하세요")
-        note = f"[트리아지 서비스 · {label}] {comment}" if comment else ""
-        return write(store, tracker, rid, label, before, target, new_team, note)
+        note = f"[트리아지 서비스 · {label}] {comment}".rstrip() if comment or who else ""
+        if who:
+            note += f" (담당: {who['name']})"
+        return write(store, tracker, rid, label, before, target, new_team, note, who.get("id", ""))
 
 
-def write(store: Store, tracker, rid: int, label: str, before: str | None, target: str, team: str, note: str) -> dict:
+def write(store: Store, tracker, rid: int, label: str, before: str | None, target: str, team: str, note: str,
+          assignee: str = "") -> dict:
     """BTS 에 쓰고 다시 읽어 확인한 뒤 기록한다 (설계 의도 3). target 이 비면 상태는 그대로 두는 동작이다."""
     key = store.get(rid)["ticket_key"]
     error = None
     try:
-        tracker.update(key, status=target, team=team, comment=note)
+        tracker.update(key, status=target, team=team, comment=note, assignee=assignee)
     except Exception as e:   # 설계 의도 3 — 도중에 실패하면 팀이 바뀌었는지 모른다
         error = f"BTS 쓰기 실패: {e}" + (f" (담당 팀 {team} 변경 여부는 BTS 에서 확인하세요)" if team else "")
         team = ""

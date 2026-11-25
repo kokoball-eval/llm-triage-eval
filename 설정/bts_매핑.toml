@@ -22,9 +22,11 @@ use = "fake"        # fake(같은 DB 에 저장하는 가짜 BTS) | jira | redmi
 # ── 생성 시 자동 배정 (src/triage_service/assign.py) ────────
 # 사람이 확정한 8칸으로 받을 팀을 정한다. 이 섹션을 지우면 배정하지 않는다.
 #   [처리] 등록(재현 대기)·정보 요청 후 보류 → qa 팀
-#   [처리] 개발 배정·긴급 사인 요청        → 첫 [모듈]의 팀 (모듈이 "해당 없음"이면 qa 팀)
+#   [처리] 긴급 사인 요청                  → qa 팀장 (판정 기준서 §0 — 리드 QA 가 사인한 뒤 개발팀에 넘긴다)
+#   [처리] 개발 배정                      → 첫 [모듈]의 팀 (모듈이 "해당 없음"이면 qa 팀)
 #   [처리] CS 응대                       → cs 팀 (지우면 배정하지 않음)
-# 팀마다 BTS 계정은 아래 [jira.teams]·[redmine.teams] 에 적는다. 검토 화면에서 팀을 바꿀 수 있다.
+# 팀은 BTS 그룹이다(아래 [jira.teams]·[redmine.teams]). 담당자는 그 그룹 구성원 중 미해결이 가장 적은 사람이고,
+# 팀장은 [jira.leads]·[redmine.leads] 에 적는다(qa 팀장은 필수). 검토 화면에서 팀·담당자를 바꿀 수 있다.
 [assign]
 qa = "QA"
 cs = "운영"
@@ -57,13 +59,16 @@ Trivial = "Trivial"
 "판단보류" = "Minor"
 "해당 없음" = "Trivial"
 
-[jira.teams]        # 팀 → 담당자 계정 ID (accountId — Jira 사용자 프로필 주소의 /people/<ID> 부분). 연결 확인(--check)이 검사한다
-QA = "your-qa-account-id"
-"운영" = "your-cs-account-id"
-"클라" = "your-client-account-id"
-"서버" = "your-server-account-id"
-"아트" = "your-art-account-id"
-"기획" = "your-design-account-id"
+[jira.teams]        # 팀 → Jira 그룹 이름 (관리 → 사용자 관리 → 그룹). 구성원이 그 프로젝트의 담당자가 될 수 있는지 --check 가 검사한다
+QA = "QA팀"
+"운영" = "운영팀"
+"클라" = "클라팀"
+"서버" = "서버팀"
+"아트" = "아트팀"
+"기획" = "기획팀"
+
+[jira.leads]        # 팀 → 팀장 계정 ID (accountId — Jira 사용자 프로필 주소의 /people/<ID> 부분). QA 는 필수(긴급 사인 요청), 그 그룹 구성원이어야 한다
+QA = "your-qa-lead-account-id"
 
 # ── Redmine (REST API) ─────────────────────────────────────
 [redmine]
@@ -81,11 +86,14 @@ Trivial = 1
 "판단보류" = 2
 "해당 없음" = 1
 
-[redmine.teams]     # 팀 → 담당자 번호 (사용자 또는 그룹. 그룹은 관리 설정 "그룹에 일감 할당 허용" 필요, 프로젝트 구성원이어야 함)
+[redmine.teams]     # 팀 → Redmine 그룹 번호 (그룹을 프로젝트 구성원으로 넣는다. 구성원 읽기에 관리자 API 키 필요)
                     # 프로젝트에 팀 이름과 같은 일감 범주도 만들어 둔다(Jira 의 "팀_" 라벨 대신, --check 가 확인)
-QA = 5
-"운영" = 6
-"클라" = 7
-"서버" = 8
-"아트" = 9
-"기획" = 10
+QA = 11
+"운영" = 12
+"클라" = 13
+"서버" = 14
+"아트" = 15
+"기획" = 16
+
+[redmine.leads]     # 팀 → 팀장 사용자 번호. QA 는 필수(긴급 사인 요청), 그 그룹 구성원이어야 한다
+QA = 1

@@ -10,13 +10,15 @@
    내용 JSON 의 comments 목록에 쌓는다. 전환 규칙은 없다(실제 BTS 의 워크플로도 다섯 상태끼리 모두 오갈 수 있게 뒀다).
 5. 버전(마일스톤)은 별도 표 fake_versions 에 두고 add_version 으로 만든다(시험·화면 확인용). 티켓의 마일스톤은 등록 내용 JSON 의
    milestone 이다.
+6. 팀 그룹은 팀마다 "<팀>팀장"·"<팀>팀원" 두 사람이다(구성원 ID = 이름). 토큰 주인(me)은 QA팀장이다. 미해결 수는 그 사람이
+   담당인 Closed 아닌 티켓 수다. 자동 배정(미해결이 적은 사람)과 팀장 사인을 실제 BTS 없이 끝까지 돌려 보는 용도다.
 """
 
 import json
 from dataclasses import asdict
 from pathlib import Path
 
-from triage_service.contracts import QA_REVIEW, BtsState, BtsTicket, Issue, Milestone, Ticket, TrackerError
+from triage_service.contracts import CLOSED, QA_REVIEW, BtsState, BtsTicket, Issue, Member, Milestone, Ticket, TrackerError
 from triage_service.store import connect, now
 
 
@@ -34,7 +36,7 @@ class FakeTracker:
         if issue.milestone and issue.milestone not in {v.name for v in self.versions()}:
             raise TrackerError(f"버전이 없습니다: {issue.milestone}")
         payload = json.dumps({"report": asdict(issue.report), "fields": issue.fields, "ref": issue.ref, "team": issue.team,
-                              "milestone": issue.milestone}, ensure_ascii=False)
+                              "milestone": issue.milestone, "assignee": issue.assignee}, ensure_ascii=False)
         with connect(self.path) as c:
             n = c.execute("INSERT INTO fake_tickets (created_at, status, issue) VALUES (?, ?, ?)",
                           (now(), QA_REVIEW, payload)).lastrowid
@@ -53,7 +55,21 @@ class FakeTracker:
         return self.get(key)["status"]
 
     def check_assignees(self) -> list[str]:
-        return []   # 계정이 없다. 팀 이름을 그대로 저장한다
+        return []   # 설계 의도 6 — 그룹이 늘 있다
+
+    def members(self, team: str) -> list[Member]:   # 설계 의도 6
+        return [Member(f"{team}팀장", f"{team}팀장"), Member(f"{team}팀원", f"{team}팀원")]
+
+    def lead(self, team: str) -> str:
+        return f"{team}팀장"
+
+    def open_count(self, member: str) -> int:
+        with connect(self.path) as c:
+            rows = c.execute("SELECT status, issue FROM fake_tickets").fetchall()
+        return sum(r["status"] != CLOSED and json.loads(r["issue"]).get("assignee") == member for r in rows)
+
+    def me(self) -> str:
+        return "QA팀장"
 
     def snapshot(self, keys: list[str]) -> dict[str, BtsState]:
         out = {}
@@ -68,11 +84,13 @@ class FakeTracker:
     def set_status(self, key: str, status: str) -> None:   # 설계 의도 3
         self.update(key, status)
 
-    def update(self, key: str, status: str = "", team: str = "", comment: str = "") -> None:   # 설계 의도 4
+    def update(self, key: str, status: str = "", team: str = "", comment: str = "", assignee: str = "") -> None:   # 설계 의도 4
         t = self.get(key)
         issue = {k: v for k, v in t.items() if k not in ("key", "created_at", "status")} | {"updated": now()}
         if team:
             issue["team"] = team
+        if assignee:
+            issue["assignee"] = assignee
         if comment:
             issue["comments"] = [*t.get("comments", []), comment]
         with connect(self.path) as c:

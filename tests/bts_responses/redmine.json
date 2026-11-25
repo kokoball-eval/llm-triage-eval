@@ -158,16 +158,21 @@
           "id": 1,
           "project": {
             "id": 1,
-            "name": "triage"
+            "name": "LLM-Triage"
           },
           "user": {
-            "id": 5,
-            "name": "QA 담당"
+            "id": 1,
+            "name": "QA 팀장"
           },
           "roles": [
             {
+              "id": 3,
+              "name": "Manager"
+            },
+            {
               "id": 4,
-              "name": "Developer"
+              "name": "Developer",
+              "inherited": true
             }
           ]
         },
@@ -175,11 +180,11 @@
           "id": 2,
           "project": {
             "id": 1,
-            "name": "triage"
+            "name": "LLM-Triage"
           },
-          "user": {
-            "id": 6,
-            "name": "운영 담당"
+          "group": {
+            "id": 11,
+            "name": "QA팀"
           },
           "roles": [
             {
@@ -192,16 +197,17 @@
           "id": 3,
           "project": {
             "id": 1,
-            "name": "triage"
+            "name": "LLM-Triage"
           },
-          "group": {
-            "id": 7,
-            "name": "클라팀"
+          "user": {
+            "id": 5,
+            "name": "QA 팀원"
           },
           "roles": [
             {
               "id": 4,
-              "name": "Developer"
+              "name": "Developer",
+              "inherited": true
             }
           ]
         },
@@ -209,11 +215,11 @@
           "id": 4,
           "project": {
             "id": 1,
-            "name": "triage"
+            "name": "LLM-Triage"
           },
           "group": {
-            "id": 8,
-            "name": "서버팀"
+            "id": 12,
+            "name": "운영팀"
           },
           "roles": [
             {
@@ -226,10 +232,98 @@
           "id": 5,
           "project": {
             "id": 1,
-            "name": "triage"
+            "name": "LLM-Triage"
+          },
+          "user": {
+            "id": 6,
+            "name": "운영 팀장"
+          },
+          "roles": [
+            {
+              "id": 4,
+              "name": "Developer",
+              "inherited": true
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "project": {
+            "id": 1,
+            "name": "LLM-Triage"
           },
           "group": {
-            "id": 9,
+            "id": 13,
+            "name": "클라팀"
+          },
+          "roles": [
+            {
+              "id": 4,
+              "name": "Developer"
+            }
+          ]
+        },
+        {
+          "id": 7,
+          "project": {
+            "id": 1,
+            "name": "LLM-Triage"
+          },
+          "user": {
+            "id": 7,
+            "name": "클라 팀장"
+          },
+          "roles": [
+            {
+              "id": 4,
+              "name": "Developer",
+              "inherited": true
+            }
+          ]
+        },
+        {
+          "id": 8,
+          "project": {
+            "id": 1,
+            "name": "LLM-Triage"
+          },
+          "group": {
+            "id": 14,
+            "name": "서버팀"
+          },
+          "roles": [
+            {
+              "id": 4,
+              "name": "Developer"
+            }
+          ]
+        },
+        {
+          "id": 9,
+          "project": {
+            "id": 1,
+            "name": "LLM-Triage"
+          },
+          "user": {
+            "id": 8,
+            "name": "서버 팀장"
+          },
+          "roles": [
+            {
+              "id": 4,
+              "name": "Developer",
+              "inherited": true
+            }
+          ]
+        },
+        {
+          "id": 10,
+          "project": {
+            "id": 1,
+            "name": "LLM-Triage"
+          },
+          "group": {
+            "id": 15,
             "name": "아트팀"
           },
           "roles": [
@@ -240,13 +334,31 @@
           ]
         },
         {
-          "id": 6,
+          "id": 11,
           "project": {
             "id": 1,
-            "name": "triage"
+            "name": "LLM-Triage"
+          },
+          "user": {
+            "id": 9,
+            "name": "아트 팀장"
+          },
+          "roles": [
+            {
+              "id": 4,
+              "name": "Developer",
+              "inherited": true
+            }
+          ]
+        },
+        {
+          "id": 12,
+          "project": {
+            "id": 1,
+            "name": "LLM-Triage"
           },
           "group": {
-            "id": 10,
+            "id": 16,
             "name": "기획팀"
           },
           "roles": [
@@ -255,14 +367,32 @@
               "name": "Developer"
             }
           ]
+        },
+        {
+          "id": 13,
+          "project": {
+            "id": 1,
+            "name": "LLM-Triage"
+          },
+          "user": {
+            "id": 10,
+            "name": "기획 팀장"
+          },
+          "roles": [
+            {
+              "id": 4,
+              "name": "Developer",
+              "inherited": true
+            }
+          ]
         }
       ],
-      "total_count": 6,
+      "total_count": 13,
       "offset": 0,
       "limit": 100
     }
   },
-  "memberships_source": "Redmine REST API 문서 형식(/projects/:id/memberships.json)으로 만든 응답 — 실제 서버 녹화 아님. 컨테이너를 지운 뒤라 S5-1 에서는 실제 Redmine 으로 확인하지 않음",
+  "memberships_source": "실제 Redmine 6.0(로컬 Docker, 2026-11-25)의 /projects/triage/memberships.json — 그룹 6개(11~16)와 그 구성원(사용자 1·5~10, 그룹을 통해 들어온 사람). S5-1 의 문서 형식 응답을 S5-5a 에서 실제 녹화로 바꿨다",
   "snapshot": {
     "status": 200,
     "body": {
@@ -532,5 +662,58 @@
       "limit": 100
     }
   },
-  "milestone_source": "실제 Redmine 6.0(로컬 Docker, 2026-11-24)에서 녹화: 버전 목록(/projects/triage/versions.json)과 목표 버전 0.0.1(1번)의 일감 목록(시험 일감 #3 한 건). 시험 일감이라 가릴 값이 없다"
+  "milestone_source": "실제 Redmine 6.0(로컬 Docker, 2026-11-24)에서 녹화: 버전 목록(/projects/triage/versions.json)과 목표 버전 0.0.1(1번)의 일감 목록(시험 일감 #3 한 건). 시험 일감이라 가릴 값이 없다",
+  "group": {
+    "status": 200,
+    "body": {
+      "group": {
+        "id": 11,
+        "name": "QA팀",
+        "users": [
+          {
+            "id": 1,
+            "name": "QA 팀장"
+          },
+          {
+            "id": 5,
+            "name": "QA 팀원"
+          }
+        ]
+      }
+    }
+  },
+  "open_count": {
+    "status": 200,
+    "body": {
+      "issues": [
+        {
+          "id": 3,
+          "status": {
+            "id": 7,
+            "name": "QA Review",
+            "is_closed": false
+          }
+        }
+      ],
+      "total_count": 3,
+      "offset": 0,
+      "limit": 1
+    }
+  },
+  "current_user": {
+    "status": 200,
+    "body": {
+      "user": {
+        "id": 1,
+        "login": "admin",
+        "firstname": "QA",
+        "lastname": "팀장"
+      }
+    }
+  },
+  "group_missing": {
+    "status": 404,
+    "body": null
+  },
+  "group_source": "실제 Redmine 6.0(로컬 Docker, 2026-11-25)에서 녹화: 그룹 QA팀(11번, include=users), 1번 사용자가 담당인 열린 일감 수(status_id=open, limit=1, 일감 칸은 번호·상태만 남김), 없는 그룹(404, 본문 없음). current_user 는 API 키·메일 없이 번호·이름만 남겼다. 시험 사용자라 가릴 이름이 없다. 프로젝트 구성원 목록(memberships)도 그룹 11~16 을 넣은 뒤 다시 녹화했다"
 }

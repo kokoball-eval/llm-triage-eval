@@ -34,6 +34,11 @@
 12. 마일스톤 티켓의 팀은 "팀_<이름>" 라벨에서 읽는다(설계 의도 6의 역). 팀을 바꿀 때 다른 팀 라벨을 지우므로 보통 하나이고,
    BTS 에서 사람이 둘 이상 붙였으면 이름순 첫 번째로 센다. shortcut: "_"는 공백으로 되돌려 팀 이름에 "_"가 있으면 다른
    이름으로 읽힌다(지금 팀 이름에는 없다). 그런 팀을 쓰게 되면 설정의 팀 이름과 라벨을 맞대어 찾도록 올린다.
+13. 팀은 Jira 그룹이다([jira.teams] 팀 → 그룹 이름, contracts 설계 의도 8). 구성원은 그룹 구성원 목록(활성 사용자만)으로
+   읽는다. 미해결 수는 "assignee = 그 사람 AND statusCategory != Done" 검색 결과를 끝까지 세고, 최근에 다룬 이슈 ID 를
+   reconcileIssues 로 함께 보낸다(설계 의도 10). 처음에는 approximate-count 를 썼는데, 색인이라 방금 등록한 이슈가 몇 초 늦게
+   세어져 연달아 등록한 두 건이 같은 사람에게 갔다(2026-11-25 KAN-11·12). approximate-count 는 reconcileIssues 를 받지 않아
+   검색으로 바꿨다. 그룹 구성원 읽기에는 "사용자 및 그룹 찾아보기" 권한이 필요하다(사이트 관리자에게 있음).
 """
 
 import httpx2
@@ -42,7 +47,7 @@ from triage_eval.contracts import NO_MODULE, split_modules
 from triage_service import config
 from triage_service.bts import clients
 from triage_service.bts.common import call, description_lines
-from triage_service.contracts import CLOSED, STATUSES, BtsState, BtsTicket, Issue, Milestone, Ticket, TrackerError
+from triage_service.contracts import CLOSED, STATUSES, BtsState, BtsTicket, Issue, Member, Milestone, Ticket, TrackerError
 
 
 class JiraTracker:
@@ -80,8 +85,9 @@ class JiraTracker:
         if issue.milestone:   # 설계 의도 11
             fields["fixVersions"] = [{"name": issue.milestone}]
         if issue.team:   # 설계 의도 6
-            fields["assignee"] = {"accountId": self.s["teams"][issue.team]}
             fields["labels"].append(team_label(issue.team))
+        if issue.assignee:   # 설계 의도 13
+            fields["assignee"] = {"accountId": issue.assignee}
         resp = call(self.http, "POST", "/rest/api/3/issue", json={"fields": fields}, creating=True).json()
         self.seen(resp["key"], resp["id"])
         return self.ticket(resp["key"])
@@ -103,12 +109,13 @@ class JiraTracker:
         return {i["key"]: BtsState(name(i["fields"]["status"]), (i["fields"].get("assignee") or {}).get("displayName", ""),
                                    i["fields"].get("updated", "")) for i in issues}
 
-    def update(self, key: str, status: str = "", team: str = "", comment: str = "") -> None:   # 설계 의도 9
-        if team:
-            others = [{"remove": team_label(t)} for t in self.s["teams"] if t != team]
-            call(self.http, "PUT", f"/rest/api/3/issue/{key}", json={
-                "fields": {"assignee": {"accountId": self.s["teams"][team]}},
-                "update": {"labels": [*others, {"add": team_label(team)}]}})
+    def update(self, key: str, status: str = "", team: str = "", comment: str = "", assignee: str = "") -> None:   # 설계 의도 9
+        if team or assignee:
+            body = {"fields": {"assignee": {"accountId": assignee}}} if assignee else {}
+            if team:
+                others = [{"remove": team_label(t)} for t in self.s["teams"] if t != team]
+                body["update"] = {"labels": [*others, {"add": team_label(team)}]}
+            call(self.http, "PUT", f"/rest/api/3/issue/{key}", json=body)
         if status:
             moves = call(self.http, "GET", f"/rest/api/3/issue/{key}/transitions").json()["transitions"]
             move = next((t for t in moves if name(t["to"]) == status), None)
@@ -153,14 +160,55 @@ class JiraTracker:
             out.append(f"완료 범주 상태가 둘 이상입니다: {', '.join(done)} (Closed 하나만 둡니다)")
         return out
 
+    def members(self, team: str) -> list[Member]:   # 설계 의도 13
+        group, out, start = self.s["teams"][team], [], 0
+        while True:
+            page = call(self.http, "GET", "/rest/api/3/group/member",
+                        params={"groupname": group, "startAt": start, "maxResults": 50}).json()
+            out += [Member(u["accountId"], u.get("displayName") or u["accountId"]) for u in page.get("values", [])
+                    if u.get("active", True) and u.get("accountType", "atlassian") == "atlassian"]
+            start += len(page.get("values", []))
+            if page.get("isLast", True) or not page.get("values"):
+                return out
+
+    def lead(self, team: str) -> str:
+        return self.s.get("leads", {}).get(team, "")
+
+    def open_count(self, member: str) -> int:   # 설계 의도 13
+        jql = f'project = "{self.s["project_key"]}" AND assignee = "{member}" AND statusCategory != Done'
+        recent = list(self.ids.values())[-config.SYNC_CHUNK:]   # 설계 의도 10 — 방금 등록·배정한 이슈도 바로 센다
+        n, token = 0, None
+        while True:
+            page = call(self.http, "GET", "/rest/api/3/search/jql", params={
+                "jql": jql, "fields": "id", "maxResults": 1000,
+                **({"reconcileIssues": recent} if recent else {}), **({"nextPageToken": token} if token else {})}).json()
+            n += len(page.get("issues", []))
+            token = page.get("nextPageToken")
+            if page.get("isLast", True) or not token:
+                return n
+
+    def me(self) -> str:
+        return call(self.http, "GET", "/rest/api/3/myself").json()["accountId"]
+
     def check_assignees(self) -> list[str]:
-        """[jira.teams] 의 계정이 이 프로젝트의 담당자가 될 수 있는지 (연결 확인 --check)."""
+        """[jira.teams] 의 그룹마다 구성원이 있고 그 구성원이 이 프로젝트의 담당자가 될 수 있는지, 팀장이 그룹 구성원인지 (--check)."""
         out = []
-        for team, account in self.s.get("teams", {}).items():
-            found = call(self.http, "GET", "/rest/api/3/user/assignable/search",
-                         params={"project": self.s["project_key"], "accountId": account}).json()
-            if not any(u.get("accountId") == account for u in found):
-                out.append(f"{team}: 계정 {account} 은 {self.s['project_key']} 의 담당자가 될 수 없습니다")
+        for team in self.s.get("teams", {}):
+            try:
+                found = self.members(team)
+            except TrackerError as e:
+                out.append(f"{team}: 그룹 {self.s['teams'][team]} 을 읽지 못했습니다 — {e}")
+                continue
+            if not found:
+                out.append(f"{team}: 그룹 {self.s['teams'][team]} 에 구성원이 없습니다")
+            for m in found:
+                ok = call(self.http, "GET", "/rest/api/3/user/assignable/search",
+                          params={"project": self.s["project_key"], "accountId": m.id}).json()
+                if not any(u.get("accountId") == m.id for u in ok):
+                    out.append(f"{team}: {m.name} 은 {self.s['project_key']} 의 담당자가 될 수 없습니다")
+            lead = self.lead(team)
+            if lead and found and lead not in {m.id for m in found}:
+                out.append(f"{team}: 팀장 계정 {lead} 이 그룹 {self.s['teams'][team]} 의 구성원이 아닙니다")
         return out
 
 

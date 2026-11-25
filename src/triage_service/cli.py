@@ -49,7 +49,7 @@ def main(argv: list[str] | None = None) -> int:
             print("자동 배정 계정 문제:\n- " + "\n- ".join(missing))
             return 1
         teams = assign.teams(loaded["assign"])
-        print(f"자동 배정: 팀 {', '.join(teams)} — 담당자 계정 확인" if teams else "자동 배정: 쓰지 않음([assign] 없음)")
+        print(f"자동 배정: 팀 {', '.join(teams)} — 그룹·구성원·팀장 확인" if teams else "자동 배정: 쓰지 않음([assign] 없음)")
         if no_status:
             print("BTS 상태 문제:\n- " + "\n- ".join(no_status))
             return 1

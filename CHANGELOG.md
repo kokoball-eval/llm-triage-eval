@@ -14,9 +14,11 @@
 - `/mine` — BTS 토큰 주인(QA팀 구성원)의 내 차례(QA Review 담당자가 나, Resolve는 QA 담당이 나), 넘긴 이슈(In Dev·Check), 병목(기준 일수 초과, `config.BOTTLENECK_DAYS`: QA Review 2·Resolve 2·In Dev 7·Check 14일)을 보인다. 머문 기간은 상태 변화 기록에서 센다.
 - 동기화가 BTS 계정(`tracker.me()`)을 QA팀 구성원 이름으로 풀어 기억한다(`Syncer.me`). 실패하면 이전 값을 두고 `/mine`에만 이유를 보인다(연결 표시는 티켓 동기화 결과만 따른다). 계산은 `sync.mine()`.
 - 가짜 BTS의 상태 조회가 담당 구성원을 돌려주게 고쳤다(실제 BTS와 같게). 실제 Jira KAN·Redmine으로 화면 확인.
-- **Resolve 접수:** 서비스가 등록했지만 QA 담당이 없는 건(바로 개발 배정)이 Resolve가 되면 동기화가 담당자를 QA팀장으로 바꾼다(한 번만, 실패하면 다시 시도, 기록 `회귀 접수`). 동기화가 BTS에 쓰는 유일한 경우. 실제 Jira KAN-17·Redmine #11 확인.
+- **Resolve 접수:** 서비스가 등록했지만 QA 담당이 없는 건(바로 개발 배정)이 Resolve가 되면 동기화가 담당자를 QA팀 구성원 중 미해결이 가장 적은 사람으로 바꾼다(한 번만, 실패하면 다시 시도, 기록 `회귀 접수`). 동기화가 BTS에 쓰는 유일한 경우.
+- **회귀 테스트 실패:** 상태를 In Dev로 돌리면서 담당을 지금 담당 팀의 구성원(미해결 최소)으로 바꿔, 접수로 QA에 가 있던 담당이 개발에 돌아가게 한다.
+- 실제 Jira KAN-17·18, Redmine #11·12 확인.
 - `triage-serve --check`가 QA팀 그룹 안에 표시 이름이 같은 구성원이 있으면 경고한다.
-- 시험 16개 추가(543개).
+- 시험 22개 추가(549개).
 
 ### 변경 (서비스 S5-5a: 팀 = BTS 그룹, 담당 = 구성원)
 - 설정 `[jira.teams]`·`[redmine.teams]`는 팀 → BTS 그룹(Jira 그룹 이름, Redmine 그룹 번호), 새 `[<bts>.leads]`는 팀 → 팀장 계정(QA 필수)

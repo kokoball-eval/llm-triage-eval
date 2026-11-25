@@ -23,6 +23,10 @@
    BTS 코멘트 끝에 붙인다. 자동 배정을 쓰지 않으면([assign] 없음) 팀장이 없으므로 긴급 사인 요청 건도 재현 확인으로 넘긴다.
 6. 등록 직후 첫 상태(assign.first_status)도 같은 길(write)로 쓴다. 새 티켓은 BTS 가 정한 첫 상태(QA Review)로 생기므로 다를
    때만 바꾼다. 실패해도 티켓은 이미 있으니 등록은 성공으로 두고 기록에 실패를 남긴다(review.py).
+8. 회귀 테스트 실패는 In Dev 로 돌리면서 담당을 지금 담당 팀(team_now)의 구성원 중 미해결이 가장 적은 사람으로 바꾼다. 바로 개발로
+   배정했다가 Resolve 접수(sync 설계 의도 14)로 QA 구성원이 담당이 된 건은 실패해도 담당이 QA 에 남아, 개발은 알림을 못 받고 QA 화면에서도
+   사라지는 구멍이 있었다. QA 팀이었던 건은 [모듈] 규칙의 팀으로 가고, 그것도 QA팀이면(모듈 없음) 담당은 두고 상태만 바꾼다. 기존 이슈에 연결한 건도 담당은 건드리지 않는다. 자동 배정을 쓰지 않으면 상태만 바꾼다. 넘길 팀을 사람이 고르는
+   입력은 두지 않는다(실패는 원래 팀으로 돌려주는 동작이라).
 """
 
 import threading
@@ -56,6 +60,12 @@ def allowed(status: str | None, urgent: bool = False) -> list[str]:
     return [a for a, (_, ok, _, _) in ACTIONS.items() if status in ok and a != skip]
 
 
+def team_now(rec: dict, log: list[dict]) -> str:
+    """지금 담당 팀(설계 의도 8) — 재현 확인으로 바꾼 팀이 있으면 그것, 없으면 등록 때 배정한 팀, 없으면 빈 문자열."""
+    moved = [a["team"] for a in log if a["team"]]
+    return moved[-1] if moved else (rec["assignment"] or {}).get("team") or ""
+
+
 def urgent(rec: dict) -> bool:
     return (rec.get("final_fields") or {}).get("처리") == assign.URGENT
 
@@ -83,6 +93,12 @@ def act(store: Store, tracker, rid: int, action: str, comment: str = "", team: s
             raise ValueError([f"설정에 없는 팀입니다: {new_team!r}"])
         if new_team == rules["qa"]:
             raise ValueError([f"{label}은(는) 개발팀으로 넘기는 동작입니다. [모듈]로 팀을 정할 수 없으니 넘길 팀을 고르세요"])
+    if action == "fail" and rules and not (rec["assignment"] or {}).get("linked_existing"):   # 설계 의도 8 — 기존 이슈에 연결한 건은 담당을 건드리지 않는다
+        new_team = team_now(rec, store.qa_log().get(rid, []))
+        if new_team not in assign.teams(rules) or new_team == rules["qa"]:   # QA팀·모르는 팀에 있던 건은 모듈 규칙의 팀으로
+            new_team = assign.dev_team(rules, rec["final_fields"])
+        if new_team == rules["qa"]:   # [모듈]이 없어 규칙도 QA팀이면 담당은 두고 상태만 바꾼다(QA 로 되돌리지 않는다)
+            new_team = ""
     with _lock:
         who = {}
         try:

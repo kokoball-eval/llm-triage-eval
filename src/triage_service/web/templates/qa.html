@@ -24,7 +24,7 @@
 <div class="box{% if result.errors or result.missing %} error{% endif %}">
   <strong>{{ result.synced }}건을 읽었습니다.</strong>
   {% if result.milestones %}<br>마일스톤: {% for name, n in result.milestones %}{{ name }} {{ n }}건{% if not loop.last %} · {% endif %}{% endfor %} (<a href="/">첫 화면</a>에서 성과 보기){% endif %}
-  {% if result.intake %}<br>개발 배정 건이 Resolve 가 되어 QA팀장에게 회귀 테스트를 배정했습니다: {{ result.intake | join(", ") }}{% endif %}
+  {% if result.intake %}<br>개발 배정 건이 Resolve 가 되어 QA팀에 회귀 테스트를 배정했습니다: {{ result.intake | join(", ") }}{% endif %}
   {% if result.missing %}<br>BTS에서 찾지 못한 티켓: {{ result.missing | join(", ") }} (지워졌거나 접근 권한 밖일 수 있습니다. 이전에 읽은 값은 그대로 둡니다.){% endif %}
   {% for e in result.errors %}<br>읽지 못했습니다 — {{ e }} (이전에 읽은 값은 그대로 둡니다.){% endfor %}
 </div>

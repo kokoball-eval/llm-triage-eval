@@ -31,11 +31,15 @@
 12. QA 동작은 상세 화면에서만 누른다(POST /reports/{id}/qa). 원문과 확정한 8칸을 보며 판단하게 하려는 것이다. 버튼은 마지막으로
    읽은 BTS 상태에서 할 수 있는 동작만 보이고, 실제 허용 여부는 qa.act 가 BTS 를 다시 읽어 정한다. 결과는 QA 기록 표로 보인다.
 13. 첫 화면 맨 위에 마일스톤 성과 카드를 둔다(QA 성과는 마일스톤 단위로 몇 건을 Closed 했는가다). 마일스톤 목록과 티켓은
-   [지금 동기화]로 읽어 둔 값이라 첫 화면을 열어도 BTS 를 부르지 않는다. 검토 화면의 마일스톤 칸도 읽어 둔 출시 전 버전만
+   동기화로 읽어 둔 값을 보인다(S5-4d 부터는 열 때 오래됐으면 뒤에서 동기화한다, 설계 의도 15). 검토 화면의 마일스톤 칸도 읽어 둔 출시 전 버전만
    보이고 기본값은 현재 마일스톤이다(sync 설계 의도 9).
 14. 대시보드의 QA 지표도 마일스톤 단위다(metrics 설계 의도 8). 고른 마일스톤이 없거나 모르는 이름이면 현재 마일스톤이고,
    기간 필터와 마일스톤은 서로의 값을 주소에 남겨 한쪽을 바꿔도 다른 쪽이 유지된다. 모든 마일스톤을 출시했으면 첫 화면과
    대시보드는 마지막 마일스톤을 보인다(읽어 둔 마일스톤이 있는데 "없다"고 안내하지 않게, 독립 검토에서 발견).
+15. 첫 화면·QA 보드·대시보드는 열 때 마지막 동기화가 오래됐으면 뒤에서 동기화를 시작하고(sync 설계 의도 10), 읽어 둔 값으로
+   바로 연다. 도는 동안은 상세 화면처럼 자동으로 다시 읽어 끝난 값을 보인다. 모든 화면 머리에 BTS 연결 표시(sync 설계 의도 12)를
+   두고, 누르면 마지막 동기화 결과가 있는 QA 화면으로 간다. 설계 의도 11 의 "BTS 를 부르는 것은 버튼뿐"은 이것으로 바뀌었다.
+   등록과 QA 동작은 동기화와 같은 잠금 안에서 한다(sync 설계 의도 11).
 """
 
 from contextlib import asynccontextmanager
@@ -96,8 +100,15 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
                 return PlainTextResponse("다른 사이트에서 보낸 요청은 받지 않습니다", status_code=403)
         return await call_next(request)
 
+    syncer = app.state.syncer = sync.Syncer(store, tracker)   # app.state: 시험이 뒤에서 도는 동기화를 기다릴 수 있게
+
     def page(request: Request, name: str, status_code: int = 200, **ctx) -> HTMLResponse:
-        return templates.TemplateResponse(request, name, ctx, status_code=status_code)
+        return templates.TemplateResponse(request, name, {"bts": syncer.status(), **ctx}, status_code=status_code)
+
+    def synced_page(request: Request, name: str, **ctx) -> HTMLResponse:
+        """설계 의도 15 — 첫 화면·QA 보드·대시보드: 때가 됐으면 뒤에서 동기화하고 읽어 둔 값으로 바로 연다."""
+        syncer.start()
+        return page(request, name, auto_refresh=True, **ctx)
 
     def detail_page(request: Request, rec: dict, values: dict, problems: list, status_code: int = 200,
                     team: str = assign.AUTO, repro: str = assign.AUTO, milestone: str | None = None, **ctx) -> HTMLResponse:
@@ -128,7 +139,7 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
     def home(request: Request, milestone: str = ""):   # 설계 의도 8·13
         milestones = store.milestones()
         name = shown(milestones, milestone)
-        return page(request, "home.html", counts=counts(), recent=store.list()[:5], milestones=milestones,
+        return synced_page(request, "home.html", counts=counts(), recent=store.list()[:5], milestones=milestones,
                     summary=sync.milestone_summary(store, name) if name else None)
 
     @app.get("/reports", response_class=HTMLResponse)
@@ -143,17 +154,15 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
         return page(request, "new.html", status_code=status_code, form=form, error=error, notice=notice,
                     existing=existing, sources_on=on, sources_off=sources_off, mode=mode)
 
-    def qa_page(request: Request, result=None):   # 설계 의도 11
-        return page(request, "qa.html", board=sync.board(sync.targets(store), store.qa_log()), result=result)
-
     @app.get("/qa", response_class=HTMLResponse)
-    def qa_board(request: Request):
-        return qa_page(request)
+    def qa_board(request: Request):   # 설계 의도 11·15 — 마지막 동기화 결과(자동 포함)를 함께 보인다
+        return synced_page(request, "qa.html", board=sync.board(sync.targets(store), store.qa_log()),
+                           result=syncer.last and syncer.last["result"])
 
     @app.post("/qa/sync")
     async def qa_sync(request: Request):
-        result = await run_in_threadpool(sync.run, store, tracker)
-        return qa_page(request, result)
+        result = await run_in_threadpool(syncer.now)
+        return page(request, "qa.html", board=sync.board(sync.targets(store), store.qa_log()), result=result)
 
     def shown(milestones: list[dict], wanted: str) -> str:
         """설계 의도 13·14 — 고른 마일스톤, 없으면 현재, 모두 출시했으면 마지막 마일스톤."""
@@ -166,7 +175,7 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
         milestones = store.milestones()
         name = shown(milestones, milestone)
         q = metrics.qa(store.tickets(name), store.ticket_changes(), store.list(flow.REGISTERED)) if name else None
-        return page(request, "dashboard.html", m=metrics.compute(store.list(), store.history(), period),
+        return synced_page(request, "dashboard.html", m=metrics.compute(store.list(), store.history(), period),
                     milestones=milestones, milestone=name, q=q)
 
     @app.get("/new", response_class=HTMLResponse)
@@ -215,7 +224,7 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
         repro = t if isinstance(t := form.get("repro", assign.AUTO), str) else assign.AUTO
         milestone = t if isinstance(t := form.get("milestone", ""), str) else ""
         try:   # DB·BTS 호출은 기다리는 동안 다른 요청을 막지 않게 스레드에서 (설계 의도 6)
-            await run_in_threadpool(review.register, store, tracker, rid, values, assign_rules, team, repro, milestone)
+            await run_in_threadpool(syncer.hold, review.register, store, tracker, rid, values, assign_rules, team, repro, milestone)
         except ValueError as e:
             return detail_page(request, store.get(rid), values, e.args[0], 422, team, repro, milestone)
         except flow.FlowError as e:
@@ -233,7 +242,7 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
         action, comment, team = (v if isinstance(v := form.get(k, d), str) else d
                                  for k, d in (("action", ""), ("comment", ""), ("team", assign.AUTO)))
         try:
-            result = await run_in_threadpool(qa.act, store, tracker, rid, action, comment, team, assign_rules)
+            result = await run_in_threadpool(syncer.hold, qa.act, store, tracker, rid, action, comment, team, assign_rules)
         except ValueError as e:
             return qa_refused(request, rid, e.args[0], 422, comment, team)
         except qa.Conflict as e:

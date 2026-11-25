@@ -214,7 +214,7 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
             tickets, changes = store.tickets(name), store.ticket_changes()
             everything = [t for m in milestones for t in store.tickets(m["name"])]
             ctx = {"ms": sync.milestone_summary(store, name), "q": metrics.qa(tickets, changes), "r": metrics.response(tickets, changes),
-                   "sp": metrics.sprint(everything, chosen)}
+                   "sp": metrics.sprint(everything, chosen, store.carries())}
         return synced_page(request, "dashboard.html", milestones=milestones, milestone=name, sprints=sprints, sprint=chosen,
                            sprint_label=sprint_mod.label, **ctx)
 

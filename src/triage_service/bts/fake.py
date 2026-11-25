@@ -84,13 +84,15 @@ class FakeTracker:
     def set_status(self, key: str, status: str) -> None:   # 설계 의도 3
         self.update(key, status)
 
-    def update(self, key: str, status: str = "", team: str = "", comment: str = "", assignee: str = "") -> None:   # 설계 의도 4
+    def update(self, key: str, status: str = "", team: str = "", comment: str = "", assignee: str = "", sprint: str = "") -> None:   # 설계 의도 4
         t = self.get(key)
         issue = {k: v for k, v in t.items() if k not in ("key", "created_at", "status")} | {"updated": now()}
         if team:
             issue["team"] = team
         if assignee:
             issue["assignee"] = assignee
+        if sprint:
+            issue["sprint"] = sprint
         if comment:
             issue["comments"] = [*t.get("comments", []), comment]
         with connect(self.path) as c:

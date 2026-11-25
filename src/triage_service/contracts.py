@@ -145,7 +145,7 @@ class Tracker(Protocol):
     def snapshot(self, keys: list[str]) -> dict[str, BtsState]: ...   # 티켓 여러 건의 상태(BTS 에 없는 키는 빠진다)
 
     def update(self, key: str, status: str = "", team: str = "", comment: str = "",
-               assignee: str = "") -> None: ...   # 빈 값은 바꾸지 않는다 (설계 의도 5·8)
+               assignee: str = "", sprint: str = "") -> None: ...   # 빈 값은 바꾸지 않는다 (설계 의도 5·8·9)
 
     def check_statuses(self) -> list[str]: ...   # BTS 에 없는 STATUSES 이름 (연결 확인 --check)
 

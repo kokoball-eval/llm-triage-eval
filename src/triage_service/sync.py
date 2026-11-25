@@ -46,13 +46,22 @@
    이슈는 서비스 기록이 없어 대상이 아니다. 처음 배정 팀이 QA팀인 건(S5-5a 이전 기록 포함)과 쓰기 직전에 BTS 상태가 Resolve 가 아닌 건도 건너뛴다.
    shortcut: 쓰기 중 코멘트만 실패하면 재시도가 그 사이 사람이 바꾼 담당자를 되돌릴 수 있고, 계속 실패하면 동기화마다 오류
    기록이 쌓인다.
+15. 스프린트 자동 이월(carry, S5-6b): 목표 업데이트가 지났는데 Closed 가 아닌 티켓의 스프린트를 지금 진행 중인 업데이트로 옮긴다
+   (2026-11-25 경민 결정: 사람이 병목이라 사람 손 없이 돈다). 업데이트 날에는 아직 진행 중이라 옮기지 않고 다음 날부터 대상이다.
+   Check(보류)도 미해결이라 옮긴다. 대상은 출시 전 마일스톤의 티켓 전부다(서비스가 등록하지 않은 것 포함, 출시한 마일스톤은 마지막
+   값을 그대로 둔다). 옮기는 곳은 몇 주 밀렸어도 지금 진행 중인 업데이트다. 쓰기 직전에 BTS 상태를 다시 읽어 그사이 Closed 가
+   됐으면 옮기지 않는다. 동기화가 BTS 에 쓰는 두 번째 경우다(첫째는 설계 의도 14). 스프린트 표식을 바꾼 뒤 이월 기록
+   (store.save_carry)을 남기고 그 다음에 BTS 코멘트("이월 N회")를 쓴다 — 코멘트만 실패해도 표식은 이미 옮겨졌으니 횟수가 새지 않게
+   기록을 먼저 남기고 실패는 동기화 결과에 보인다. 표식 쓰기가 실패하면 조건이 그대로라 다음 동기화에서 다시 시도한다. 이월 횟수는
+   기록의 줄 수다. 방금(config.CARRY_RECHECK_MINUTES) 옮긴 티켓은 다시 옮기지 않는다 — Jira 검색은 색인이라 바꾼 라벨이 몇 초 늦게
+   읽혀 두 번 이월로 세는 것을 막는다(독립 검토 지적). 사람이 표식을 지난 날짜로 되돌리면 다음 동기화에서 다시 옮기고 횟수가 는다. shortcut: 이월 시각은 동기화가 발견한 때라 목요일이 지나고 처음 동기화할 때 옮겨진다.
 """
 
 import threading
 from collections import Counter
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
-from triage_service import assign, config, flow, qa
+from triage_service import assign, config, flow, qa, sprint
 from triage_service.contracts import CHECK, CLOSED, IN_DEV, QA_REVIEW, RESOLVE, STATUSES, Member
 from triage_service.store import Store, now
 
@@ -130,6 +139,37 @@ def intake(store: Store, tracker, qa_team: str, result: dict) -> dict:
     return result
 
 
+def carry(store: Store, tracker, result: dict, today: date | None = None) -> dict:
+    """설계 의도 15 — 목표 업데이트가 지난 미완료 티켓을 지금 진행 중인 업데이트로 옮긴다. result 에 "carried": [옮긴 티켓 키] 를 더하고
+    실패 이유는 result["errors"] 에 보탠다. 한 건이 실패해도 나머지를 계속한다."""
+    result = {**result, "errors": list(result["errors"]), "carried": []}
+    now_ = sprint.current(today or date.today()).isoformat()
+    done = store.carries()
+    for m in store.milestones():
+        if m["released"]:
+            continue
+        for t in store.tickets(m["name"]):
+            if not t["sprint"] or t["sprint"] >= now_ or t["status"] == CLOSED:
+                continue
+            last = (done.get(t["key"]) or [(None, None, None)])[-1]
+            if last[2] == now_ and datetime.now() - datetime.fromisoformat(last[0]) < timedelta(minutes=config.CARRY_RECHECK_MINUTES):
+                continue   # 방금 옮겼다 — 검색 색인이 늦어 옛 값이 읽힌 것이다
+            try:
+                if tracker.status(t["key"]) == CLOSED:   # 읽어 둔 상태가 오래됐을 수 있다 — 지금 상태를 다시 본다
+                    continue
+                tracker.update(t["key"], sprint=now_)
+                store.save_carry(t["key"], t["sprint"], now_, now())
+            except Exception as e:
+                result["errors"].append(f"{t['key']} 스프린트 이월: {e}")
+                continue
+            result["carried"].append(t["key"])   # 표식은 옮겨졌고 기록도 남았다 — 코멘트가 실패해도 센다
+            try:
+                tracker.update(t["key"], comment=f"[트리아지 서비스 · 스프린트 이월] {sprint.label(t['sprint'])} → {sprint.label(now_)} (이월 {len(done.get(t['key'], [])) + 1}회)")
+            except Exception as e:
+                result["errors"].append(f"{t['key']} 스프린트 이월 코멘트: {e}")
+    return result
+
+
 class Syncer:
     """설계 의도 10~12 — 동기화를 한 번에 하나만 돌리고 마지막 결과를 기억한다."""
 
@@ -181,6 +221,7 @@ class Syncer:
             result = run(self.store, self.tracker)
             if self.qa_team:
                 result = intake(self.store, self.tracker, self.qa_team, result)
+            result = carry(self.store, self.tracker, result)
         except Exception as e:   # run 은 묶음별 실패를 모으지만, 저장 실패 같은 것도 표시에 남긴다
             result = {"synced": 0, "missing": [], "errors": [f"동기화 실패: {e}"], "milestones": []}
         if self.qa_team:   # 설계 의도 13 — 실패하면 이전 값을 그대로 둔다

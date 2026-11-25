@@ -33,6 +33,8 @@
 11. 스프린트(sprint.py, 목표 수정 버전) 현황은 그 업데이트를 목표로 단 BTS 티켓으로 센다: 목표 건수, Closed 와 완료율, 남은 건의
    상태별 건수. 표식은 마일스톤 티켓을 읽을 때 함께 읽으므로 마일스톤이 없는 티켓은 빠진다. S5-5c 의 "최근 7일 처리량"은 이
    스프린트 현황으로 바꿨다(경민 결정: 주간 단위는 기간이 아니라 이슈의 목표 업데이트로 본다).
+12. 스프린트 이월(sync 설계 의도 15) 지표: 이 스프린트로 넘어온 건수와 이월 2회 이상인 미해결 목록. 이월 횟수는 store.carries 의 줄
+   수다. 두 번 이상 밀린 이슈가 병목이라는 경민의 판단이다.
 """
 
 import math
@@ -209,10 +211,15 @@ def response(tickets: list[dict], changes: dict, now: datetime | None = None) ->
             "members": sorted(((n, *v) for n, v in members.items()), key=lambda x: (-x[1], x[0]))}
 
 
-def sprint(tickets: list[dict], name: str) -> dict:
-    """설계 의도 11 — 목표 스프린트 하나의 완료 현황. tickets 는 마일스톤 티켓 전체(store.tickets 를 모은 것)."""
+def sprint(tickets: list[dict], name: str, carries: dict | None = None) -> dict:
+    """설계 의도 11·12 — 목표 스프린트 하나의 완료 현황. tickets 는 마일스톤 티켓 전체(store.tickets 를 모은 것), carries 는
+    store.carries(). "carried_in": 지난 업데이트에서 넘어와 이 스프린트가 된 건수, "repeat": 이월 2회 이상인 미해결(많은 순)."""
+    carries = carries or {}
     mine = [t for t in tickets if t.get("sprint") == name]
     left = Counter(t["status"] for t in mine if t["status"] != CLOSED)
     closed = len(mine) - sum(left.values())
+    repeat = sorted(({"key": t["key"], "title": t["title"], "status": t["status"], "assignee": t["assignee"], "n": len(carries[t["key"]])}
+                     for t in mine if t["status"] != CLOSED and len(carries.get(t["key"], [])) >= 2), key=lambda x: (-x["n"], x["key"]))
     return {"name": name, "total": len(mine), "closed": closed, "rate": ratio(closed, len(mine))["pct"],
-            "left": [(s, left[s]) for s in FLOW] + sorted((s, n) for s, n in left.items() if s not in FLOW)}
+            "left": [(s, left[s]) for s in FLOW] + sorted((s, n) for s, n in left.items() if s not in FLOW),
+            "carried_in": sum(1 for t in mine if carries.get(t["key"]) and carries[t["key"]][-1][2] == name), "repeat": repeat}

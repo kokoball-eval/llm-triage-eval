@@ -23,7 +23,8 @@
    바꾼 팀, 코멘트, 오류. 실패하거나 일부만 된 것도 남겨, BTS 와 서비스 화면이 다를 때 무엇을 보냈는지 확인할 수 있게 한다.
    재현 확인으로 바꾼 팀은 이 기록의 마지막 팀이 현재 팀이다(assignment 는 등록 때 배정으로 두어 S5-4c 의 "사람이 바꾼 비율"을 지킨다).
 11. 마일스톤(BTS 버전) 목록은 bts_milestones 에, 마일스톤에 속한 BTS 티켓 전체(서비스가 등록하지 않은 것 포함)는 bts_tickets 에
-   티켓 키로 둔다(팀은 BTS 팀 표식, 스프린트는 BTS 스프린트 표식 — contracts 설계 의도 7·9). 리포트(reports)와는 티켓 키로만 이어진다. 상태가 처음이거나 바뀐 것을 발견하면 bts_ticket_changes 에 한 줄
+   티켓 키로 둔다(팀은 BTS 팀 표식, 스프린트는 BTS 스프린트 표식 — contracts 설계 의도 7·9). 스프린트 이월(sync 설계 의도 15)은
+   티켓 키로 sprint_carries 에 한 줄씩 남긴다(이월 횟수의 근거). 리포트(reports)와는 티켓 키로만 이어진다. 상태가 처음이거나 바뀐 것을 발견하면 bts_ticket_changes 에 한 줄
    남긴다(설계 의도 9 와 같은 방식, 재오픈 수의 근거). 동기화에서 그 마일스톤 검색에 더는 나오지 않는 티켓은 마일스톤을 비운다
    (BTS 에서 다른 버전으로 옮겼거나 버전을 뺀 경우). shortcut: 티켓 하나에 마일스톤 하나 — Jira 는 버전을 여러 개 걸 수 있지만
    마지막에 읽은 마일스톤에만 센다. 한 티켓을 여러 마일스톤에 거는 운영을 하게 되면 키를 (티켓, 마일스톤)으로 올린다.
@@ -94,6 +95,12 @@ CREATE TABLE IF NOT EXISTS bts_ticket_changes (
     key TEXT NOT NULL,
     at TEXT NOT NULL,
     src TEXT,
+    dst TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS sprint_carries (
+    key TEXT NOT NULL,
+    at TEXT NOT NULL,
+    src TEXT NOT NULL,
     dst TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS qa_actions (
@@ -280,6 +287,20 @@ class Store:
     def tickets(self, milestone: str):
         with connect(self.path) as c:
             return [dict(r) for r in c.execute("SELECT * FROM bts_tickets WHERE milestone = ? ORDER BY key", (milestone,))]
+
+    def save_carry(self, key: str, src: str, dst: str, at: str) -> None:
+        """스프린트 이월 한 줄과 저장해 둔 티켓의 스프린트 (sync 설계 의도 15)."""
+        with connect(self.path) as c:
+            c.execute("INSERT INTO sprint_carries (key, at, src, dst) VALUES (?, ?, ?, ?)", (key, at, src, dst))
+            c.execute("UPDATE bts_tickets SET sprint = ? WHERE key = ?", (dst, key))
+
+    def carries(self) -> dict:
+        """티켓 키 → [(이월한 시각, 이전 스프린트, 다음 스프린트)] 시간순 (sync 설계 의도 15)."""
+        out: dict = {}
+        with connect(self.path) as c:
+            for r in c.execute("SELECT key, at, src, dst FROM sprint_carries ORDER BY rowid"):
+                out.setdefault(r["key"], []).append((r["at"], r["src"], r["dst"]))
+        return out
 
     def ticket_changes(self) -> dict:
         """티켓 키 → [(발견한 시각, 이전 상태, 다음 상태)] 시간순 (설계 의도 11)."""

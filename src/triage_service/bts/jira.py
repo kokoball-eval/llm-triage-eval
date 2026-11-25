@@ -42,6 +42,8 @@
 14. 스프린트(contracts 설계 의도 9)는 "스프린트_<날짜>" 라벨이다. 팀 라벨처럼 개발자도 Jira 에서 보고 바꿀 수 있다. Jira 스프린트
    기능(애자일 보드)은 쓰지 않는다 — Redmine 에 없어 두 BTS 가 같은 방식으로 셀 수 없다. 사람이 둘 이상 붙였으면 가장 늦은
    날짜로 읽고, 업데이트 요일이 아닌 날짜 라벨은 무시한다.
+15. 스프린트를 바꿀 때(이월, S5-6b)는 이슈의 지금 라벨을 읽어 예전 스프린트 라벨을 모두 지우고 새 라벨을 붙인다. 지울 라벨의 이름을
+   어댑터가 알아야 해서 요청이 하나 늘지만, 사람이 둘 이상 붙인 스프린트 라벨도 함께 정리된다.
 """
 
 import httpx2
@@ -114,12 +116,17 @@ class JiraTracker:
         return {i["key"]: BtsState(name(i["fields"]["status"]), (i["fields"].get("assignee") or {}).get("displayName", ""),
                                    i["fields"].get("updated", "")) for i in issues}
 
-    def update(self, key: str, status: str = "", team: str = "", comment: str = "", assignee: str = "") -> None:   # 설계 의도 9
-        if team or assignee:
+    def update(self, key: str, status: str = "", team: str = "", comment: str = "", assignee: str = "", sprint: str = "") -> None:   # 설계 의도 9
+        if team or assignee or sprint:
             body = {"fields": {"assignee": {"accountId": assignee}}} if assignee else {}
+            labels = []
             if team:
-                others = [{"remove": team_label(t)} for t in self.s["teams"] if t != team]
-                body["update"] = {"labels": [*others, {"add": team_label(team)}]}
+                labels += [{"remove": team_label(t)} for t in self.s["teams"] if t != team] + [{"add": team_label(team)}]
+            if sprint:   # 설계 의도 15 — 붙어 있는 예전 스프린트 라벨을 모두 지우고 새로 붙인다
+                now = call(self.http, "GET", f"/rest/api/3/issue/{key}", params={"fields": "labels"}).json()["fields"].get("labels", [])
+                labels += [{"remove": x} for x in now if x.startswith(SPRINT) and x != SPRINT + sprint] +                           ([] if SPRINT + sprint in now else [{"add": SPRINT + sprint}])
+            if labels:
+                body["update"] = {"labels": labels}
             call(self.http, "PUT", f"/rest/api/3/issue/{key}", json=body)
         if status:
             moves = call(self.http, "GET", f"/rest/api/3/issue/{key}/transitions").json()["transitions"]

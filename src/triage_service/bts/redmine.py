@@ -97,7 +97,7 @@ class RedmineTracker:
     def statuses(self) -> dict[str, int]:
         return {s["name"]: s["id"] for s in call(self.http, "GET", "/issue_statuses.json").json()["issue_statuses"]}
 
-    def update(self, key: str, status: str = "", team: str = "", comment: str = "", assignee: str = "") -> None:   # 설계 의도 7
+    def update(self, key: str, status: str = "", team: str = "", comment: str = "", assignee: str = "", sprint: str = "") -> None:   # 설계 의도 7
         body = {}
         if status:
             ids = self.statuses()
@@ -108,6 +108,8 @@ class RedmineTracker:
             body["category_id"] = self.category(team)
         if assignee:
             body["assigned_to_id"] = int(assignee)
+        if sprint and self.s.get("sprint_field_id"):   # 설계 의도 12
+            body["custom_fields"] = [{"id": self.s["sprint_field_id"], "value": sprint}]
         if comment:
             body["notes"] = comment
         call(self.http, "PUT", f"/issues/{key}.json", json={"issue": body})

@@ -34,7 +34,14 @@
   {% endfor %}
 </nav>
 <p>목표 <strong>{{ sp.total }}</strong>건 · 완료 <strong>{{ sp.closed }}</strong>건{% if sp.total - sp.closed %} · 남음: {% for s, n in sp.left if n %}{{ s }} {{ n }}건{% if not loop.last %} · {% endif %}{% endfor %}{% endif %}</p>
-<p class="muted">BTS 스프린트 표식(Jira 스프린트_ 라벨, Redmine 스프린트 필드)으로 셉니다. 마일스톤에 들어 있지 않은 티켓은 빠집니다.</p>
+{% if sp.carried_in %}<p>지난 업데이트에서 넘어온 이슈 <strong>{{ sp.carried_in }}</strong>건</p>{% endif %}
+{% if sp.repeat %}
+<table>
+  <tr><th>이월 2회 이상</th><th>티켓</th><th>상태</th><th>담당자</th><th>이월</th></tr>
+  {% for t in sp.repeat %}<tr><td>{{ t.title }}</td><td style="white-space:nowrap">{{ t.key }}</td><td>{{ t.status }}</td><td>{{ t.assignee or "없음" }}</td><td><span class="late">{{ t.n }}회</span></td></tr>{% endfor %}
+</table>
+{% endif %}
+<p class="muted">BTS 스프린트 표식(Jira 스프린트_ 라벨, Redmine 스프린트 필드)으로 셉니다. 마일스톤에 들어 있지 않은 티켓은 빠집니다. 목표 업데이트가 지나도 닫히지 않은 이슈는 동기화가 진행 중인 업데이트로 옮깁니다.</p>
 
 <h2>대응 흐름</h2>
 <div class="flow">

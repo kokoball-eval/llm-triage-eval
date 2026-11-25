@@ -9,6 +9,12 @@
 
 ## [Unreleased]
 
+### 추가 (서비스 S5-6a: 스프린트 = 목표 수정 버전)
+
+- 스프린트는 매주 목요일 정기 업데이트(`config.SPRINT_WEEKDAY`)이고 이슈마다 목표 업데이트 날짜를 단다(`sprint.py`). 기본 목표는 발견한 날 다음 업데이트에서 우선순위별 주 수(`config.SPRINT_WEEKS`: Critical 0·Major 1·Minor 2·Trivial 3) 뒤, 긴급 사인 요청은 기준 업데이트. 검토 화면에서 바꿀 수 있다.
+- BTS 표식: Jira `스프린트_<날짜>` 라벨, Redmine 날짜 사용자 정의 필드(`sprint_field_id`). 계약 `Issue.sprint`·`BtsTicket.sprint`, 동기화가 마일스톤 티켓의 표식을 읽어 `bts_tickets.sprint` 에 저장(옛 DB 는 칸을 붙인다).
+- 대시보드의 "최근 7일 처리량"을 스프린트 현황(목표·완료·남은 상태별, 스프린트 선택)으로 바꿨다(`metrics.sprint`). 실제 Jira KAN-19·Redmine #13 확인. 시험 13개 추가(564개).
+
 ### 변경 (서비스 S5-5c: 대시보드 개편)
 
 - `/dashboard`는 QA팀 대응 현황만 보인다: 마일스톤 D-day·완료율, 최근 7일 닫힘·새로 들어옴·재오픈, 대응 흐름 4칸(QA Review → In Dev → Resolve, Check)과 칸별 병목(기준 일수 초과), 구성원별 부하, 팀별 미해결, 회귀 테스트(지금 Resolve·재오픈률·머문 시간). 계산은 `metrics.response()`.

@@ -43,12 +43,16 @@
 16. 검토 화면에서 규칙의 팀 그룹 구성원과 각자의 미해결 수를 보이고 담당자를 고르게 한다(assign 설계 의도 8·9). BTS 를
    부르므로 검토 대기 건을 열 때만 읽고, 읽지 못해도 화면은 열며 등록할 때 다시 읽는다. 고른 구성원은 팀을 "규칙대로"로 둘
    때만 쓴다 — 팀을 바꾸면 그 팀에서 규칙대로 정한다. 긴급 사인 요청은 QA팀장으로 고정이라 고르지 않는다.
-17. 대시보드(/dashboard)는 QA팀 대응 현황(마일스톤 진행·대응 흐름·최근 7일 처리량·팀별·구성원별 부하·회귀 테스트), 트리아지
+17. 대시보드(/dashboard)는 QA팀 대응 현황(마일스톤 진행·스프린트 현황·대응 흐름·팀별·구성원별 부하·회귀 테스트), 트리아지
    품질(/triage)은 모델과 검토 지표(기간별)로 나눈다(S5-5c, metrics 설계 의도 9). 보는 사람과 질문이 다르기 때문이다 — QA 리드는
    "지금 어디서 막혔나", 모델 운영자는 "모델이 얼마나 맞히나"를 본다.
+18. 검토 화면에서 목표 스프린트(sprint.py)를 고른다. 기본값은 리포트를 받은 날과 우선순위로 정한 규칙의 업데이트이고,
+   선택지는 지금 진행 중인 업데이트부터 6주다. 대시보드는 고른 스프린트(기본: 지금 진행 중)의 목표 이슈 완료 현황을 보인다.
+   스프린트 표식은 마일스톤 티켓에서 읽으므로 마일스톤이 없는 티켓은 세지 않는다.
 """
 
 from contextlib import asynccontextmanager
+from datetime import date
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -60,6 +64,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from triage_eval.contracts import ENUMS, FIELDS, MODULES, NO_MODULE, split_modules
 from triage_service import assign, config, flow, metrics, qa, review, sync
+from triage_service import sprint as sprint_mod   # 대시보드의 sprint 매개변수와 이름이 겹치지 않게
 from triage_service.bts import make_tracker, settings
 from triage_service.contracts import REPORTERS, TRACKS
 from triage_service import intake
@@ -128,7 +133,7 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
 
     def detail_page(request: Request, rec: dict, values: dict, problems: list, status_code: int = 200,
                     team: str = assign.AUTO, repro: str = assign.AUTO, milestone: str | None = None,
-                    member: str = assign.AUTO, **ctx) -> HTMLResponse:
+                    member: str = assign.AUTO, sprint_: str | None = None, **ctx) -> HTMLResponse:
         repro_now = assign.cs_repro(values, repro)
         suggested = assign.suggest(assign_rules, values, repro_now)
         milestones = store.milestones()   # 설계 의도 13
@@ -140,7 +145,10 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
                     dev_team=assign.dev_team(assign_rules, rec["final_fields"] or {}),
                     qa_log=store.qa_log().get(rec["id"], []),
                     open_milestones=[m for m in milestones if not m["released"]],
-                    milestone=sync.current(milestones) if milestone is None else milestone, **ctx)
+                    milestone=sync.current(milestones) if milestone is None else milestone,
+                    sprints=sprint_mod.window(date.today()), sprint_label=sprint_mod.label,   # 설계 의도 18
+                    sprint_=sprint_mod.default(date.fromisoformat(rec["created_at"][:10]), values.get("우선순위", ""),
+                                           values.get("처리") == assign.URGENT) if sprint_ is None else sprint_, **ctx)
 
     def get_or_404(rid: int) -> dict:
         rec = store.get(rid)
@@ -196,14 +204,19 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
         return sync.current(milestones) or (milestones[-1]["name"] if milestones else "")
 
     @app.get("/dashboard", response_class=HTMLResponse)
-    def dashboard(request: Request, milestone: str = ""):   # 설계 의도 14·17 — QA팀 대응 현황
+    def dashboard(request: Request, milestone: str = "", sprint: str = ""):   # 설계 의도 14·17·18 — QA팀 대응 현황
         milestones = store.milestones()
         name = shown(milestones, milestone)
+        sprints = sprint_mod.window(date.today(), before=2, after=3)
+        chosen = sprint if sprint in sprints else sprints[2]
         ctx = {}
         if name:
             tickets, changes = store.tickets(name), store.ticket_changes()
-            ctx = {"ms": sync.milestone_summary(store, name), "q": metrics.qa(tickets, changes), "r": metrics.response(tickets, changes)}
-        return synced_page(request, "dashboard.html", milestones=milestones, milestone=name, **ctx)
+            everything = [t for m in milestones for t in store.tickets(m["name"])]
+            ctx = {"ms": sync.milestone_summary(store, name), "q": metrics.qa(tickets, changes), "r": metrics.response(tickets, changes),
+                   "sp": metrics.sprint(everything, chosen)}
+        return synced_page(request, "dashboard.html", milestones=milestones, milestone=name, sprints=sprints, sprint=chosen,
+                           sprint_label=sprint_mod.label, **ctx)
 
     @app.get("/triage", response_class=HTMLResponse)
     def triage_quality(request: Request, period: str = "30"):   # 설계 의도 17 — BTS 를 읽지 않는 화면이라 자동 동기화하지 않는다
@@ -255,10 +268,11 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
         repro = t if isinstance(t := form.get("repro", assign.AUTO), str) else assign.AUTO
         milestone = t if isinstance(t := form.get("milestone", ""), str) else ""
         member = t if isinstance(t := form.get("member", assign.AUTO), str) and team == assign.AUTO else assign.AUTO   # 설계 의도 16
+        sprint_ = t if isinstance(t := form.get("sprint", ""), str) else ""
         try:   # DB·BTS 호출은 기다리는 동안 다른 요청을 막지 않게 스레드에서 (설계 의도 6)
-            await run_in_threadpool(syncer.hold, review.register, store, tracker, rid, values, assign_rules, team, repro, milestone, member)
+            await run_in_threadpool(syncer.hold, review.register, store, tracker, rid, values, assign_rules, team, repro, milestone, member, sprint_)
         except ValueError as e:   # 다시 그릴 때도 구성원을 BTS 에서 읽으므로 스레드에서 (설계 의도 6)
-            return await run_in_threadpool(detail_page, request, store.get(rid), values, e.args[0], 422, team, repro, milestone, member)
+            return await run_in_threadpool(detail_page, request, store.get(rid), values, e.args[0], 422, team, repro, milestone, member, sprint_)
         except flow.FlowError as e:
             return refused(request, rid, e)
         return go(rid)

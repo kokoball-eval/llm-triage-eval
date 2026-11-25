@@ -30,12 +30,14 @@
 11. 팀은 Redmine 그룹이다([redmine.teams] 팀 → 그룹 번호, contracts 설계 의도 8). 그룹은 프로젝트 구성원이어야 하고,
    구성원은 그룹 조회(include=users)로 읽는다 — 관리자 API 키가 필요하다. 담당자는 그룹이 아니라 구성원 한 사람으로 넣는다
    (Jira 와 같게). 미해결 수는 그 사람이 담당인 열린 일감 수(status_id=open, total_count)다.
+12. 스프린트(contracts 설계 의도 9)는 날짜 형식 사용자 정의 필드에 넣는다. 모듈 필드처럼 관리자가 만들어 번호를 설정
+   (sprint_field_id)에 두고, 없으면 넣지도 읽지도 않는다. 목록 응답에 사용자 정의 필드가 들어 있어 읽기 요청이 늘지 않는다.
 """
 
 import httpx2
 
 from triage_eval.contracts import NO_MODULE, split_modules
-from triage_service import config
+from triage_service import config, sprint
 from triage_service.bts import clients
 from triage_service.bts.common import call, description_lines, marker_line
 from triage_service.contracts import STATUSES, BtsState, BtsTicket, Issue, Member, Milestone, Ticket, TrackerError
@@ -74,8 +76,13 @@ class RedmineTracker:
         if issue.milestone:   # 설계 의도 10
             body["issue"]["fixed_version_id"] = self.version_id(issue.milestone)
         modules = [m for m in split_modules(issue.fields.get("모듈", "")) if m != NO_MODULE]
+        custom = []
         if modules and self.s.get("module_field_id"):   # 설계 의도 9
-            body["issue"]["custom_fields"] = [{"id": self.s["module_field_id"], "value": modules}]
+            custom.append({"id": self.s["module_field_id"], "value": modules})
+        if issue.sprint and self.s.get("sprint_field_id"):   # 설계 의도 12
+            custom.append({"id": self.s["sprint_field_id"], "value": issue.sprint})
+        if custom:
+            body["issue"]["custom_fields"] = custom
         resp = call(self.http, "POST", "/issues.json", json=body, creating=True)
         return self.ticket(resp.json()["issue"]["id"])
 
@@ -125,9 +132,15 @@ class RedmineTracker:
             batch = page.get("issues", [])
             out += [BtsTicket(str(i["id"]), i.get("subject", ""), BtsState(
                 i["status"]["name"], (i.get("assigned_to") or {}).get("name", ""), i.get("updated_on", "")),
-                (i.get("category") or {}).get("name", "")) for i in batch]
+                (i.get("category") or {}).get("name", ""), self.sprint_of(i)) for i in batch]
             offset, total = offset + len(batch), page.get("total_count", 0) if batch else 0
         return out[:config.MILESTONE_LIMIT]
+
+    def sprint_of(self, issue: dict) -> str:
+        """설계 의도 12 — 스프린트 필드 값(업데이트 요일의 날짜만), 없으면 빈 문자열."""
+        fid = self.s.get("sprint_field_id")
+        value = next((f.get("value") for f in issue.get("custom_fields", []) if fid and f.get("id") == fid), "") or ""
+        return value if isinstance(value, str) and sprint.valid(value) else ""
 
     def categories(self) -> dict[str, int]:
         resp = call(self.http, "GET", f"/projects/{self.s['project_id']}/issue_categories.json")

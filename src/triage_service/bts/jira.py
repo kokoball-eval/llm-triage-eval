@@ -39,12 +39,15 @@
    reconcileIssues 로 함께 보낸다(설계 의도 10). 처음에는 approximate-count 를 썼는데, 색인이라 방금 등록한 이슈가 몇 초 늦게
    세어져 연달아 등록한 두 건이 같은 사람에게 갔다(2026-11-25 KAN-11·12). approximate-count 는 reconcileIssues 를 받지 않아
    검색으로 바꿨다. 그룹 구성원 읽기에는 "사용자 및 그룹 찾아보기" 권한이 필요하다(사이트 관리자에게 있음).
+14. 스프린트(contracts 설계 의도 9)는 "스프린트_<날짜>" 라벨이다. 팀 라벨처럼 개발자도 Jira 에서 보고 바꿀 수 있다. Jira 스프린트
+   기능(애자일 보드)은 쓰지 않는다 — Redmine 에 없어 두 BTS 가 같은 방식으로 셀 수 없다. 사람이 둘 이상 붙였으면 가장 늦은
+   날짜로 읽고, 업데이트 요일이 아닌 날짜 라벨은 무시한다.
 """
 
 import httpx2
 
 from triage_eval.contracts import NO_MODULE, split_modules
-from triage_service import config
+from triage_service import config, sprint
 from triage_service.bts import clients
 from triage_service.bts.common import call, description_lines
 from triage_service.contracts import CLOSED, STATUSES, BtsState, BtsTicket, Issue, Member, Milestone, Ticket, TrackerError
@@ -88,6 +91,8 @@ class JiraTracker:
             fields["labels"].append(team_label(issue.team))
         if issue.assignee:   # 설계 의도 13
             fields["assignee"] = {"accountId": issue.assignee}
+        if issue.sprint:   # 설계 의도 14
+            fields["labels"].append(SPRINT + issue.sprint)
         resp = call(self.http, "POST", "/rest/api/3/issue", json={"fields": fields}, creating=True).json()
         self.seen(resp["key"], resp["id"])
         return self.ticket(resp["key"])
@@ -143,7 +148,7 @@ class JiraTracker:
                 f = i["fields"]
                 out.append(BtsTicket(i["key"], f.get("summary", ""), BtsState(
                     name_of(f["status"]), (f.get("assignee") or {}).get("displayName", ""), f.get("updated", "")),
-                    team_of(f.get("labels", []))))
+                    team_of(f.get("labels", [])), sprint_of(f.get("labels", []))))
             token = page.get("nextPageToken")
             if page.get("isLast", True) or not token:
                 break
@@ -228,6 +233,14 @@ def team_of(labels: list[str]) -> str:
     """설계 의도 12 — team_label 의 역. 팀 라벨이 없으면 빈 문자열."""
     found = sorted(x for x in labels if x.startswith("팀_"))
     return found[0].removeprefix("팀_").replace("_", " ") if found else ""
+
+
+SPRINT = "스프린트_"
+
+
+def sprint_of(labels: list[str]) -> str:
+    """설계 의도 14 — 스프린트 라벨의 날짜, 없으면 빈 문자열."""
+    return max((x.removeprefix(SPRINT) for x in labels if x.startswith(SPRINT) and sprint.valid(x.removeprefix(SPRINT))), default="")
 
 
 def adf(lines: list[str]) -> dict:

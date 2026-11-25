@@ -15,7 +15,7 @@
 {% if ms %}
 <nav class="filter">마일스톤:
   {% for m in milestones %}
-    {% if m.name == milestone %}<strong>{{ m.name }}</strong>{% else %}<a href="/dashboard?{{ {"milestone": m.name} | urlencode }}">{{ m.name }}</a>{% endif %}{% if m.released %} <span class="muted">(출시)</span>{% endif %}
+    {% if m.name == milestone %}<strong>{{ m.name }}</strong>{% else %}<a href="/dashboard?{{ {"milestone": m.name, "sprint": sprint} | urlencode }}">{{ m.name }}</a>{% endif %}{% if m.released %} <span class="muted">(출시)</span>{% endif %}
   {% endfor %}
 </nav>
 
@@ -23,9 +23,18 @@
   <div class="card"><span class="muted">마일스톤 {{ ms.name }}{% if ms.release %} · 출시 {{ ms.release }}{% endif %}</span><br>
     <span class="big">{% if ms.released %}출시함{% elif ms.d_day is none %}출시일 없음{% elif ms.d_day >= 0 %}D-{{ ms.d_day }}{% else %}D+{{ -ms.d_day }}{% endif %}</span></div>
   <div class="card"><span class="muted">완료 (Closed)</span><br>{% if ms.rate is none %}<span class="muted">티켓 없음</span>{% else %}<span class="big">{{ ms.rate }}%</span> <span class="muted">({{ ms.closed }} / {{ ms.total }}건)</span>{% endif %}</div>
-  <div class="card"><span class="muted">최근 7일 닫힘</span><br><span class="big">{{ r.week.closed }}</span> <span class="muted">건 · 새로 들어옴 {{ r.week.found }} · 재오픈 {{ r.week.reopened }}</span></div>
+  <div class="card"><span class="muted">스프린트 {{ sprint_label(sp.name) }}</span><br>{% if sp.rate is none %}<span class="muted">목표로 단 이슈 없음</span>{% else %}<span class="big">{{ sp.rate }}%</span> <span class="muted">({{ sp.closed }} / {{ sp.total }}건 완료)</span>{% endif %}</div>
   <div class="card"><span class="muted">병목 (기준 초과)</span><br><span class="big">{{ r.flow | map(attribute=2) | sum }}</span> <span class="muted">건</span></div>
 </div>
+
+<h2>스프린트 <span class="muted" style="font-size:14px;font-weight:400">(목표 수정 버전 · 매주 목요일 업데이트)</span></h2>
+<nav class="filter">
+  {% for s in sprints %}
+    {% if s == sprint %}<strong>{{ sprint_label(s) }}</strong>{% else %}<a href="/dashboard?{{ {"milestone": milestone, "sprint": s} | urlencode }}">{{ sprint_label(s) }}</a>{% endif %}{% if loop.index0 == 2 %} <span class="muted">(진행 중)</span>{% endif %}
+  {% endfor %}
+</nav>
+<p>목표 <strong>{{ sp.total }}</strong>건 · 완료 <strong>{{ sp.closed }}</strong>건{% if sp.total - sp.closed %} · 남음: {% for s, n in sp.left if n %}{{ s }} {{ n }}건{% if not loop.last %} · {% endif %}{% endfor %}{% endif %}</p>
+<p class="muted">BTS 스프린트 표식(Jira 스프린트_ 라벨, Redmine 스프린트 필드)으로 셉니다. 마일스톤에 들어 있지 않은 티켓은 빠집니다.</p>
 
 <h2>대응 흐름</h2>
 <div class="flow">

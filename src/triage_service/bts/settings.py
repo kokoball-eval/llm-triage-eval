@@ -30,7 +30,8 @@ SCHEMA = {
     "redmine": {"base_url": str, "project_id": str, "tracker_id": int, "timeout_sec": (int, float), "priority": dict},
 }
 OPTIONAL = {"jira": {"teams": dict, "leads": dict},   # 자동 배정(설계 의도 4)을 쓸 때만
-            "redmine": {"teams": dict, "leads": dict, "module_field_id": int}}   # 모듈 사용자 정의 필드 번호(redmine.py 설계 의도 9)
+            "redmine": {"teams": dict, "leads": dict, "module_field_id": int,   # 모듈 사용자 정의 필드 번호(redmine.py 설계 의도 9)
+                        "sprint_field_id": int}}   # 스프린트 사용자 정의 필드 번호(redmine.py 설계 의도 12)
 PRIORITY_TYPE = {"jira": str, "redmine": int}   # 팀 → 그룹·팀장 값의 형식도 같다(Jira 는 글자, Redmine 은 번호)
 SECRETS = {"fake": (), "jira": ("JIRA_EMAIL", "JIRA_API_TOKEN"), "redmine": ("REDMINE_API_KEY",)}
 

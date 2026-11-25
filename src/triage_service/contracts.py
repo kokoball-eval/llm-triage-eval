@@ -21,6 +21,8 @@
 8. 팀은 BTS 의 그룹이고 담당자는 그 구성원 한 사람이다(2026-11-25 경민 결정). 어댑터는 그룹 구성원(members), 팀장(lead,
    설정 [<bts>.leads]), 한 사람의 미해결 수(open_count), 토큰 주인(me)을 알려 주고, 누구에게 줄지는 assign.py 가 정한다.
    Jira 는 그룹을 담당자로 둘 수 없어 항상 사람에게 배정한다. 구성원 ID 는 BTS 와 상관없이 글자로 다룬다(Redmine 번호도 글자).
+9. 스프린트(목표 수정 버전, sprint.py)는 이슈에 붙는 업데이트 날짜다(YYYY-MM-DD). 등록할 때 Issue.sprint 를 넣고, 마일스톤 티켓을
+   읽을 때 BTSTicket.sprint 로 돌려받는다. BTS 표식은 Jira "스프린트_<날짜>" 라벨, Redmine 사용자 정의 필드다(어댑터가 정한다).
 """
 
 from dataclasses import dataclass
@@ -67,6 +69,7 @@ class Issue:
     team: str = ""
     milestone: str = ""   # BTS 버전 이름 (설계 의도 6, 빈 문자열이면 넣지 않음)
     assignee: str = ""    # 팀 그룹에서 고른 구성원 ID (설계 의도 8, 빈 문자열이면 담당자를 넣지 않음)
+    sprint: str = ""      # 목표 스프린트(업데이트 날짜, 설계 의도 9, 빈 문자열이면 넣지 않음)
 
 
 @dataclass(frozen=True)
@@ -105,6 +108,7 @@ class BtsTicket:
     title: str
     state: BtsState
     team: str = ""   # 설계 의도 7
+    sprint: str = ""   # 설계 의도 9
 
 
 class Source(Protocol):

@@ -36,7 +36,7 @@ class FakeTracker:
         if issue.milestone and issue.milestone not in {v.name for v in self.versions()}:
             raise TrackerError(f"버전이 없습니다: {issue.milestone}")
         payload = json.dumps({"report": asdict(issue.report), "fields": issue.fields, "ref": issue.ref, "team": issue.team,
-                              "milestone": issue.milestone, "assignee": issue.assignee}, ensure_ascii=False)
+                              "milestone": issue.milestone, "assignee": issue.assignee, "sprint": issue.sprint}, ensure_ascii=False)
         with connect(self.path) as c:
             n = c.execute("INSERT INTO fake_tickets (created_at, status, issue) VALUES (?, ?, ?)",
                           (now(), QA_REVIEW, payload)).lastrowid
@@ -114,7 +114,7 @@ class FakeTracker:
         out = []
         for key in keys:
             t = self.get(key)
-            out.append(BtsTicket(key, t["fields"].get("요약", ""), BtsState(t["status"], t.get("assignee") or t.get("team", ""), t.get("updated", t["created_at"])), t.get("team", "")))
+            out.append(BtsTicket(key, t["fields"].get("요약", ""), BtsState(t["status"], t.get("assignee") or t.get("team", ""), t.get("updated", t["created_at"])), t.get("team", ""), t.get("sprint", "")))
         return out
 
     def get(self, key: str) -> dict:

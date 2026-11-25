@@ -76,6 +76,7 @@ base_url = "http://127.0.0.1:3000"   # 로컬 Docker Redmine
 project_id = "triage"                # 프로젝트 식별자
 tracker_id = 1                       # 유형 번호 (영문 기본 데이터: 1 = Bug)
 # module_field_id = 1                # 모듈을 넣을 사용자 정의 필드 번호(목록·여러 값, 선택지는 8칸 모듈 이름). 관리자가 만든 뒤 번호를 적는다. 없으면 설명에만 남긴다
+# sprint_field_id = 2                # 목표 스프린트를 넣을 사용자 정의 필드 번호(날짜 형식). 관리자가 만든 뒤 번호를 적는다. 없으면 넣지 않는다
 timeout_sec = 10
 
 [redmine.priority]  # 8칸 [우선순위] → Redmine 우선순위 번호 (영문 기본 데이터 번호 1 Low · 2 Normal · 3 High · 5 Immediate 의 이름을 Trivial · Minor · Major · Critical 로 바꿔 씀)

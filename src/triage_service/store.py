@@ -23,7 +23,7 @@
    바꾼 팀, 코멘트, 오류. 실패하거나 일부만 된 것도 남겨, BTS 와 서비스 화면이 다를 때 무엇을 보냈는지 확인할 수 있게 한다.
    재현 확인으로 바꾼 팀은 이 기록의 마지막 팀이 현재 팀이다(assignment 는 등록 때 배정으로 두어 S5-4c 의 "사람이 바꾼 비율"을 지킨다).
 11. 마일스톤(BTS 버전) 목록은 bts_milestones 에, 마일스톤에 속한 BTS 티켓 전체(서비스가 등록하지 않은 것 포함)는 bts_tickets 에
-   티켓 키로 둔다(팀은 BTS 팀 표식, contracts 설계 의도 7). 리포트(reports)와는 티켓 키로만 이어진다. 상태가 처음이거나 바뀐 것을 발견하면 bts_ticket_changes 에 한 줄
+   티켓 키로 둔다(팀은 BTS 팀 표식, 스프린트는 BTS 스프린트 표식 — contracts 설계 의도 7·9). 리포트(reports)와는 티켓 키로만 이어진다. 상태가 처음이거나 바뀐 것을 발견하면 bts_ticket_changes 에 한 줄
    남긴다(설계 의도 9 와 같은 방식, 재오픈 수의 근거). 동기화에서 그 마일스톤 검색에 더는 나오지 않는 티켓은 마일스톤을 비운다
    (BTS 에서 다른 버전으로 옮겼거나 버전을 뺀 경우). shortcut: 티켓 하나에 마일스톤 하나 — Jira 는 버전을 여러 개 걸 수 있지만
    마지막에 읽은 마일스톤에만 센다. 한 티켓을 여러 마일스톤에 거는 운영을 하게 되면 키를 (티켓, 마일스톤)으로 올린다.
@@ -87,7 +87,8 @@ CREATE TABLE IF NOT EXISTS bts_tickets (
     assignee TEXT NOT NULL,
     updated TEXT NOT NULL,
     synced_at TEXT NOT NULL,
-    team TEXT NOT NULL DEFAULT ''
+    team TEXT NOT NULL DEFAULT '',
+    sprint TEXT NOT NULL DEFAULT ''
 );
 CREATE TABLE IF NOT EXISTS bts_ticket_changes (
     key TEXT NOT NULL,
@@ -137,8 +138,10 @@ class Store:
             for name in ADDED_COLUMNS:   # 설계 의도 6
                 if name not in columns:
                     c.execute(f"ALTER TABLE reports ADD COLUMN {name} TEXT")
-            if "team" not in {r["name"] for r in c.execute("PRAGMA table_info(bts_tickets)")}:   # S5-4b 에서 만든 DB
-                c.execute("ALTER TABLE bts_tickets ADD COLUMN team TEXT NOT NULL DEFAULT ''")
+            ticket_columns = {r["name"] for r in c.execute("PRAGMA table_info(bts_tickets)")}
+            for name in ("team", "sprint"):   # S5-4b·S5-5c 에서 만든 DB
+                if name not in ticket_columns:
+                    c.execute(f"ALTER TABLE bts_tickets ADD COLUMN {name} TEXT NOT NULL DEFAULT ''")
             c.execute("INSERT OR IGNORE INTO meta (key, value) VALUES ('instance', ?)", (uuid.uuid4().hex[:8],))
             self.instance = c.execute("SELECT value FROM meta WHERE key = 'instance'").fetchone()["value"]
 
@@ -242,11 +245,11 @@ class Store:
             try:
                 for t in tickets:
                     self._ticket_status(c, t.key, t.state.status, at)
-                    c.execute("INSERT INTO bts_tickets (key, milestone, title, status, assignee, updated, synced_at, team) "
-                              "VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(key) DO UPDATE SET milestone = excluded.milestone, "
+                    c.execute("INSERT INTO bts_tickets (key, milestone, title, status, assignee, updated, synced_at, team, sprint) "
+                              "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(key) DO UPDATE SET milestone = excluded.milestone, "
                               "title = excluded.title, status = excluded.status, assignee = excluded.assignee, "
-                              "updated = excluded.updated, synced_at = excluded.synced_at, team = excluded.team",
-                              (t.key, milestone, t.title, t.state.status, t.state.assignee, t.state.updated, at, t.team))
+                              "updated = excluded.updated, synced_at = excluded.synced_at, team = excluded.team, sprint = excluded.sprint",
+                              (t.key, milestone, t.title, t.state.status, t.state.assignee, t.state.updated, at, t.team, t.sprint))
                 keys = [t.key for t in tickets]
                 c.execute(f"UPDATE bts_tickets SET milestone = '' WHERE milestone = ? AND key NOT IN ({','.join('?' * len(keys))})",
                           (milestone, *keys))

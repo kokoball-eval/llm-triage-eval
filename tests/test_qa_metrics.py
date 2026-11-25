@@ -141,7 +141,7 @@ def test_sync_reads_ticket_team_from_fake(store):
 
 # ── 대응 현황 (S5-5c) ─────────────────────────────────────
 
-def test_response_flow_week_and_members():
+def test_response_flow_and_members():
     from datetime import datetime
     now = datetime.fromisoformat("2026-11-25T12:00:00")
     def t(key, status, assignee, updated="2026-11-25T11:00:00"):
@@ -156,10 +156,8 @@ def test_response_flow_week_and_members():
     tickets.append(t("G", CLOSED, "강승규"))
     r = metrics.response(tickets, changes, now=now)
     assert r["flow"] == [(QA_REVIEW, 2, 1), (IN_DEV, 1, 1), (RESOLVE, 1, 0), (CHECK, 0, 0)]
-    assert r["week"] == {"closed": 1, "found": 1, "reopened": 1}   # 11-15 이전은 7일 밖
     assert r["members"] == [("박대무", 2, 1), ("담당 없음", 1, 0), ("이용석", 1, 1)]   # Closed·다섯 상태 밖은 빠진다
 
 
 def test_response_empty():
-    assert metrics.response([], {}) == {"flow": [(QA_REVIEW, 0, 0), (IN_DEV, 0, 0), (RESOLVE, 0, 0), (CHECK, 0, 0)],
-                                        "week": {"closed": 0, "found": 0, "reopened": 0}, "members": []}
+    assert metrics.response([], {}) == {"flow": [(QA_REVIEW, 0, 0), (IN_DEV, 0, 0), (RESOLVE, 0, 0), (CHECK, 0, 0)], "members": []}

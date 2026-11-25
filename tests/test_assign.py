@@ -257,7 +257,7 @@ def test_register_assigns_by_confirmed_fields(store):
     values = {**store.get(rid)["model_fields"], "처리": "개발 배정", "모듈": "그래픽·사운드"}
     rec = review.register(store, tracker, rid, values, RULES)
     who = {"id": "아트팀장", "name": "아트팀장"}   # 가짜 BTS 그룹의 첫 구성원(둘 다 미해결 0건, 배정한 적 없음)
-    assert rec["assignment"] == {"suggested": "아트", "team": "아트", "milestone": "", "member": who, "member_rule": "아트팀장",
+    assert rec["assignment"] == {"suggested": "아트", "team": "아트", "milestone": "", "sprint": "", "member": who, "member_rule": "아트팀장",
                                  "qa_owner": None}
     assert (tracker.get(rec["ticket_key"])["team"], tracker.get(rec["ticket_key"])["assignee"]) == ("아트", "아트팀장")
 

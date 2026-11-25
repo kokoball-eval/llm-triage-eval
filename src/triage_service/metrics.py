@@ -25,12 +25,14 @@
    - shortcut: 상태 변화는 티켓 단위라 다른 마일스톤에서 옮겨 온 티켓은 옮기기 전의 Resolve 체류·재오픈도 지금 마일스톤에
      들어간다. 마일스톤을 자주 옮기는 운영이면 변화 기록에 마일스톤을 함께 남기도록 올린다.
 9. 대시보드는 QA팀 대응 현황만 보인다(S5-5c, 2026-11-25 경민 결정: 지표가 많아 무엇을 봐야 할지 흐려졌다). 마일스톤 하나의 BTS 티켓으로
-   대응 흐름 4칸(QA Review·In Dev·Resolve·Check 건수와 기준 일수 config.BOTTLENECK_DAYS 를 넘긴 병목 수), 최근 7일 처리량(상태 변화
-   기록에서 닫힘·새로 들어옴(처음 본 상태가 QA Review)·재오픈), 구성원별 부하(담당자 표시 이름별 미해결·병목)를 센다(response). 머문 일수는 내 담당 화면과 같은
+   대응 흐름 4칸(QA Review·In Dev·Resolve·Check 건수와 기준 일수 config.BOTTLENECK_DAYS 를 넘긴 병목 수), 구성원별 부하(담당자 표시 이름별 미해결·병목)를 센다(response). 머문 일수는 내 담당 화면과 같은
    계산(sync.stay_days)이다. 트리아지 품질 지표(compute)는 별도 화면(/triage)으로 옮겼다.
 10. 사람이 바꾼 배정 비율(assign_changed)은 모델 품질 지표라 트리아지 품질 화면의 기간 필터를 따른다(S5-4c 에서는 마일스톤별이었다).
    서비스가 등록하고 자동 배정을 쓴 건만 센다(규칙의 팀이 있어야 비교할 수 있다). 이미 있던 티켓에 연결해 배정을 적용하지 않은 건은
    뺀다. 재현 확인 뒤 팀을 옮긴 것(QA 기록)은 사람이 배정을 고친 것이 아니라 업무 흐름이라 세지 않는다.
+11. 스프린트(sprint.py, 목표 수정 버전) 현황은 그 업데이트를 목표로 단 BTS 티켓으로 센다: 목표 건수, Closed 와 완료율, 남은 건의
+   상태별 건수. 표식은 마일스톤 티켓을 읽을 때 함께 읽으므로 마일스톤이 없는 티켓은 빠진다. S5-5c 의 "최근 7일 처리량"은 이
+   스프린트 현황으로 바꿨다(경민 결정: 주간 단위는 기간이 아니라 이슈의 목표 업데이트로 본다).
 """
 
 import math
@@ -193,8 +195,7 @@ FLOW = (QA_REVIEW, IN_DEV, RESOLVE, CHECK)
 
 
 def response(tickets: list[dict], changes: dict, now: datetime | None = None) -> dict:
-    """설계 의도 9 — 마일스톤 하나의 QA팀 대응 현황. {"flow": [(상태, 건수, 병목)], "week": {"closed", "found", "reopened"},
-    "members": [(담당자, 미해결, 병목)] 미해결 많은 순}. tickets 는 store.tickets(이름), changes 는 store.ticket_changes()."""
+    """설계 의도 9 — 마일스톤 하나의 QA팀 대응 현황. {"flow": [(상태, 건수, 병목)], "members": [(담당자, 미해결, 병목)] 미해결 많은 순}. tickets 는 store.tickets(이름), changes 는 store.ticket_changes()."""
     at = (now or datetime.now()).astimezone()
     flow_, members = {s: [0, 0] for s in FLOW}, {}
     for t in tickets:
@@ -204,17 +205,14 @@ def response(tickets: list[dict], changes: dict, now: datetime | None = None) ->
         for box in (flow_[t["status"]], members.setdefault(t["assignee"] or "담당 없음", [0, 0])):
             box[0] += 1
             box[1] += late
-    since = at - timedelta(days=7)
-    week = []
-    for t in tickets:
-        for a, src, dst in changes.get(t["key"], []):
-            try:   # 시각을 못 읽는 기록은 화면 전체를 막지 않고 건너뛴다(stay_days 와 같은 방침)
-                if sync._aware(a) >= since:
-                    week.append((src, dst))
-            except ValueError:
-                pass
     return {"flow": [(s, *flow_[s]) for s in FLOW],
-            "week": {"closed": sum(src is not None and dst == CLOSED for src, dst in week),
-                     "found": sum(src is None and dst == QA_REVIEW for src, dst in week),   # 처음 본 때 이미 진행 중이던 건은 새 유입이 아니다
-                     "reopened": sum(src == RESOLVE and dst == IN_DEV for src, dst in week)},
             "members": sorted(((n, *v) for n, v in members.items()), key=lambda x: (-x[1], x[0]))}
+
+
+def sprint(tickets: list[dict], name: str) -> dict:
+    """설계 의도 11 — 목표 스프린트 하나의 완료 현황. tickets 는 마일스톤 티켓 전체(store.tickets 를 모은 것)."""
+    mine = [t for t in tickets if t.get("sprint") == name]
+    left = Counter(t["status"] for t in mine if t["status"] != CLOSED)
+    closed = len(mine) - sum(left.values())
+    return {"name": name, "total": len(mine), "closed": closed, "rate": ratio(closed, len(mine))["pct"],
+            "left": [(s, left[s]) for s in FLOW] + sorted((s, n) for s, n in left.items() if s not in FLOW)}

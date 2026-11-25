@@ -36,7 +36,7 @@
 14. 대시보드의 QA 지표도 마일스톤 단위다(metrics 설계 의도 8). 고른 마일스톤이 없거나 모르는 이름이면 현재 마일스톤이고,
    (S5-5c 에서 기간 필터는 트리아지 품질 화면으로 옮겨 대시보드에는 마일스톤만 남았다.) 모든 마일스톤을 출시했으면 첫 화면과
    대시보드는 마지막 마일스톤을 보인다(읽어 둔 마일스톤이 있는데 "없다"고 안내하지 않게, 독립 검토에서 발견).
-15. 첫 화면·QA 보드·대시보드는 열 때 마지막 동기화가 오래됐으면 뒤에서 동기화를 시작하고(sync 설계 의도 10), 읽어 둔 값으로
+15. 첫 화면·QA 보드·내 담당·대시보드는 열 때 마지막 동기화가 오래됐으면 뒤에서 동기화를 시작하고(sync 설계 의도 10), 읽어 둔 값으로
    바로 연다. 도는 동안은 상세 화면처럼 자동으로 다시 읽어 끝난 값을 보인다. 모든 화면 머리에 BTS 연결 표시(sync 설계 의도 12)를
    두고, 누르면 마지막 동기화 결과가 있는 QA 화면으로 간다. 설계 의도 11 의 "BTS 를 부르는 것은 버튼뿐"은 이것으로 바뀌었다.
    등록과 QA 동작은 동기화와 같은 잠금 안에서 한다(sync 설계 의도 11).
@@ -117,7 +117,7 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
         return templates.TemplateResponse(request, name, {"bts": syncer.status(), **ctx}, status_code=status_code)
 
     def synced_page(request: Request, name: str, **ctx) -> HTMLResponse:
-        """설계 의도 15 — 첫 화면·QA 보드·대시보드: 때가 됐으면 뒤에서 동기화하고 읽어 둔 값으로 바로 연다."""
+        """설계 의도 15 — 첫 화면·QA 보드·내 담당·대시보드: 때가 됐으면 뒤에서 동기화하고 읽어 둔 값으로 바로 연다."""
         syncer.start()
         return page(request, name, auto_refresh=True, **ctx)
 

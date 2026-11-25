@@ -2,6 +2,8 @@
 
 - src/ 는 pyproject.toml 의 [tool.pytest.ini_options] pythonpath 설정으로 import 경로에 들어간다.
 - 시험은 저장소의 실제 기록을 "읽기만" 한다. 파일이 필요하면 pytest 가 주는 임시 폴더(tmp_path)에 쓴다.
+- 화면을 열 때의 자동 동기화(sync 설계 의도 10)는 기본으로 끈다. 뒤에서 도는 동기화가 시험 도중 DB 를 바꾸면 결과가
+  실행마다 달라진다. 자동 동기화 시험(test_auto_sync.py)만 켠다.
 """
 
 import json
@@ -12,6 +14,12 @@ import pytest
 from triage_eval.config import DEV_INPUTS
 DEV = json.loads(DEV_INPUTS.read_text(encoding="utf-8"))
 NO_ALL = {f"q{i}": "아니오" for i in range(1, 7)}
+
+
+@pytest.fixture(autouse=True)
+def no_auto_sync(monkeypatch):
+    from triage_service import config
+    monkeypatch.setattr(config, "AUTO_SYNC_MINUTES", None)
 
 
 class FakeClient:

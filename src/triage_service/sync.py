@@ -3,8 +3,8 @@
 [설계 의도]
 1. BTS 가 원본이다. 서비스는 읽어 온 값을 복사해 두고 보여 줄 뿐이다. BTS 에 쓰는 것은 QA 가 누른 동작뿐이다(qa.py).
    개발자는 계속 BTS 에서 일하므로 서비스가 자기 상태를 따로 가지면 같은 버그의 상태가 두 곳에서 달라진다.
-2. 읽기는 버튼을 눌렀을 때만 한다(끌어오기). 서비스는 이 PC(127.0.0.1)에서만 열려 있어 BTS 가 변경을 알려 주는 웹훅을 받을
-   수 없고, 화면을 여는 것만으로 BTS 를 부르면 화면이 느려지고 GET 이 값을 바꾸게 된다.
+2. 읽기는 끌어오기다. 서비스는 이 PC(127.0.0.1)에서만 열려 있어 BTS 가 변경을 알려 주는 웹훅을 받을 수 없다. [지금 동기화]
+   버튼과 화면을 열 때의 자동 동기화(설계 의도 10) 두 길로만 읽는다.
 3. 상태는 다섯 이름(contracts.STATUSES)으로 나눈다: QA Review → 재현 대기, Resolve → 회귀 테스트 대기, Check → 보류,
    Closed 가 아니면 팀별 미해결. 다섯 이름 밖의 상태를 읽으면 그 이름을 화면에 그대로 보여 BTS 워크플로가 바뀐 것을 알아챈다.
    (S5-2 의 상태 대응 설정 [<bts>.status] 는 상태 이름을 통일하면서 없앴다.)
@@ -21,8 +21,19 @@
 9. 현재 마일스톤은 출시 전 버전 중 출시일이 가장 이른 것이다(출시일이 지났어도 출시 처리 전이면 현재). 마일스톤 성과는 그
    버전의 BTS 티켓 전체로 센다: Closed 수·완료율, 남은 상태별 건수, 재오픈(Resolve → In Dev 를 본 티켓) 수, QA 가 서비스에서
    회귀 테스트 통과로 닫은 수(QA 기록). 상태 변화는 발견한 시각 기준이라 동기화 사이에 오간 것은 놓칠 수 있다.
+10. 첫 화면·QA 보드·대시보드를 열 때 마지막 동기화(실패 포함)가 config.AUTO_SYNC_MINUTES 분보다 오래됐으면 뒤에서 동기화한다
+   (2026-11-25 경민 결정: 변화 시각이 동기화 간격만큼 늦게 잡히는 것을 줄인다). 화면은 기다리지 않고 읽어 둔 값으로 열린다.
+   BTS 가 느리거나 멈춰도 화면이 묶이지 않게 하려는 것이다. 실패해도 다음 시도는 다시 그 간격 뒤라 BTS 가 멈춘 동안 화면을 열
+   때마다 부르지 않는다. 마지막 시각은 서버 메모리에만 둔다(다시 켜면 처음 여는 화면에서 읽는다).
+11. 동기화는 잠금 하나로 한 번에 하나만 돈다. 자동 동기화가 도는 중이면 새로 시작하지 않고, [지금 동기화]는 그것이 끝나길
+   기다렸다가 다시 읽는다. 연달아 누른 두 동기화가 겹쳐 늦게 끝난 쪽이 오래된 값을 덮어쓰던 S5-2 의 한계도 이것으로 막힌다.
+   BTS 에 쓰는 일(등록, QA 동작)도 같은 잠금 안에서 한다(Syncer.hold). 동기화가 읽어 둔 옛 상태를 QA 동작이 쓴 새 상태 뒤에
+   저장해 되돌리는 일을 막는다(독립 검토에서 발견). 동기화가 도는 중이면 QA 동작은 그것이 끝날 때까지 기다린다.
+12. 화면 구석의 BTS 연결 표시는 마지막 동기화 결과로 정한다(표시하려고 BTS 를 따로 부르지 않는다): 다 읽었으면 연결됨, 일부만
+   실패했으면 일부 실패, 아무것도 읽지 못하고 실패했으면 연결 안 됨, 도는 중이면 읽는 중. 언제 읽은 값인지도 함께 보인다.
 """
 
+import threading
 from collections import Counter
 from datetime import date, datetime
 
@@ -74,6 +85,73 @@ def run(store: Store, tracker) -> dict:
         if len(tickets) >= config.MILESTONE_LIMIT:
             out["errors"].append(f"마일스톤 {m.name}: {config.MILESTONE_LIMIT}건까지만 읽었습니다 — 성과가 실제보다 적게 보일 수 있습니다(config.MILESTONE_LIMIT)")
     return out
+
+
+
+class Syncer:
+    """설계 의도 10~12 — 동기화를 한 번에 하나만 돌리고 마지막 결과를 기억한다."""
+
+    def __init__(self, store: Store, tracker):
+        self.store, self.tracker, self.lock = store, tracker, threading.Lock()
+        self.last: dict | None = None   # {"at": 시각, "result": run() 의 결과}
+        self.thread: threading.Thread | None = None
+
+    def due(self, at: datetime | None = None) -> bool:
+        minutes = config.AUTO_SYNC_MINUTES
+        if minutes is None or minutes <= 0:   # 0 이면 화면을 다시 읽을 때마다 동기화가 돌아 끝나지 않는다
+            return False
+        return self.last is None or ((at or datetime.now()) - self.last["at"]).total_seconds() >= minutes * 60
+
+    def start(self) -> None:
+        """설계 의도 10 — 때가 됐으면 뒤에서 동기화를 시작한다. 이미 도는 중이면 아무것도 하지 않는다."""
+        if not (self.due() and self.lock.acquire(blocking=False)):
+            return
+        if not self.due():   # 잠금을 얻기 직전에 다른 동기화가 끝났다
+            self.lock.release()
+            return
+        try:
+            self.thread = threading.Thread(target=self._locked, daemon=True)
+            self.thread.start()
+        except BaseException:   # 스레드를 못 띄우면 잠금이 영영 잡혀 있지 않게
+            self.lock.release()
+            raise
+
+    def now(self) -> dict:
+        """[지금 동기화] — 도는 동기화가 있으면 끝나길 기다렸다가 읽는다(설계 의도 11)."""
+        with self.lock:
+            return self._run()
+
+    def hold(self, fn, *args):
+        """설계 의도 11 — BTS 에 쓰는 일을 동기화와 겹치지 않게 같은 잠금 안에서 한다."""
+        with self.lock:
+            return fn(*args)
+
+    def _locked(self) -> None:
+        try:
+            self._run()
+        finally:
+            self.lock.release()
+
+    def _run(self) -> dict:
+        try:
+            result = run(self.store, self.tracker)
+        except Exception as e:   # run 은 묶음별 실패를 모으지만, 저장 실패 같은 것도 표시에 남긴다
+            result = {"synced": 0, "missing": [], "errors": [f"동기화 실패: {e}"], "milestones": []}
+        self.last = {"at": datetime.now(), "result": result}
+        return result
+
+    def status(self) -> dict:
+        """설계 의도 12 — {"bts": 이름, "state": never·running·ok·partial·down, "ago": "방금"·"3분", "errors": [...]}."""
+        out = {"bts": getattr(self.tracker, "name", ""), "state": "never", "ago": "", "errors": []}
+        if self.last:
+            r = self.last["result"]
+            read = r["synced"] or r["milestones"]
+            minutes = (datetime.now() - self.last["at"]).total_seconds() / 60
+            out.update(ago=ago(minutes) if minutes >= 1 else "방금", errors=r["errors"],
+                       state="ok" if not r["errors"] else "partial" if read else "down")
+        if self.lock.locked():
+            out["state"] = "running"
+        return out
 
 
 def current(milestones: list[dict]) -> str:

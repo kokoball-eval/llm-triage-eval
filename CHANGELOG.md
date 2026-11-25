@@ -9,6 +9,12 @@
 
 ## [Unreleased]
 
+### 추가 (서비스 S5-5b: "내 담당" 화면)
+
+- `/mine` — BTS 토큰 주인(QA팀 구성원)의 내 차례(QA Review 담당자가 나, Resolve는 QA 담당이 나), 넘긴 이슈(In Dev·Check), 병목(기준 일수 초과, `config.BOTTLENECK_DAYS`: QA Review 2·Resolve 2·In Dev 7·Check 14일)을 보인다. 머문 기간은 상태 변화 기록에서 센다.
+- 동기화가 BTS 계정(`tracker.me()`)을 QA팀 구성원 이름으로 풀어 기억한다(`Syncer.me`). 실패하면 이전 값을 두고 `/mine`에만 이유를 보인다(연결 표시는 티켓 동기화 결과만 따른다). 계산은 `sync.mine()`.
+- 가짜 BTS의 상태 조회가 담당 구성원을 돌려주게 고쳤다(실제 BTS와 같게). 시험 8개 추가(535개). 실제 Jira KAN으로 화면 확인.
+
 ### 변경 (서비스 S5-5a: 팀 = BTS 그룹, 담당 = 구성원)
 - 설정 `[jira.teams]`·`[redmine.teams]`는 팀 → BTS 그룹(Jira 그룹 이름, Redmine 그룹 번호), 새 `[<bts>.leads]`는 팀 → 팀장 계정(QA 필수)
 - 등록할 때 그룹 구성원 중 이 프로젝트의 미해결 이슈가 가장 적은 사람에게 배정한다(같으면 서비스가 가장 오래전에 배정한 사람). 계약 `Tracker.members`·`lead`·`open_count`·`me`, `Issue.assignee`, `update(assignee=)`. Jira는 그룹 구성원 목록과 approximate-count, Redmine은 그룹 조회(include=users)와 열린 일감 수

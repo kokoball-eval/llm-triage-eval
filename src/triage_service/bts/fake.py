@@ -78,7 +78,7 @@ class FakeTracker:
                 t = self.get(key)
             except TrackerError:   # 지워진 티켓은 돌려주지 않는다(실제 BTS 의 검색과 같다)
                 continue
-            out[key] = BtsState(t["status"], t.get("team", ""), t.get("updated", t["created_at"]))
+            out[key] = BtsState(t["status"], t.get("assignee") or t.get("team", ""), t.get("updated", t["created_at"]))
         return out
 
     def set_status(self, key: str, status: str) -> None:   # 설계 의도 3
@@ -114,7 +114,7 @@ class FakeTracker:
         out = []
         for key in keys:
             t = self.get(key)
-            out.append(BtsTicket(key, t["fields"].get("요약", ""), BtsState(t["status"], t.get("team", ""), t.get("updated", t["created_at"])), t.get("team", "")))
+            out.append(BtsTicket(key, t["fields"].get("요약", ""), BtsState(t["status"], t.get("assignee") or t.get("team", ""), t.get("updated", t["created_at"])), t.get("team", "")))
         return out
 
     def get(self, key: str) -> dict:

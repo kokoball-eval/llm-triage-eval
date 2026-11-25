@@ -91,7 +91,7 @@
   </style>
 </head>
 <body>
-  <header><a class="logo" href="/"><b>●</b> 트리아지 작업 페이지</a><a href="/reports">리포트</a><a href="/new">새 리포트</a><a href="/qa">QA</a><a href="/dashboard">대시보드</a>
+  <header><a class="logo" href="/"><b>●</b> 트리아지 작업 페이지</a><a href="/reports">리포트</a><a href="/new">새 리포트</a><a href="/qa">QA</a><a href="/mine">내 담당</a><a href="/dashboard">대시보드</a>
     {% if bts %}{% set who = {"jira": "Jira", "redmine": "Redmine", "fake": "가짜 BTS"}.get(bts.bts, bts.bts or "BTS") %}
     <a class="bts {{ bts.state }}" href="/qa" title="{{ bts.errors | join(' / ') if bts.errors else 'BTS 연결 상태 — 마지막 동기화 결과' }}">● {{ who }} {{ {"never": "확인 전", "running": "읽는 중", "ok": "연결됨", "partial": "일부 실패", "down": "연결 안 됨"}[bts.state] }}{% if bts.ago and bts.state != "running" %} · {{ bts.ago }} 전{% endif %}</a>{% endif %}</header>
   <main>{% block body %}{% endblock %}</main>

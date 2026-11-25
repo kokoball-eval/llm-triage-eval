@@ -69,7 +69,7 @@ from triage_service.worker import Worker
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 templates.env.globals.update(TITLE_MAX=config.TITLE_MAX, BODY_MAX=config.BODY_MAX, split_modules=split_modules, FIELDS=FIELDS, ENUMS=ENUMS, MODULES=MODULES, NO_MODULE=NO_MODULE, TRACKS=TRACKS, REPORTERS=REPORTERS,
                              STATES=flow.STATES, PENDING=flow.PENDING, REVIEW=flow.REVIEW, FAILED=flow.FAILED,
-                             REFRESH=config.STATUS_REFRESH_SEC)
+                             REFRESH=config.STATUS_REFRESH_SEC, BOTTLENECK_DAYS=config.BOTTLENECK_DAYS)
 
 
 def create_app(store: Store | None = None, worker: Worker | None = None, tracker=None,
@@ -103,7 +103,7 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
                 return PlainTextResponse("다른 사이트에서 보낸 요청은 받지 않습니다", status_code=403)
         return await call_next(request)
 
-    syncer = app.state.syncer = sync.Syncer(store, tracker)   # app.state: 시험이 뒤에서 도는 동기화를 기다릴 수 있게
+    syncer = app.state.syncer = sync.Syncer(store, tracker, assign_rules["qa"] if assign_rules else "")   # app.state: 시험이 뒤에서 도는 동기화를 기다릴 수 있게
 
     def page(request: Request, name: str, status_code: int = 200, **ctx) -> HTMLResponse:
         return templates.TemplateResponse(request, name, {"bts": syncer.status(), **ctx}, status_code=status_code)
@@ -174,6 +174,12 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
     def qa_board(request: Request):   # 설계 의도 11·15 — 마지막 동기화 결과(자동 포함)를 함께 보인다
         return synced_page(request, "qa.html", board=sync.board(sync.targets(store), store.qa_log()),
                            result=syncer.last and syncer.last["result"])
+
+    @app.get("/mine", response_class=HTMLResponse)
+    def mine(request: Request):   # sync 설계 의도 13 — 화면은 읽어 둔 값만 보여 준다
+        tickets = [t for m in store.milestones() for t in store.tickets(m["name"])]
+        m = syncer.me and sync.mine(sync.targets(store), tickets, store.ticket_changes(), store.qa_log(), syncer.me)
+        return synced_page(request, "mine.html", m=m, rules=bool(assign_rules), synced=syncer.last is not None, me_error=syncer.me_error)
 
     @app.post("/qa/sync")
     async def qa_sync(request: Request):

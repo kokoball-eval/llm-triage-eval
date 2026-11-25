@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}내 담당{% endblock %}
+{% macro rows(items, who=False) %}
+<table>
+  <tr><th>제목</th><th>티켓</th><th>상태</th><th>담당 팀</th>{% if who %}<th>지금 담당자</th>{% endif %}<th>머문 기간</th></tr>
+  {% for r in items %}
+  <tr>
+    <td>{% if r.rid %}<a href="/reports/{{ r.rid }}">{{ r.title }}</a>{% else %}{{ r.title }}{% endif %}</td>
+    <td style="white-space:nowrap">{{ r.key }}</td>
+    <td>{{ r.status }}</td>
+    <td>{{ r.team }}</td>
+    {% if who %}<td>{{ r.assignee or "없음" }}</td>{% endif %}
+    <td style="white-space:nowrap">{{ r.days }}일{% if r.late %} <span class="badge" style="background:var(--bad);color:#fff">기준 {{ r.limit }}일 초과</span>{% endif %}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endmacro %}
+{% block body %}
+<h1>내 담당</h1>
+{% if not rules %}
+<div class="box">자동 배정 설정(<code>[assign]</code>)이 없어 "나"를 알 수 없습니다. 설정 파일을 확인하세요.</div>
+{% elif not m %}
+<div class="box">{% if synced %}BTS 토큰 주인이 QA팀 그룹 구성원이 아니거나 읽지 못했습니다. 화면 위 BTS 연결 표시와 <code>triage-serve --check</code>를 확인하세요.{% if me_error %} (읽지 못한 이유: {{ me_error }}){% endif %}{% else %}BTS에서 내 계정을 읽는 중입니다. 잠시 뒤 다시 열어 주세요.{% endif %}</div>
+{% else %}
+<p class="muted">{{ m.me }} 님 · 내 차례 {{ m.mine | length }}건 · 넘긴 이슈 {{ m.handed | length }}건 · 기준 초과 {{ m.late | length }}건</p>
+
+{% if m.late %}
+<h2>병목 <span class="badge">{{ m.late | length }}</span></h2>
+{{ rows(m.late, True) }}
+<p class="muted">상태별 기준: {% for s, d in BOTTLENECK_DAYS.items() %}{{ s }} {{ d }}일{% if not loop.last %} · {% endif %}{% endfor %}. 오래 머문 순서입니다.</p>
+{% endif %}
+
+<h2>내 차례 <span class="muted">(QA Review · Resolve)</span> <span class="badge">{{ m.mine | length }}</span></h2>
+{% if m.mine %}{{ rows(m.mine) }}<p class="muted">동작(재현 확인 · 회귀 테스트 통과·실패 · 보류)은 제목을 눌러 상세 화면에서 합니다.</p>{% else %}<p class="muted">지금 내가 처리할 이슈가 없습니다.</p>{% endif %}
+
+<h2>넘긴 이슈 <span class="muted">(In Dev · Check)</span> <span class="badge">{{ m.handed | length }}</span></h2>
+{% if m.handed %}{{ rows(m.handed, True) }}<p class="muted">내가 QA 담당으로 받았다가 개발로 넘겼거나 보류한 이슈입니다.</p>{% else %}<p class="muted">넘긴 이슈가 없습니다.</p>{% endif %}
+{% endif %}
+{% endblock %}

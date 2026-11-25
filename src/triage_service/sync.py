@@ -31,6 +31,12 @@
    저장해 되돌리는 일을 막는다(독립 검토에서 발견). 동기화가 도는 중이면 QA 동작은 그것이 끝날 때까지 기다린다.
 12. 화면 구석의 BTS 연결 표시는 마지막 동기화 결과로 정한다(표시하려고 BTS 를 따로 부르지 않는다): 다 읽었으면 연결됨, 일부만
    실패했으면 일부 실패, 아무것도 읽지 못하고 실패했으면 연결 안 됨, 도는 중이면 읽는 중. 언제 읽은 값인지도 함께 보인다.
+13. "내 담당"(mine)의 나는 BTS 토큰 주인이다. 저장된 담당자는 표시 이름이라, 동기화할 때 QA팀 그룹 구성원 중 me() ID 와 같은
+   사람을 찾아 이름까지 함께 기억한다(QA팀 구성원이 아니면 None — 화면이 안내한다). 내 차례는 QA Review(BTS 담당자가 나)와
+   Resolve(QA 담당 qa_owner 가 나, 서비스를 거치지 않은 티켓은 BTS 담당자가 나)이고, 넘긴 이슈는 서비스가 QA 담당으로 기억한
+   In Dev·Check 다. 머문 시간은 상태 변화 기록에서 그 상태로 들어온 것을 본 시각(없으면 BTS 가 마지막으로 바꾼 시각)부터 센다.
+   기준(config.BOTTLENECK_DAYS)을 넘기면 병목이다. shortcut: 이름이 같은 사람이 둘이면 구분하지 못한다. 그런 계정이 생기면 담당자
+   ID 도 저장한다.
 """
 
 import threading
@@ -38,7 +44,7 @@ from collections import Counter
 from datetime import date, datetime
 
 from triage_service import config, flow, qa
-from triage_service.contracts import CHECK, CLOSED, IN_DEV, QA_REVIEW, RESOLVE, STATUSES
+from triage_service.contracts import CHECK, CLOSED, IN_DEV, QA_REVIEW, RESOLVE, STATUSES, Member
 from triage_service.store import Store, now
 
 
@@ -91,8 +97,10 @@ def run(store: Store, tracker) -> dict:
 class Syncer:
     """설계 의도 10~12 — 동기화를 한 번에 하나만 돌리고 마지막 결과를 기억한다."""
 
-    def __init__(self, store: Store, tracker):
-        self.store, self.tracker, self.lock = store, tracker, threading.Lock()
+    def __init__(self, store: Store, tracker, qa_team: str = ""):
+        self.store, self.tracker, self.qa_team, self.lock = store, tracker, qa_team, threading.Lock()
+        self.me: Member | None = None   # 설계 의도 13
+        self.me_error = ""   # 내 계정을 못 읽은 이유 — 티켓 동기화는 멀쩡하니 연결 표시(status)에는 섞지 않고 /mine 에서만 보인다
         self.last: dict | None = None   # {"at": 시각, "result": run() 의 결과}
         self.thread: threading.Thread | None = None
 
@@ -137,6 +145,12 @@ class Syncer:
             result = run(self.store, self.tracker)
         except Exception as e:   # run 은 묶음별 실패를 모으지만, 저장 실패 같은 것도 표시에 남긴다
             result = {"synced": 0, "missing": [], "errors": [f"동기화 실패: {e}"], "milestones": []}
+        if self.qa_team:   # 설계 의도 13 — 실패하면 이전 값을 그대로 둔다
+            try:
+                me = self.tracker.me()
+                self.me, self.me_error = next((m for m in self.tracker.members(self.qa_team) if m.id == me), None), ""
+            except Exception as e:
+                self.me_error = str(e)
         self.last = {"at": datetime.now(), "result": result}
         return result
 
@@ -227,3 +241,41 @@ def board(records: list[dict], log: dict, at: datetime | None = None) -> dict:
 def _aware(text: str) -> datetime:
     t = datetime.fromisoformat(text)
     return t if t.tzinfo else t.astimezone()   # 시간대가 없는 값(가짜 BTS)은 이 PC 시각으로 본다
+
+
+def mine(records: list[dict], tickets: list[dict], changes: dict, log: dict, me: Member, at: datetime | None = None) -> dict:
+    """설계 의도 13 — {"me": 이름, "mine": 내 차례, "handed": 넘긴 이슈, "late": 기준을 넘긴 것}, 각 줄은 {key, title, status, team,
+    assignee, days, limit, late, rid}(rid 는 서비스가 등록한 건만). 오래 머문 순. tickets 는 마일스톤 티켓 전체,
+    records 는 등록한 리포트(같은 키면 리포트 쪽이 이긴다), changes 는 store.ticket_changes(), log 는 store.qa_log()."""
+    at = at or datetime.now().astimezone()
+    rows = {t["key"]: {"key": t["key"], "title": t["title"], "status": t["status"], "assignee": t["assignee"],
+                       "team": t["team"] or "팀 없음", "updated": t["updated"], "rid": None, "owner": None} for t in tickets}
+    for r in records:
+        b = r["bts"]
+        if b:
+            rows[r["ticket_key"]] = {"key": r["ticket_key"], "title": r["report"].title, "status": b["status"], "assignee": b["assignee"],
+                                     "team": team(r, log.get(r["id"], [])), "updated": b["updated"], "rid": r["id"],
+                                     "owner": (r["assignment"] or {}).get("qa_owner")}
+    out = {"me": me.name, "mine": [], "handed": [], "late": []}
+    for key, row in rows.items():
+        status, owner = row["status"], row["owner"]
+        mine_ = ((status == QA_REVIEW and row["assignee"] == me.name)
+                 or (status == RESOLVE and (owner["id"] == me.id if owner else row["assignee"] == me.name)))
+        handed = status in (IN_DEV, CHECK) and bool(owner) and owner["id"] == me.id
+        if not (mine_ or handed):
+            continue
+        seen = next((a for a, _, d in reversed(changes.get(key, [])) if d == status), None) or row["updated"]
+        try:   # 시각을 못 읽으면(빈 값·이상한 값) 화면 전체를 막지 않고 0일로 둔다
+            days = max((at - _aware(seen)).total_seconds() / 86400, 0)
+        except ValueError:
+            days = 0
+        limit = config.BOTTLENECK_DAYS[status]
+        line = {"key": key, "title": row["title"], "status": status, "team": row["team"], "assignee": row["assignee"],
+                "days": round(days, 1), "limit": limit, "late": days > limit, "rid": row["rid"]}
+        out["mine" if mine_ else "handed"].append(line)
+        if line["late"]:
+            out["late"].append(line)
+    for k in out:
+        if k != "me":
+            out[k].sort(key=lambda x: -x["days"])
+    return out

@@ -104,7 +104,7 @@ def test_fake_snapshot_and_set_status(store, monkeypatch):
     rec = register(store, tracker, 처리="등록(재현 대기)")
     key = rec["ticket_key"]
     first = tracker.snapshot([key, "FAKE-99"])
-    assert list(first) == [key] and first[key].status == QA_REVIEW and first[key].assignee == rec["assignment"]["team"]
+    assert list(first) == [key] and first[key].status == QA_REVIEW and first[key].assignee == rec["assignment"]["member"]["name"]   # 가짜 BTS 도 실제처럼 담당 구성원을 돌려준다
     monkeypatch.setattr("triage_service.bts.fake.now", lambda: "2099-01-01T00:00:00")   # 초 단위 시계라 같은 초면 구분되지 않는다
     tracker.set_status(key, RESOLVE)
     after = tracker.snapshot([key])[key]

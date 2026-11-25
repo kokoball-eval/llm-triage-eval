@@ -37,6 +37,7 @@ TITLE_MAX = 100
 BODY_MAX = 1000
 STATUS_REFRESH_SEC = 1    # 트리아지가 끝날 때까지 상세 화면을 다시 읽는 간격
 AUTO_SYNC_MINUTES = 10    # 화면을 열 때 마지막 동기화가 이보다 오래됐으면 뒤에서 다시 읽는다(분, None·0 이하면 끈다. sync 설계 의도 10)
+BOTTLENECK_DAYS = {"QA Review": 2, "Resolve": 2, "In Dev": 7, "Check": 14}   # 상태별로 이만큼(일) 넘게 머물면 병목으로 본다 (sync 설계 의도 13)
 SYNC_LIMIT = 200          # BTS 에서 상태를 읽는 등록 리포트 수의 상한 (설계 의도 8)
 MILESTONE_LIMIT = 500     # 동기화에서 마일스톤 하나당 읽는 BTS 티켓 수의 상한 (sync 설계 의도 8)
 SYNC_CHUNK = 50           # 한 번의 BTS 요청에 담는 티켓 수 (50 이하: Jira 검색의 reconcileIssues 가 ID 50개까지만 받는다. Redmine limit 100)

@@ -96,7 +96,7 @@ class FakeTracker:
         out = []
         for key in keys:
             t = self.get(key)
-            out.append(BtsTicket(key, t["fields"].get("요약", ""), BtsState(t["status"], t.get("team", ""), t.get("updated", t["created_at"]))))
+            out.append(BtsTicket(key, t["fields"].get("요약", ""), BtsState(t["status"], t.get("team", ""), t.get("updated", t["created_at"])), t.get("team", "")))
         return out
 
     def get(self, key: str) -> dict:

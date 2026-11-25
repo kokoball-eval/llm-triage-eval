@@ -25,7 +25,8 @@
    설명에만 남는다. 필드 정의는 관리자 권한으로만 읽을 수 있어 --check 가 확인하지 않는다(shortcut: 번호는 사람이 맞춘다,
    여러 Redmine 에 붙일 때 관리자 키로 확인하는 검사를 올림).
 10. 마일스톤은 목표 버전(fixed_version)이다. 버전 번호는 이름으로 찾고, 상태가 open 이 아니면(locked·closed) 출시한 것으로 본다.
-   한 버전의 티켓은 fixed_version_id 목록 조회를 offset 으로 끝까지 읽는다(status_id=* 로 닫힌 티켓 포함).
+   한 버전의 티켓은 fixed_version_id 목록 조회를 offset 으로 끝까지 읽는다(status_id=* 로 닫힌 티켓 포함). 팀은 일감 범주
+   이름이다(설계 의도 8의 역, 목록 응답에 범주가 들어 있어 요청이 늘지 않는다).
 """
 
 import httpx2
@@ -118,7 +119,8 @@ class RedmineTracker:
                 "project_id": self.s["project_id"], "fixed_version_id": vid, "status_id": "*", "limit": 100, "offset": offset}).json()
             batch = page.get("issues", [])
             out += [BtsTicket(str(i["id"]), i.get("subject", ""), BtsState(
-                i["status"]["name"], (i.get("assigned_to") or {}).get("name", ""), i.get("updated_on", ""))) for i in batch]
+                i["status"]["name"], (i.get("assigned_to") or {}).get("name", ""), i.get("updated_on", "")),
+                (i.get("category") or {}).get("name", "")) for i in batch]
             offset, total = offset + len(batch), page.get("total_count", 0) if batch else 0
         return out[:config.MILESTONE_LIMIT]
 

@@ -16,7 +16,7 @@
 <h1>대시보드</h1>
 <nav class="filter">기간:
   {% for key, name in [("7", "최근 7일"), ("30", "최근 30일"), ("all", "전체")] %}
-    {% if m.period == key %}<strong>{{ name }}</strong>{% else %}<a href="/dashboard?period={{ key }}">{{ name }}</a>{% endif %}
+    {% if m.period == key %}<strong>{{ name }}</strong>{% else %}<a href="/dashboard?{{ {"period": key, "milestone": milestone or ""} | urlencode }}">{{ name }}</a>{% endif %}
   {% endfor %}
   <span class="muted"> · 접수 {{ m.total }}건{% if m.since %} ({{ m.since }}부터){% endif %}</span>
 </nav>
@@ -27,6 +27,34 @@
   <div class="card"><span class="muted">사람 수정 비율</span><br>{% if m.edited.pct is none %}<span class="muted">데이터 없음</span>{% else %}<span class="big">{{ m.edited.pct }}%</span> <span class="muted">({{ m.edited.n }} / {{ m.edited.d }}건)</span>{% endif %}</div>
   <div class="card"><span class="muted">접수 → 등록 (중앙값)</span><br>{% if m.times.total_min.n %}<span class="big">{{ "%.1f"|format(m.times.total_min.p50) }}</span> <span class="muted">분 ({{ m.times.total_min.n }}건)</span>{% else %}<span class="muted">데이터 없음</span>{% endif %}</div>
 </div>
+
+<h2>QA 지표 (마일스톤별)</h2>
+{% if q %}
+<nav class="filter">마일스톤:
+  {% for ms in milestones %}
+    {% if ms.name == milestone %}<strong>{{ ms.name }}</strong>{% else %}<a href="/dashboard?{{ {"period": m.period, "milestone": ms.name} | urlencode }}">{{ ms.name }}</a>{% endif %}{% if ms.released %} <span class="muted">(출시)</span>{% endif %}
+  {% endfor %}
+  <span class="muted"> · BTS 티켓 {{ q.total }}건 · 기간 필터와 관계없이 마일스톤 기준</span>
+</nav>
+<div class="kpis">
+  <div class="card"><span class="muted">회귀 테스트 대기 (지금 Resolve)</span><br><span class="big">{{ q.resolve_now }}</span> <span class="muted">건{% if q.oldest_wait is not none %} · 가장 오래 {{ "%.1f"|format(q.oldest_wait) }}시간{% endif %}{% if q.unknown_entry %} · 들어간 시각을 모르는 건 제외{% endif %}</span></div>
+  <div class="card"><span class="muted">재오픈률 (Resolve → In Dev)</span><br>{% if q.reopen.pct is none %}<span class="muted">데이터 없음</span>{% else %}<span class="big">{{ q.reopen.pct }}%</span> <span class="muted">({{ q.reopen.n }} / {{ q.reopen.d }}건)</span>{% endif %}</div>
+  <div class="card"><span class="muted">사람이 바꾼 배정</span><br>{% if q.assign_changed.pct is none %}<span class="muted">데이터 없음</span>{% else %}<span class="big">{{ q.assign_changed.pct }}%</span> <span class="muted">({{ q.assign_changed.n }} / {{ q.assign_changed.d }}건)</span>{% endif %}</div>
+  <div class="card"><span class="muted">미해결 (Closed 아님)</span><br><span class="big">{{ q.teams | map(attribute=1) | sum }}</span> <span class="muted">건</span></div>
+</div>
+<div class="grid" style="margin-top:16px">
+  <div class="card"><h2>회귀 테스트 대기 시간</h2>
+    <p>Resolve 에 머문 시간: {{ dur(q.resolve_wait, "시간") }}</p>
+    {% if q.unknown_entry %}<p class="muted">처음 읽었을 때 이미 Resolve 였던 {{ q.unknown_entry }}건은 들어간 시각을 몰라 뺐습니다.</p>{% endif %}
+    <p class="muted">시각은 [지금 동기화]로 발견한 때입니다. 동기화를 자주 할수록 정확합니다.</p>
+  </div>
+  <div class="card"><h2>팀별 미해결</h2>{{ bars(q.teams) }}
+    <p class="muted">팀은 BTS 팀 표식(Jira 팀_ 라벨, Redmine 일감 범주)입니다. 사람이 바꾼 배정은 서비스로 등록하고 자동 배정을 쓴 건만 셉니다.</p>
+  </div>
+</div>
+{% else %}
+<p class="muted">마일스톤이 없습니다. QA 화면에서 [지금 동기화]를 누르면 BTS 버전을 읽어 옵니다.</p>
+{% endif %}
 
 <h2>상태</h2>
 <div class="states">{% for s, n in m.states.items() %}<a class="card" href="/reports?state={{ s }}"><span class="muted">{{ s }}</span><br><span class="big">{{ n }}</span></a>{% endfor %}</div>

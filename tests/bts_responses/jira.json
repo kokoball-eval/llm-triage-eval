@@ -273,13 +273,17 @@
   "milestone": {
     "status": 200,
     "body": {
-      "isLast": true,
       "issues": [
         {
           "id": "10018",
           "key": "KAN-9",
           "fields": {
             "summary": "[실제 확인] S5-4b 마일스톤 등록",
+            "assignee": {
+              "accountId": "qa-account-id",
+              "displayName": "QA 담당"
+            },
+            "updated": "2026-11-24T17:43:23.491+0900",
             "status": {
               "name": "QA Review",
               "id": "10003",
@@ -287,15 +291,17 @@
                 "key": "new"
               }
             },
-            "assignee": {
-              "accountId": "qa-account-id",
-              "displayName": "QA 담당"
-            },
-            "updated": "2026-11-24T17:43:23.491+0900"
+            "labels": [
+              "triage",
+              "triage-s54blive-1",
+              "모듈_UI·텍스트",
+              "팀_QA"
+            ]
           }
         }
-      ]
+      ],
+      "isLast": true
     }
   },
-  "milestone_source": "실제 KAN 공간에서 녹화(2026-11-24): 버전 목록(/project/<키>/versions, 0.0.1·0.1.0·0.2.0 — 출시일 2027-01-13·03-10·05-12)과 fixVersion = \"0.0.1\" 검색(시험 티켓 KAN-9 한 건). 계정·이름은 가렸고 상태 객체는 name·id·statusCategory.key 만 남겼다"
+  "milestone_source": "실제 KAN 공간에서 녹화(2026-11-24): 버전 목록(/project/<키>/versions, 0.0.1·0.1.0·0.2.0 — 출시일 2027-01-13·03-10·05-12)과 fixVersion = \"0.0.1\" 검색(시험 티켓 KAN-9 한 건, 2026-11-25 팀 라벨을 읽으려고 labels 를 더해 다시 녹화). 계정·이름은 가렸고 상태 객체는 name·id·statusCategory.key 만 남겼다"
 }

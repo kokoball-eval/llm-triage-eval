@@ -31,6 +31,9 @@
    에서 확인, 기능 설정에는 스위치가 없다). 한 버전의 티켓은 fixVersion 검색을 페이지(nextPageToken)로 끝까지 읽는다. 방금
    등록하거나 버전을 바꾼 티켓은 검색에 몇 초 늦게 나타나므로(KAN-9 로 확인), 최근에 다룬 이슈 ID 를 reconcileIssues 로 함께
    보낸다(설계 의도 10, 한도 50개). 버전을 바꾼 직후 검색에서 이 매개변수가 있으면 바로 보이고 없으면 안 보이는 것을 확인했다.
+12. 마일스톤 티켓의 팀은 "팀_<이름>" 라벨에서 읽는다(설계 의도 6의 역). 팀을 바꿀 때 다른 팀 라벨을 지우므로 보통 하나이고,
+   BTS 에서 사람이 둘 이상 붙였으면 이름순 첫 번째로 센다. shortcut: "_"는 공백으로 되돌려 팀 이름에 "_"가 있으면 다른
+   이름으로 읽힌다(지금 팀 이름에는 없다). 그런 팀을 쓰게 되면 설정의 팀 이름과 라벨을 맞대어 찾도록 올린다.
 """
 
 import httpx2
@@ -125,14 +128,15 @@ class JiraTracker:
         recent = list(self.ids.values())[-config.SYNC_CHUNK:]   # 설계 의도 10·11 — 50개까지, 페이지 토큰이 첫 질의에 묶여 한 번만 정한다
         out, token = [], None
         while len(out) < config.MILESTONE_LIMIT:
-            params = {"jql": jql, "fields": "summary,status,assignee,updated", "maxResults": 100,
+            params = {"jql": jql, "fields": "summary,status,assignee,updated,labels", "maxResults": 100,
                       **({"reconcileIssues": recent} if recent else {}), **({"nextPageToken": token} if token else {})}
             page = call(self.http, "GET", "/rest/api/3/search/jql", params=params).json()
             for i in page.get("issues", []):
                 self.seen(i["key"], i["id"])
                 f = i["fields"]
                 out.append(BtsTicket(i["key"], f.get("summary", ""), BtsState(
-                    name_of(f["status"]), (f.get("assignee") or {}).get("displayName", ""), f.get("updated", ""))))
+                    name_of(f["status"]), (f.get("assignee") or {}).get("displayName", ""), f.get("updated", "")),
+                    team_of(f.get("labels", []))))
             token = page.get("nextPageToken")
             if page.get("isLast", True) or not token:
                 break
@@ -170,6 +174,12 @@ name_of = name
 
 def team_label(team: str) -> str:
     return "팀_" + team.replace(" ", "_")
+
+
+def team_of(labels: list[str]) -> str:
+    """설계 의도 12 — team_label 의 역. 팀 라벨이 없으면 빈 문자열."""
+    found = sorted(x for x in labels if x.startswith("팀_"))
+    return found[0].removeprefix("팀_").replace("_", " ") if found else ""
 
 
 def adf(lines: list[str]) -> dict:

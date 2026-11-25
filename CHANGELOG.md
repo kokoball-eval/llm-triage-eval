@@ -9,6 +9,12 @@
 
 ## [Unreleased]
 
+### 추가 (서비스 S5-4c: 대시보드 QA 지표)
+- 대시보드 "QA 지표 (마일스톤별)" — 회귀 테스트 대기(지금 Resolve 건수, 가장 오래 기다린 시간, Resolve에 머문 시간 중앙값·p95), 재오픈률, 팀별 미해결, 배정 팀을 사람이 바꾼 비율. 마일스톤을 고르고(기본값 현재 마일스톤) 기간 필터와 따로 움직인다. 계산은 `metrics.qa`
+- 마일스톤 티켓의 팀 — `BtsTicket.team`, Jira `팀_` 라벨·Redmine 일감 범주에서 읽어 `bts_tickets.team`에 둔다. 이전 DB에는 시작할 때 칸을 붙인다
+- Jira 마일스톤 검색 응답을 `labels`를 더해 실제 KAN에서 다시 녹화했다
+- 시험 11개 추가(487개)
+
 ### 추가 (서비스 S5-4b: 마일스톤 성과)
 - 마일스톤 = BTS 버전(Jira 릴리스 `fixVersions`, Redmine 목표 버전). 계약 `Tracker.versions()`·`milestone_tickets(name)`, `Milestone`·`BtsTicket`, `Issue.milestone`
 - [지금 동기화]가 버전 목록과 출시 전 버전마다 그 버전의 BTS 티켓 전체(서비스가 등록하지 않은 것 포함)를 읽어 `bts_milestones`·`bts_tickets`에 두고 상태 변화를 `bts_ticket_changes`에 쌓는다. 마일스톤당 `config.MILESTONE_LIMIT`(500)건

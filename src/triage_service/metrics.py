@@ -16,6 +16,17 @@
    값 중 하나가 되어 설명하기 쉽다.
 5. 자동 처리율은 0%다(라우팅 미채택 — routing.py). 숫자로 함께 보여 줘 "모든 건 사람 확인"이 지켜지는지 드러낸다.
 6. 기간 필터는 접수 시각 기준이다. 기간 안에 접수한 리포트만 센다.
+8. QA 지표(qa)는 기간이 아니라 마일스톤 단위다(QA 성과의 단위, sync 설계 의도 9). 그 마일스톤의 BTS 티켓 전체와 상태 변화
+   기록(store.bts_ticket_changes)으로 센다. 변화 시각은 BTS 가 바꾼 때가 아니라 동기화에서 발견한 때다.
+   - 회귀 테스트 대기는 Resolve 에 들어간 것을 본 때부터 나간 것을 본 때까지다. 처음 읽었을 때 이미 Resolve 였던 티켓은 들어간
+     시각을 몰라 시간에서 빼고 그 건수(unknown_entry)를 적는다(검토 대기 시간의 no_receipt 와 같은 방식).
+   - 재오픈률 = Resolve → In Dev 를 본 티켓 ÷ Resolve 에 있는 것을 본 티켓.
+   - 팀별 미해결은 Closed 가 아닌 티켓을 BTS 팀 표식으로 센다(contracts 설계 의도 7). 표식이 없으면 "팀 없음".
+   - 사람이 바꾼 배정 비율은 이 마일스톤 티켓 중 서비스가 등록하고 자동 배정을 쓴 건만 센다(규칙의 팀이 있어야 비교할 수
+     있다). 이미 있던 티켓에 연결해 배정을 적용하지 않은 건은 뺀다. 재현 확인 뒤 팀을 옮긴 것(QA 기록)은 사람이 배정을 고친
+     것이 아니라 업무 흐름이라 세지 않는다.
+   - shortcut: 상태 변화는 티켓 단위라 다른 마일스톤에서 옮겨 온 티켓은 옮기기 전의 Resolve 체류·재오픈도 지금 마일스톤에
+     들어간다. 마일스톤을 자주 옮기는 운영이면 변화 기록에 마일스톤을 함께 남기도록 올린다.
 """
 
 import math
@@ -24,6 +35,7 @@ from datetime import datetime, timedelta
 
 from triage_eval.contracts import ENUMS, split_modules
 from triage_service import flow
+from triage_service.contracts import CLOSED, IN_DEV, RESOLVE
 
 PERIODS = {"7": 7, "30": 30, "all": None}
 
@@ -134,3 +146,36 @@ def compute(records: list[dict], history: dict, period: str = "30", now: datetim
                      "now_unknown": failures["알 수 없음"], "rate": ratio(sum(1 for r in recs if r["state"] == flow.FAILED),
                                                                      len(recs))},
     }
+
+
+def qa(tickets: list[dict], changes: dict, records: list[dict], now: datetime | None = None) -> dict:
+    """설계 의도 8 — 마일스톤 하나의 QA 지표. tickets 는 store.tickets(이름), changes 는 store.ticket_changes(),
+    records 는 등록한 리포트(store.list(flow.REGISTERED)). 시간은 시간(h) 단위."""
+    now = now or datetime.now()
+    stays, waiting, unknown, reached, reopened = [], [], 0, 0, 0
+    for t in tickets:
+        seen = changes.get(t["key"], [])
+        entered = None
+        for at, src, dst in seen:
+            if entered is not None:
+                stays.append((_t(at) - entered).total_seconds() / 3600)
+                entered = None
+            if dst == RESOLVE:
+                if src is None:
+                    unknown += 1
+                else:
+                    entered = _t(at)
+        if t["status"] == RESOLVE and entered is not None:
+            waiting.append((now - entered).total_seconds() / 3600)
+        reached += any(dst == RESOLVE for _, _, dst in seen)
+        reopened += any(src == RESOLVE and dst == IN_DEV for _, src, dst in seen)
+    teams = Counter(t["team"] or "팀 없음" for t in tickets if t["status"] != CLOSED)
+    keys = {t["key"] for t in tickets}
+    assigned = [r["assignment"] for r in records if r["ticket_key"] in keys and r["assignment"]
+                and r["assignment"].get("suggested") and not r["assignment"].get("linked_existing")]
+    return {"total": len(tickets),
+            "resolve_now": sum(t["status"] == RESOLVE for t in tickets),
+            "resolve_wait": summary(stays), "oldest_wait": max(waiting, default=None), "unknown_entry": unknown,
+            "reopen": ratio(reopened, reached),
+            "teams": sorted(teams.items(), key=lambda x: (-x[1], x[0])),
+            "assign_changed": ratio(sum(a["team"] != a["suggested"] for a in assigned), len(assigned))}

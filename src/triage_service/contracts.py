@@ -16,6 +16,8 @@
 6. 마일스톤은 BTS 의 버전이다(Jira 릴리스 fixVersions, Redmine 목표 버전). 두 BTS 에 공통으로 있는 단위가 버전뿐이라서다.
    어댑터는 버전 목록(versions)과 한 버전에 속한 티켓 전체(milestone_tickets)를 읽고, 등록할 때 Issue.milestone 을 넣는다.
    마일스톤 성과는 서비스가 등록한 티켓만이 아니라 그 버전의 BTS 티켓 전체로 센다(BTS 에 직접 등록한 이슈도 QA 업무다).
+7. 마일스톤 티켓의 팀은 BTS 의 팀 표식에서 읽는다(Jira "팀_<이름>" 라벨, Redmine 일감 범주). 서비스가 등록할 때 붙이는 것과
+   같은 표식이라 두 BTS 가 같은 방식으로 팀별 미해결을 센다. 표식이 없으면 빈 문자열이다(BTS 에 직접 만든 티켓).
 """
 
 from dataclasses import dataclass
@@ -91,6 +93,7 @@ class BtsTicket:
     key: str
     title: str
     state: BtsState
+    team: str = ""   # 설계 의도 7
 
 
 class Source(Protocol):

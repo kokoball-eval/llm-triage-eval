@@ -34,7 +34,7 @@
    동기화로 읽어 둔 값을 보인다(S5-4d 부터는 열 때 오래됐으면 뒤에서 동기화한다, 설계 의도 15). 검토 화면의 마일스톤 칸도 읽어 둔 출시 전 버전만
    보이고 기본값은 현재 마일스톤이다(sync 설계 의도 9).
 14. 대시보드의 QA 지표도 마일스톤 단위다(metrics 설계 의도 8). 고른 마일스톤이 없거나 모르는 이름이면 현재 마일스톤이고,
-   기간 필터와 마일스톤은 서로의 값을 주소에 남겨 한쪽을 바꿔도 다른 쪽이 유지된다. 모든 마일스톤을 출시했으면 첫 화면과
+   (S5-5c 에서 기간 필터는 트리아지 품질 화면으로 옮겨 대시보드에는 마일스톤만 남았다.) 모든 마일스톤을 출시했으면 첫 화면과
    대시보드는 마지막 마일스톤을 보인다(읽어 둔 마일스톤이 있는데 "없다"고 안내하지 않게, 독립 검토에서 발견).
 15. 첫 화면·QA 보드·대시보드는 열 때 마지막 동기화가 오래됐으면 뒤에서 동기화를 시작하고(sync 설계 의도 10), 읽어 둔 값으로
    바로 연다. 도는 동안은 상세 화면처럼 자동으로 다시 읽어 끝난 값을 보인다. 모든 화면 머리에 BTS 연결 표시(sync 설계 의도 12)를
@@ -43,6 +43,9 @@
 16. 검토 화면에서 규칙의 팀 그룹 구성원과 각자의 미해결 수를 보이고 담당자를 고르게 한다(assign 설계 의도 8·9). BTS 를
    부르므로 검토 대기 건을 열 때만 읽고, 읽지 못해도 화면은 열며 등록할 때 다시 읽는다. 고른 구성원은 팀을 "규칙대로"로 둘
    때만 쓴다 — 팀을 바꾸면 그 팀에서 규칙대로 정한다. 긴급 사인 요청은 QA팀장으로 고정이라 고르지 않는다.
+17. 대시보드(/dashboard)는 QA팀 대응 현황(마일스톤 진행·대응 흐름·최근 7일 처리량·팀별·구성원별 부하·회귀 테스트), 트리아지
+   품질(/triage)은 모델과 검토 지표(기간별)로 나눈다(S5-5c, metrics 설계 의도 9). 보는 사람과 질문이 다르기 때문이다 — QA 리드는
+   "지금 어디서 막혔나", 모델 운영자는 "모델이 얼마나 맞히나"를 본다.
 """
 
 from contextlib import asynccontextmanager
@@ -193,12 +196,18 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
         return sync.current(milestones) or (milestones[-1]["name"] if milestones else "")
 
     @app.get("/dashboard", response_class=HTMLResponse)
-    def dashboard(request: Request, period: str = "30", milestone: str = ""):   # 설계 의도 4·14
+    def dashboard(request: Request, milestone: str = ""):   # 설계 의도 14·17 — QA팀 대응 현황
         milestones = store.milestones()
         name = shown(milestones, milestone)
-        q = metrics.qa(store.tickets(name), store.ticket_changes(), store.list(flow.REGISTERED)) if name else None
-        return synced_page(request, "dashboard.html", m=metrics.compute(store.list(), store.history(), period),
-                    milestones=milestones, milestone=name, q=q)
+        ctx = {}
+        if name:
+            tickets, changes = store.tickets(name), store.ticket_changes()
+            ctx = {"ms": sync.milestone_summary(store, name), "q": metrics.qa(tickets, changes), "r": metrics.response(tickets, changes)}
+        return synced_page(request, "dashboard.html", milestones=milestones, milestone=name, **ctx)
+
+    @app.get("/triage", response_class=HTMLResponse)
+    def triage_quality(request: Request, period: str = "30"):   # 설계 의도 17 — BTS 를 읽지 않는 화면이라 자동 동기화하지 않는다
+        return page(request, "triage.html", m=metrics.compute(store.list(), store.history(), period))
 
     @app.get("/new", response_class=HTMLResponse)
     def new(request: Request, mode: str = "paste"):   # 설계 의도 9

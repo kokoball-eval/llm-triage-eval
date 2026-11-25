@@ -77,6 +77,10 @@
     table.bars td { padding:3px 0; border:0; }
     table.bars td.num { width:3em; text-align:right; }
     .bar { display:inline-block; height:10px; background:var(--accent); border-radius:999px; }
+    .flow { display:flex; align-items:stretch; gap:8px; flex-wrap:wrap; }
+    .flow .card { flex:1 1 150px; }
+    .flow i { align-self:center; color:var(--muted); font-style:normal; }
+    .late { color:var(--bad); font-weight:600; }
     .states { display:grid; grid-template-columns:repeat(auto-fit, minmax(96px, 1fr)); gap:8px; }
     .states .card { text-align:center; text-decoration:none; color:var(--fg); padding:8px; box-shadow:none; }
     .split { display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start; }
@@ -91,7 +95,7 @@
   </style>
 </head>
 <body>
-  <header><a class="logo" href="/"><b>●</b> 트리아지 작업 페이지</a><a href="/reports">리포트</a><a href="/new">새 리포트</a><a href="/qa">QA</a><a href="/mine">내 담당</a><a href="/dashboard">대시보드</a>
+  <header><a class="logo" href="/"><b>●</b> 트리아지 작업 페이지</a><a href="/reports">리포트</a><a href="/new">새 리포트</a><a href="/qa">QA</a><a href="/mine">내 담당</a><a href="/dashboard">대시보드</a><a href="/triage">트리아지 품질</a>
     {% if bts %}{% set who = {"jira": "Jira", "redmine": "Redmine", "fake": "가짜 BTS"}.get(bts.bts, bts.bts or "BTS") %}
     <a class="bts {{ bts.state }}" href="/qa" title="{{ bts.errors | join(' / ') if bts.errors else 'BTS 연결 상태 — 마지막 동기화 결과' }}">● {{ who }} {{ {"never": "확인 전", "running": "읽는 중", "ok": "연결됨", "partial": "일부 실패", "down": "연결 안 됨"}[bts.state] }}{% if bts.ago and bts.state != "running" %} · {{ bts.ago }} 전{% endif %}</a>{% endif %}</header>
   <main>{% block body %}{% endblock %}</main>

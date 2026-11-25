@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}트리아지 품질{% endblock %}
+{% macro pct(r) %}{% if r.pct is none %}<span class="muted">데이터 없음</span>{% else %}<strong>{{ r.pct }}%</strong> <span class="muted">({{ r.n }} / {{ r.d }}건)</span>{% endif %}{% endmacro %}
+{% macro dur(s, unit) %}{% if s.n %}중앙값 <strong>{{ "%.1f"|format(s.p50) }}{{ unit }}</strong> · p95 <strong>{{ "%.1f"|format(s.p95) }}{{ unit }}</strong> <span class="muted">({{ s.n }}건)</span>{% else %}<span class="muted">데이터 없음</span>{% endif %}{% endmacro %}
+{% macro bars(rows) %}
+  {% set top = rows | map(attribute=1) | max if rows else 0 %}
+  <table class="bars">
+  {% for row in rows %}
+    <tr><th>{{ row[0] }}{% if row|length > 2 and row[2] %} <span class="muted">({{ row[2] }})</span>{% endif %}</th><td><span class="bar" style="width: {{ (row[1] / top * 100) | round(1) if top else 0 }}%"></span></td><td class="num">{{ row[1] }}</td></tr>
+  {% else %}
+    <tr><td class="muted">데이터 없음</td></tr>
+  {% endfor %}
+  </table>
+{% endmacro %}
+{% block body %}
+<h1>트리아지 품질</h1>
+<p class="muted">모델이 정리한 결과를 사람이 얼마나 고쳤는지, 처리에 얼마나 걸렸는지를 기간별로 봅니다. QA팀 대응 현황은 <a href="/dashboard">대시보드</a>에 있습니다.</p>
+<nav class="filter">기간:
+  {% for key, name in [("7", "최근 7일"), ("30", "최근 30일"), ("all", "전체")] %}
+    {% if m.period == key %}<strong>{{ name }}</strong>{% else %}<a href="/triage?period={{ key }}">{{ name }}</a>{% endif %}
+  {% endfor %}
+  <span class="muted"> · 접수 {{ m.total }}건{% if m.since %} ({{ m.since }}부터){% endif %}</span>
+</nav>
+
+<div class="kpis">
+  <div class="card"><span class="muted">접수</span><br><span class="big">{{ m.total }}</span> <span class="muted">건</span></div>
+  <div class="card"><span class="muted">검토 대기</span><br><span class="big">{{ m.states[REVIEW] }}</span> <span class="muted">건</span></div>
+  <div class="card"><span class="muted">사람 수정 비율</span><br>{% if m.edited.pct is none %}<span class="muted">데이터 없음</span>{% else %}<span class="big">{{ m.edited.pct }}%</span> <span class="muted">({{ m.edited.n }} / {{ m.edited.d }}건)</span>{% endif %}</div>
+  <div class="card"><span class="muted">사람이 바꾼 배정</span><br>{% if m.assign_changed.pct is none %}<span class="muted">데이터 없음</span>{% else %}<span class="big">{{ m.assign_changed.pct }}%</span> <span class="muted">({{ m.assign_changed.n }} / {{ m.assign_changed.d }}건)</span>{% endif %}</div>
+  <div class="card"><span class="muted">접수 → 등록 (중앙값)</span><br>{% if m.times.total_min.n %}<span class="big">{{ "%.1f"|format(m.times.total_min.p50) }}</span> <span class="muted">분 ({{ m.times.total_min.n }}건)</span>{% else %}<span class="muted">데이터 없음</span>{% endif %}</div>
+</div>
+
+<h2>상태</h2>
+<div class="states">{% for s, n in m.states.items() %}<a class="card" href="/reports?state={{ s }}"><span class="muted">{{ s }}</span><br><span class="big">{{ n }}</span></a>{% endfor %}</div>
+
+<div class="grid" style="margin-top:16px">
+  <div class="card"><h2>사람 수정 비율 (등록한 건 중 한 칸이라도 고침)</h2>
+    <p>{{ pct(m.edited) }}</p>
+    <table class="bars">{% for f, r in m.edited_by_field.items() %}
+      <tr><th>{{ f }}</th><td>{% if r.pct is not none %}<span class="bar" style="width: {{ r.pct }}%"></span>{% endif %}</td><td class="num">{{ r.n }}</td></tr>
+    {% endfor %}</table>
+    <p class="muted">칸별 막대: 그 칸을 고친 등록 건 비율</p>
+  </div>
+  <div class="card"><h2>Critical 수정 (등록한 건 기준)</h2>
+    <p>사람이 Critical 로 <strong>올림</strong>: {{ pct(m.critical_up) }}</p>
+    <p>사람이 Critical 에서 <strong>내림</strong>: {{ pct(m.critical_down) }}</p>
+    <p class="muted">올림은 모델이 놓친 Critical — 측정에서 가장 무거웠던 실수(X-1)가 운영에서도 나오는지 보는 신호입니다.</p>
+  </div>
+  <div class="card"><h2>처리 시간</h2>
+    <p>트리아지(모델): {{ dur(m.times.triage_sec, "초") }}</p>
+    <p>검토 대기 (한 건 기준, 여러 번이면 합): {{ dur(m.times.review_min, "분") }}</p>
+    <p>접수 → 등록: {{ dur(m.times.total_min, "분") }}</p>
+    {% if m.times.waiting_now %}<p class="muted">지금 검토 대기 중인 {{ m.times.waiting_now }}건은 아직 끝난 값이 없어 검토 대기 시간에서 빠져 있습니다.</p>{% endif %}
+    {% if m.times.no_receipt %}<p class="muted">접수 이력이 없는 옛 리포트 {{ m.times.no_receipt }}건은 접수 → 등록 시간에서 뺐습니다.</p>{% endif %}
+  </div>
+  <div class="card"><h2>자동 처리율 · 실패</h2>
+    <p>자동 처리율: {{ pct(m.auto) }}</p>
+    <p class="muted">라우팅 미채택 — 모든 건 사람 확인(분모: 등록·폐기로 결정된 건)</p>
+    <p>현재 실패 상태: {{ pct(m.failures.rate) }}<br><span class="muted">트리아지 단계 {{ m.failures.now_triage }}건 · 등록 단계 {{ m.failures.now_register }}건{% if m.failures.now_unknown %} · 단계 기록 없음 {{ m.failures.now_unknown }}건{% endif %} · 기간 안에 접수한 리포트에서 실패가 일어난 횟수(다시 시도 포함) {{ m.failures.events }}회</span></p>
+  </div>
+</div>
+
+<h2>일자별 유입</h2>
+{{ bars(m.intake_rows) }}
+<p class="muted">출처: {% for s, n in m.sources.items() %}{{ s }} {{ n }}{% if not loop.last %} · {% endif %}{% else %}없음{% endfor %}</p>
+
+<h2>분포 (등록한 {{ m.registered }}건의 확정 8칸)</h2>
+<div class="grid">
+  {% for f in ["우선순위", "처리", "분류", "모듈"] %}
+  <div class="card"><h2>{{ f }}</h2>{{ bars(m.distribution[f]) }}</div>
+  {% endfor %}
+</div>
+{% endblock %}

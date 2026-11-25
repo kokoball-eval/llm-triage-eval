@@ -9,6 +9,12 @@
 
 ## [Unreleased]
 
+### 변경 (서비스 S5-5c: 대시보드 개편)
+
+- `/dashboard`는 QA팀 대응 현황만 보인다: 마일스톤 D-day·완료율, 최근 7일 닫힘·새로 들어옴·재오픈, 대응 흐름 4칸(QA Review → In Dev → Resolve, Check)과 칸별 병목(기준 일수 초과), 구성원별 부하, 팀별 미해결, 회귀 테스트(지금 Resolve·재오픈률·머문 시간). 계산은 `metrics.response()`.
+- 트리아지 품질 지표(기간 필터·사람 수정 비율·Critical 수정·처리 시간·자동 처리율·유입·분포)는 새 화면 `/triage`로 옮겼고, 사람이 바꾼 배정도 기간별로 이 화면에 둔다(`metrics.assign_changed`).
+- 병목 일수 계산을 내 담당 화면과 공용으로(`sync.stay_days`). 실제 Jira KAN으로 두 화면 확인. 시험 2개 추가(551개).
+
 ### 추가 (서비스 S5-5b: "내 담당" 화면)
 
 - `/mine` — BTS 토큰 주인(QA팀 구성원)의 내 차례(QA Review 담당자가 나, Resolve는 QA 담당이 나), 넘긴 이슈(In Dev·Check), 병목(기준 일수 초과, `config.BOTTLENECK_DAYS`: QA Review 2·Resolve 2·In Dev 7·Check 14일)을 보인다. 머문 기간은 상태 변화 기록에서 센다.

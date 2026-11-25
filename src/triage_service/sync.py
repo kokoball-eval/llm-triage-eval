@@ -280,6 +280,16 @@ def _aware(text: str) -> datetime:
     return t if t.tzinfo else t.astimezone()   # 시간대가 없는 값(가짜 BTS)은 이 PC 시각으로 본다
 
 
+def stay_days(seen: list, status: str, updated: str, at: datetime) -> float:
+    """설계 의도 13 — 지금 상태에 머문 일수: 그 상태로 들어온 것을 본 시각(없으면 BTS 가 마지막으로 바꾼 시각)부터.
+    seen 은 그 티켓의 store.ticket_changes() 값. 시각을 못 읽으면(빈 값·이상한 값) 화면 전체를 막지 않고 0일로 둔다."""
+    since = next((a for a, _, d in reversed(seen) if d == status), None) or updated
+    try:
+        return max((at - _aware(since)).total_seconds() / 86400, 0)
+    except ValueError:
+        return 0
+
+
 def mine(records: list[dict], tickets: list[dict], changes: dict, log: dict, me: Member, at: datetime | None = None) -> dict:
     """설계 의도 13 — {"me": 이름, "mine": 내 차례, "handed": 넘긴 이슈, "late": 기준을 넘긴 것}, 각 줄은 {key, title, status, team,
     assignee, days, limit, late, rid}(rid 는 서비스가 등록한 건만). 오래 머문 순. tickets 는 마일스톤 티켓 전체,
@@ -301,11 +311,7 @@ def mine(records: list[dict], tickets: list[dict], changes: dict, log: dict, me:
         handed = status in (IN_DEV, CHECK) and bool(owner) and owner["id"] == me.id
         if not (mine_ or handed):
             continue
-        seen = next((a for a, _, d in reversed(changes.get(key, [])) if d == status), None) or row["updated"]
-        try:   # 시각을 못 읽으면(빈 값·이상한 값) 화면 전체를 막지 않고 0일로 둔다
-            days = max((at - _aware(seen)).total_seconds() / 86400, 0)
-        except ValueError:
-            days = 0
+        days = stay_days(changes.get(key, []), status, row["updated"], at)
         limit = config.BOTTLENECK_DAYS[status]
         line = {"key": key, "title": row["title"], "status": status, "team": row["team"], "assignee": row["assignee"],
                 "days": round(days, 1), "limit": limit, "late": days > limit, "rid": row["rid"]}

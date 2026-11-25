@@ -177,17 +177,17 @@ def test_dashboard_page(scenario):
     app = create_app(scenario, tracker=FakeTracker(scenario.path), start_worker=False,
                      allowed_hosts=("testserver",), sources=[])
     with TestClient(app) as c:
-        page = c.get("/dashboard?period=all").text
+        page = c.get("/triage?period=all").text
         assert "사람 수정 비율" in page and "<strong>50.0%</strong> <span class=\"muted\">(1 / 2건)</span>" in page
         assert "Critical 로 <strong>올림</strong>: <strong>50.0%</strong>" in page
         assert "현재 실패 상태: <strong>25.0%</strong> <span class=\"muted\">(1 / 4건)</span>" in page
         assert "11-19 <span class=\"muted\">(paste 2)</span>" in page          # 일자별 유입의 출처별 건수
-        assert c.get("/dashboard?period=7").status_code == 200
+        assert c.get("/triage?period=7").status_code == 200
 
 
 def test_dashboard_on_empty_store(store):
     app = create_app(store, tracker=FakeTracker(store.path), start_worker=False, allowed_hosts=("testserver",),
                      sources=[])
     with TestClient(app) as c:
-        page = c.get("/dashboard").text
-        assert "데이터 없음" in page and c.get("/").status_code == 200
+        assert "데이터 없음" in c.get("/triage").text and c.get("/").status_code == 200
+        assert "마일스톤이 없습니다" in c.get("/dashboard").text

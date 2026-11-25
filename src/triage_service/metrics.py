@@ -22,11 +22,15 @@
      시각을 몰라 시간에서 빼고 그 건수(unknown_entry)를 적는다(검토 대기 시간의 no_receipt 와 같은 방식).
    - 재오픈률 = Resolve → In Dev 를 본 티켓 ÷ Resolve 에 있는 것을 본 티켓.
    - 팀별 미해결은 Closed 가 아닌 티켓을 BTS 팀 표식으로 센다(contracts 설계 의도 7). 표식이 없으면 "팀 없음".
-   - 사람이 바꾼 배정 비율은 이 마일스톤 티켓 중 서비스가 등록하고 자동 배정을 쓴 건만 센다(규칙의 팀이 있어야 비교할 수
-     있다). 이미 있던 티켓에 연결해 배정을 적용하지 않은 건은 뺀다. 재현 확인 뒤 팀을 옮긴 것(QA 기록)은 사람이 배정을 고친
-     것이 아니라 업무 흐름이라 세지 않는다.
    - shortcut: 상태 변화는 티켓 단위라 다른 마일스톤에서 옮겨 온 티켓은 옮기기 전의 Resolve 체류·재오픈도 지금 마일스톤에
      들어간다. 마일스톤을 자주 옮기는 운영이면 변화 기록에 마일스톤을 함께 남기도록 올린다.
+9. 대시보드는 QA팀 대응 현황만 보인다(S5-5c, 2026-11-25 경민 결정: 지표가 많아 무엇을 봐야 할지 흐려졌다). 마일스톤 하나의 BTS 티켓으로
+   대응 흐름 4칸(QA Review·In Dev·Resolve·Check 건수와 기준 일수 config.BOTTLENECK_DAYS 를 넘긴 병목 수), 최근 7일 처리량(상태 변화
+   기록에서 닫힘·새로 들어옴(처음 본 상태가 QA Review)·재오픈), 구성원별 부하(담당자 표시 이름별 미해결·병목)를 센다(response). 머문 일수는 내 담당 화면과 같은
+   계산(sync.stay_days)이다. 트리아지 품질 지표(compute)는 별도 화면(/triage)으로 옮겼다.
+10. 사람이 바꾼 배정 비율(assign_changed)은 모델 품질 지표라 트리아지 품질 화면의 기간 필터를 따른다(S5-4c 에서는 마일스톤별이었다).
+   서비스가 등록하고 자동 배정을 쓴 건만 센다(규칙의 팀이 있어야 비교할 수 있다). 이미 있던 티켓에 연결해 배정을 적용하지 않은 건은
+   뺀다. 재현 확인 뒤 팀을 옮긴 것(QA 기록)은 사람이 배정을 고친 것이 아니라 업무 흐름이라 세지 않는다.
 """
 
 import math
@@ -34,8 +38,8 @@ from collections import Counter
 from datetime import datetime, timedelta
 
 from triage_eval.contracts import ENUMS, split_modules
-from triage_service import flow
-from triage_service.contracts import CLOSED, IN_DEV, RESOLVE
+from triage_service import config, flow, sync
+from triage_service.contracts import CHECK, CLOSED, IN_DEV, QA_REVIEW, RESOLVE
 
 PERIODS = {"7": 7, "30": 30, "all": None}
 
@@ -140,6 +144,7 @@ def compute(records: list[dict], history: dict, period: str = "30", now: datetim
                             ("요약", "분류", "모듈", "우선순위", "재현 정보", "발생 빈도", "처리", "누락 정보 및 권장 조치")},
         "critical_up": ratio(up, len(registered)), "critical_down": ratio(down, len(registered)),
         "auto": ratio(0, decided),   # 설계 의도 5
+        "assign_changed": assign_changed(registered),   # 설계 의도 10
         "times": {"triage_sec": summary(triage_sec), "review_min": summary(review_min),
                   "total_min": summary(total_min), "no_receipt": no_receipt, "waiting_now": waiting_now},
         "failures": {"events": failures["이벤트"], "now_triage": failures["트리아지"], "now_register": failures["등록"],
@@ -148,9 +153,16 @@ def compute(records: list[dict], history: dict, period: str = "30", now: datetim
     }
 
 
-def qa(tickets: list[dict], changes: dict, records: list[dict], now: datetime | None = None) -> dict:
-    """설계 의도 8 — 마일스톤 하나의 QA 지표. tickets 는 store.tickets(이름), changes 는 store.ticket_changes(),
-    records 는 등록한 리포트(store.list(flow.REGISTERED)). 시간은 시간(h) 단위."""
+def assign_changed(registered: list[dict]) -> dict:
+    """설계 의도 10 — 자동 배정을 쓴 등록 건 중 사람이 팀을 바꾼 비율."""
+    assigned = [r["assignment"] for r in registered if r["assignment"] and r["assignment"].get("suggested")
+                and not r["assignment"].get("linked_existing")]
+    return ratio(sum(a["team"] != a["suggested"] for a in assigned), len(assigned))
+
+
+def qa(tickets: list[dict], changes: dict, now: datetime | None = None) -> dict:
+    """설계 의도 8 — 마일스톤 하나의 QA 지표. tickets 는 store.tickets(이름), changes 는 store.ticket_changes().
+    시간은 시간(h) 단위."""
     now = now or datetime.now()
     stays, waiting, unknown, reached, reopened = [], [], 0, 0, 0
     for t in tickets:
@@ -170,12 +182,39 @@ def qa(tickets: list[dict], changes: dict, records: list[dict], now: datetime | 
         reached += any(dst == RESOLVE for _, _, dst in seen)
         reopened += any(src == RESOLVE and dst == IN_DEV for _, src, dst in seen)
     teams = Counter(t["team"] or "팀 없음" for t in tickets if t["status"] != CLOSED)
-    keys = {t["key"] for t in tickets}
-    assigned = [r["assignment"] for r in records if r["ticket_key"] in keys and r["assignment"]
-                and r["assignment"].get("suggested") and not r["assignment"].get("linked_existing")]
     return {"total": len(tickets),
             "resolve_now": sum(t["status"] == RESOLVE for t in tickets),
             "resolve_wait": summary(stays), "oldest_wait": max(waiting, default=None), "unknown_entry": unknown,
             "reopen": ratio(reopened, reached),
-            "teams": sorted(teams.items(), key=lambda x: (-x[1], x[0])),
-            "assign_changed": ratio(sum(a["team"] != a["suggested"] for a in assigned), len(assigned))}
+            "teams": sorted(teams.items(), key=lambda x: (-x[1], x[0]))}
+
+
+FLOW = (QA_REVIEW, IN_DEV, RESOLVE, CHECK)
+
+
+def response(tickets: list[dict], changes: dict, now: datetime | None = None) -> dict:
+    """설계 의도 9 — 마일스톤 하나의 QA팀 대응 현황. {"flow": [(상태, 건수, 병목)], "week": {"closed", "found", "reopened"},
+    "members": [(담당자, 미해결, 병목)] 미해결 많은 순}. tickets 는 store.tickets(이름), changes 는 store.ticket_changes()."""
+    at = (now or datetime.now()).astimezone()
+    flow_, members = {s: [0, 0] for s in FLOW}, {}
+    for t in tickets:
+        if t["status"] not in flow_:   # Closed 와 다섯 상태 밖의 이름은 흐름에 넣지 않는다
+            continue
+        late = sync.stay_days(changes.get(t["key"], []), t["status"], t["updated"], at) > config.BOTTLENECK_DAYS[t["status"]]
+        for box in (flow_[t["status"]], members.setdefault(t["assignee"] or "담당 없음", [0, 0])):
+            box[0] += 1
+            box[1] += late
+    since = at - timedelta(days=7)
+    week = []
+    for t in tickets:
+        for a, src, dst in changes.get(t["key"], []):
+            try:   # 시각을 못 읽는 기록은 화면 전체를 막지 않고 건너뛴다(stay_days 와 같은 방침)
+                if sync._aware(a) >= since:
+                    week.append((src, dst))
+            except ValueError:
+                pass
+    return {"flow": [(s, *flow_[s]) for s in FLOW],
+            "week": {"closed": sum(src is not None and dst == CLOSED for src, dst in week),
+                     "found": sum(src is None and dst == QA_REVIEW for src, dst in week),   # 처음 본 때 이미 진행 중이던 건은 새 유입이 아니다
+                     "reopened": sum(src == RESOLVE and dst == IN_DEV for src, dst in week)},
+            "members": sorted(((n, *v) for n, v in members.items()), key=lambda x: (-x[1], x[0]))}

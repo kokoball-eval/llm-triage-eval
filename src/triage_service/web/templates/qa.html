@@ -46,10 +46,5 @@
 <h2>보류 <span class="muted">(Check)</span> <span class="badge">{{ board.hold | length }}</span></h2>
 {% if board.hold %}{{ rows(board.hold) }}<p class="muted">보류 사유는 각 티켓의 코멘트에 있습니다.</p>{% else %}<p class="muted">보류한 티켓이 없습니다.</p>{% endif %}
 
-<h2>팀별 미해결</h2>
-{% if board.teams %}
-<table class="bars">{% for team, n in board.teams.items() %}<tr><th>{{ team }}</th><td class="num">{{ n }}</td></tr>{% endfor %}</table>
-<p class="muted">Closed가 아닌 티켓 수입니다. 재현 확인으로 넘긴 건은 넘긴 팀으로 셉니다.</p>
-{% else %}<p class="muted">미해결 티켓이 없습니다.</p>{% endif %}
 <p class="muted">동작(재현 확인 · 회귀 테스트 통과·실패 · 보류 · 코멘트)은 제목을 눌러 상세 화면에서 합니다.</p>
 {% endblock %}

@@ -114,18 +114,18 @@ def test_fake_snapshot_and_set_status(store, monkeypatch):
 
 # ── 동기화 ─────────────────────────────────────────────
 
-def test_sync_saves_state_and_records_changes_once(store):
+def test_sync_saves_state(store):
     tracker = FakeTracker(store.path)
     key = register(store, tracker, 처리="등록(재현 대기)")["ticket_key"]
     assert sync.run(store, tracker) == {"synced": 1, "missing": [], "errors": [], "milestones": []}
     rid = store.list()[0]["id"]
     assert store.get(rid)["bts"]["status"] == QA_REVIEW
-    sync.run(store, tracker)   # 그대로면 변화 기록을 더하지 않는다
-    assert [(src, dst) for _, src, dst in store.bts_history()[rid]] == [(None, QA_REVIEW)]
     tracker.set_status(key, IN_DEV)
     sync.run(store, tracker)
-    assert [(src, dst) for _, src, dst in store.bts_history()[rid]] == [(None, QA_REVIEW), (QA_REVIEW, IN_DEV)]
+    assert store.get(rid)["bts"]["status"] == IN_DEV
     assert store.get(rid)["state"] == "등록 완료"   # 리포트 흐름은 BTS 상태와 따로다
+    with pytest.raises(KeyError):
+        store.save_bts(999, {"status": IN_DEV})   # 없는 리포트는 조용히 넘기지 않는다
 
 
 def test_sync_ignores_unregistered_reports(store):
@@ -191,7 +191,7 @@ def test_old_database_gets_new_columns_and_tables(tmp_path):
     store = Store(path)
     with sqlite3.connect(path) as c:
         assert "bts" in {r[1] for r in c.execute("PRAGMA table_info(reports)")}
-    assert store.get(1)["bts"] is None and store.bts_history() == {} and store.qa_log() == {}
+    assert store.get(1)["bts"] is None and store.qa_log() == {}
 
 
 # ── 보드 ───────────────────────────────────────────────
@@ -216,20 +216,21 @@ def test_board_lists(store):
     assert [r["id"] for r in b["repro"]] == [recs[0]["id"]]
     assert [(r["id"], w) for r, w in b["verify"]] == [(recs[1]["id"], "3시간"), (recs[2]["id"], "30분")]   # 오래된 순
     assert [r["id"] for r in b["hold"]] == [recs[4]["id"]]
-    assert b["teams"] == {"QA": 1, "기획": 1, "서버": 1, "아트": 1, "클라": 1}   # Closed(recs[5])는 뺀다
     assert b["unsynced"] == 1 and b["synced_at"] == "2026-11-23T12:00:00" and b["unknown"] == []
 
 
 def test_board_counts_reassigned_team(store):
-    """재현 확인으로 넘긴 팀이 있으면 그 팀으로 센다(sync 설계 의도 7). 쓰기 요청이 실패한 기록은 팀이 비어 세지 않고,
-    요청은 받았지만 상태 확인에서 실패한 기록의 팀은 센다."""
+    """재현 확인으로 넘긴 팀이 있으면 그 팀이 지금 팀이다(sync 설계 의도 7). 쓰기 요청이 실패한 기록은 팀이 비어 바뀌지 않고,
+    요청은 받았지만 상태 확인에서 실패한 기록의 팀은 바뀐 것으로 본다."""
     recs, at = synced_store(store)
     store.save_qa(recs[0]["id"], "재현 확인", QA_REVIEW, IN_DEV, team="서버")
     store.save_qa(recs[3]["id"], "재현 확인", QA_REVIEW, QA_REVIEW, team="", error="BTS 쓰기 실패")
     store.save_qa(recs[4]["id"], "재현 확인", QA_REVIEW, QA_REVIEW, team="아트", error="BTS 가 바꾸지 않았습니다")
-    b = sync.board(sync.targets(store), store.qa_log(), at)
-    assert b["teams"] == {"서버": 2, "아트": 2, "클라": 1}
-    assert next(r for r in b["repro"] if r["id"] == recs[0]["id"])["team_now"] == "서버"
+    records = sync.targets(store)
+    sync.board(records, store.qa_log(), at)
+    now_team = {r["id"]: r["team_now"] for r in records if "team_now" in r}
+    assert now_team[recs[0]["id"]] == "서버" and now_team[recs[4]["id"]] == "아트"
+    assert now_team[recs[3]["id"]] == recs[3]["assignment"]["team"]   # 쓰기 실패한 기록은 팀을 바꾸지 않는다
 
 
 def test_board_shows_unknown_status_names(store):

@@ -13,7 +13,7 @@ from fastapi.testclient import TestClient
 from conftest import FakeClient
 from test_bts import MAPPING, adapter, an_issue
 from test_service import DEV_ITEMS, triaged
-from triage_service import cli, config, qa, review, sync
+from triage_service import cli, config, metrics, qa, review, sync
 from triage_service.bts.fake import FakeTracker
 from triage_service.bts.jira import JiraTracker
 from triage_service.bts.redmine import RedmineTracker
@@ -212,11 +212,11 @@ def test_milestone_summary(store):
     tracker.set_status(keys[1], IN_DEV)
     tracker.set_status(keys[2], CLOSED)
     sync.run(store, tracker)
-    s = sync.milestone_summary(store, "0.0.1", today=date(2026, 11, 24))
+    s = metrics.milestone_summary(store, "0.0.1", today=date(2026, 11, 24))
     assert (s["total"], s["closed"], s["rate"], s["qa_closed"], s["reopened"]) == (4, 2, 50.0, 1, 1)
     assert s["left"] == {QA_REVIEW: 1, IN_DEV: 1, RESOLVE: 0, "Check": 0} and s["d_day"] == 50 and s["other"] == {}
-    assert sync.milestone_summary(store, "없는 버전") is None
-    empty = sync.milestone_summary(store, "0.1.0")
+    assert metrics.milestone_summary(store, "없는 버전") is None
+    empty = metrics.milestone_summary(store, "0.1.0")
     assert empty["total"] == 0 and empty["rate"] is None
 
 

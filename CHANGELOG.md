@@ -9,6 +9,14 @@
 
 ## [Unreleased]
 
+### 정리 (서비스 코드 정리: 필요한 코드만, ponytail·SoC)
+
+- 열린 상태 목록을 `contracts.OPEN` 한 곳에 두고 QA 동작·대응 흐름·마일스톤 성과·병목 기준(`config.BOTTLENECK_DAYS` 키)이 함께 쓴다(네 곳에 따로 있던 것).
+- 지표 계산이 동기화 모듈을 부르던 의존을 없앴다: 머문 일수(`stay_days`)·시각 읽기(`aware`)·마일스톤 성과(`milestone_summary`)를 `metrics.py`로 옮기고 재오픈 판정을 하나로 합쳤다(`metrics.reopened_`).
+- 대시보드의 진행 중 스프린트를 목록 위치(`[2]`) 대신 날짜로 찾는다.
+- 지운 것: 읽는 곳 없는 리포트 단위 상태 변화 기록(`bts_changes` 쓰기·`bts_history`, 옛 DB 의 표는 그대로 둠), 동기화 잠금과 겹친 `qa._lock`, `metrics.compute` 의 안 쓰는 `"intake"` 키, `store.FAILED_STEPS`, `jira.py` 의 별칭 `name_of`, QA 보드의 팀별 미해결(대시보드와 기준이 달라 같은 이름의 숫자가 둘이던 것).
+- 대시보드 회귀 테스트 카드에 들어간 시각을 몰라 뺀 건수를 다시 보인다(설계 의도대로). 화면 숫자와 측정한 트리아지(`src/triage_eval`)는 바뀌지 않았다. 시험 575개.
+
 ### 추가 (서비스 S5-6b: 스프린트 자동 이월)
 
 - 동기화가 출시 전 마일스톤의 미완료(Check 포함) 티켓 중 목표 업데이트가 지난 것을 진행 중인 업데이트로 옮긴다(`sync.carry`, 금요일부터). 쓰기 직전 BTS 상태를 다시 읽고, 표식 → 이월 기록(`sprint_carries`) → BTS 코멘트("이월 N회") 순으로 쓴다. 동기화가 BTS에 쓰는 두 번째 경우. 계약 `update(sprint=)`, Jira 는 예전 스프린트 라벨을 모두 지우고 새 라벨을 붙인다.

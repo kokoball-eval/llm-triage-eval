@@ -1,17 +1,18 @@
-"""BTS 상태 동기화와 QA 보드 — 등록한 티켓의 BTS 상태를 읽어 와 재현 대기·회귀 테스트 대기·보류·팀별 미해결로 보여 준다.
+"""BTS 상태 동기화와 QA 보드 — 등록한 티켓의 BTS 상태를 읽어 와 재현 대기·회귀 테스트 대기·보류로 보여 준다.
 
 [설계 의도]
 1. BTS 가 원본이다. 서비스는 읽어 온 값을 복사해 두고 보여 줄 뿐이다. BTS 에 쓰는 것은 QA 가 누른 동작뿐이다(qa.py).
    개발자는 계속 BTS 에서 일하므로 서비스가 자기 상태를 따로 가지면 같은 버그의 상태가 두 곳에서 달라진다.
 2. 읽기는 끌어오기다. 서비스는 이 PC(127.0.0.1)에서만 열려 있어 BTS 가 변경을 알려 주는 웹훅을 받을 수 없다. [지금 동기화]
    버튼과 화면을 열 때의 자동 동기화(설계 의도 10) 두 길로만 읽는다.
-3. 상태는 다섯 이름(contracts.STATUSES)으로 나눈다: QA Review → 재현 대기, Resolve → 회귀 테스트 대기, Check → 보류,
-   Closed 가 아니면 팀별 미해결. 다섯 이름 밖의 상태를 읽으면 그 이름을 화면에 그대로 보여 BTS 워크플로가 바뀐 것을 알아챈다.
+3. 상태는 다섯 이름(contracts.STATUSES)으로 나눈다: QA Review → 재현 대기, Resolve → 회귀 테스트 대기, Check → 보류.
+   팀별 미해결은 대시보드가 BTS 팀 표식 기준으로 보인다(QA 보드에서는 2026-11-25 코드 정리 때 뺐다, 같은 이름의 숫자가 두 화면에서
+   다르게 나오지 않게). 다섯 이름 밖의 상태를 읽으면 그 이름을 화면에 그대로 보여 BTS 워크플로가 바뀐 것을 알아챈다.
    (S5-2 의 상태 대응 설정 [<bts>.status] 는 상태 이름을 통일하면서 없앴다.)
 4. 읽기에 실패한 묶음은 이전에 읽은 값을 그대로 두고 이유를 보여 준다. 일부만 실패해도 성공한 묶음은 갱신한다. BTS 에서
    찾지 못한 티켓(지워졌거나 접근 권한 밖)은 갱신하지 않고 목록으로 알린다.
 5. 대기 시간은 "BTS 가 그 티켓을 마지막으로 바꾼 뒤 경과 시간"이다. 상태가 바뀐 시각이 아니라, 회귀 테스트 대기 중 코멘트가
-   달려도 줄어든다. 정확한 상태 변경 시각은 store.bts_changes 에 쌓는 기록(우리가 발견한 시각)으로 S5-4 에서 센다.
+   달려도 줄어든다. 정확한 상태 변경 시각은 마일스톤 티켓의 상태 변화 기록(store.bts_ticket_changes, 발견한 시각)으로 센다.
 6. 대상은 등록한 리포트 중 최근 config.SYNC_LIMIT 건이다. 보드도 같은 대상만 센다(동기화하지 않는 오래된 건이 "동기화 전"으로
    섞이지 않게).
 7. 팀은 재현 확인으로 바꾼 팀(QA 기록의 마지막 팀)이 있으면 그것, 없으면 등록 때 배정한 팀이다(store 설계 의도 10). 기록의
@@ -58,10 +59,9 @@
 """
 
 import threading
-from collections import Counter
 from datetime import date, datetime, timedelta
 
-from triage_service import assign, config, flow, qa, sprint
+from triage_service import assign, config, flow, metrics, qa, sprint
 from triage_service.contracts import CHECK, CLOSED, IN_DEV, QA_REVIEW, RESOLVE, STATUSES, Member
 from triage_service.store import Store, now
 
@@ -252,29 +252,6 @@ def current(milestones: list[dict]) -> str:
     return next((m["name"] for m in milestones if not m["released"]), "")
 
 
-def milestone_summary(store: Store, name: str, today: date | None = None) -> dict | None:
-    """설계 의도 9 — 마일스톤 성과. 모르는 마일스톤이면 None."""
-    m = next((m for m in store.milestones() if m["name"] == name), None)
-    if m is None:
-        return None
-    today = today or date.today()
-    tickets, changes = store.tickets(name), store.ticket_changes()
-    counts = Counter(t["status"] for t in tickets)
-    passed = qa.ACTIONS["pass"][0]
-    log = store.qa_log()
-    qa_closed_keys = {r["ticket_key"] for r in store.list(flow.REGISTERED)
-                      if any(a["action"] == passed and not a["error"] for a in log.get(r["id"], []))}
-    total, closed = len(tickets), counts[CLOSED]
-    return {"name": name, "release": m["release"], "released": m["released"],
-            "d_day": (date.fromisoformat(m["release"]) - today).days if m["release"] else None,
-            "total": total, "closed": closed, "rate": round(closed / total * 100, 1) if total else None,
-            "left": {s: counts[s] for s in (QA_REVIEW, IN_DEV, RESOLVE, CHECK)},
-            "other": {s: n for s, n in counts.items() if s not in STATUSES},
-            "reopened": sum(1 for t in tickets if any(s == RESOLVE and d == IN_DEV for _, s, d in changes.get(t["key"], []))),
-            "qa_closed": sum(1 for t in tickets if t["status"] == CLOSED and t["key"] in qa_closed_keys),
-            "synced_at": max((t["synced_at"] for t in tickets), default=m["synced_at"])}
-
-
 def ago(minutes: float) -> str:
     return f"{minutes:.0f}분" if minutes < 60 else f"{minutes / 60:.0f}시간" if minutes < 1440 else f"{minutes / 1440:.0f}일"
 
@@ -285,11 +262,11 @@ def team(record: dict, log: list[dict]) -> str:
 
 
 def board(records: list[dict], log: dict, at: datetime | None = None) -> dict:
-    """QA 보드 — {"repro": [기록], "verify": [(기록, 대기 문자열)] 오래된 순, "hold": [기록], "teams": {팀: 미해결 건수},
+    """QA 보드 — {"repro": [기록], "verify": [(기록, 대기 문자열)] 오래된 순, "hold": [기록],
     "unsynced": 건수, "synced_at": 가장 최근에 읽은 시각, "unknown": 다섯 상태 밖의 이름들}. log 는 store.qa_log().
     읽어 둔 기록에는 지금 담당 팀(team_now)을 붙인다."""
     at = at or datetime.now().astimezone()
-    repro, verify, hold, teams, unsynced, unknown = [], [], [], {}, 0, set()
+    repro, verify, hold, unsynced, unknown = [], [], [], 0, set()
     for r in records:
         b = r["bts"]
         if b is None:
@@ -302,33 +279,16 @@ def board(records: list[dict], log: dict, at: datetime | None = None) -> dict:
             repro.append(r)
         elif status == RESOLVE:
             try:   # 시각을 못 읽으면(빈 값·이상한 값) 화면 전체를 막지 않고 0분으로 둔다
-                waited = max((at - _aware(b["updated"])).total_seconds() / 60, 0)
+                waited = max((at - metrics.aware(b["updated"])).total_seconds() / 60, 0)
             except ValueError:
                 waited = 0
             verify.append((waited, r))
         elif status == CHECK:
             hold.append(r)
-        if status != CLOSED:
-            teams[r["team_now"]] = teams.get(r["team_now"], 0) + 1
     verify.sort(key=lambda w: -w[0])
     synced = [r["bts"]["synced_at"] for r in records if r["bts"]]
-    return {"repro": repro, "verify": [(r, ago(w)) for w, r in verify], "hold": hold, "teams": dict(sorted(teams.items())),
+    return {"repro": repro, "verify": [(r, ago(w)) for w, r in verify], "hold": hold,
             "unsynced": unsynced, "synced_at": max(synced, default=None), "unknown": sorted(unknown)}
-
-
-def _aware(text: str) -> datetime:
-    t = datetime.fromisoformat(text)
-    return t if t.tzinfo else t.astimezone()   # 시간대가 없는 값(가짜 BTS)은 이 PC 시각으로 본다
-
-
-def stay_days(seen: list, status: str, updated: str, at: datetime) -> float:
-    """설계 의도 13 — 지금 상태에 머문 일수: 그 상태로 들어온 것을 본 시각(없으면 BTS 가 마지막으로 바꾼 시각)부터.
-    seen 은 그 티켓의 store.ticket_changes() 값. 시각을 못 읽으면(빈 값·이상한 값) 화면 전체를 막지 않고 0일로 둔다."""
-    since = next((a for a, _, d in reversed(seen) if d == status), None) or updated
-    try:
-        return max((at - _aware(since)).total_seconds() / 86400, 0)
-    except ValueError:
-        return 0
 
 
 def mine(records: list[dict], tickets: list[dict], changes: dict, log: dict, me: Member, at: datetime | None = None) -> dict:
@@ -352,7 +312,7 @@ def mine(records: list[dict], tickets: list[dict], changes: dict, log: dict, me:
         handed = status in (IN_DEV, CHECK) and bool(owner) and owner["id"] == me.id
         if not (mine_ or handed):
             continue
-        days = stay_days(changes.get(key, []), status, row["updated"], at)
+        days = metrics.stay_days(changes.get(key, []), status, row["updated"], at)
         limit = config.BOTTLENECK_DAYS[status]
         line = {"key": key, "title": row["title"], "status": status, "team": row["team"], "assignee": row["assignee"],
                 "days": round(days, 1), "limit": limit, "late": days > limit, "rid": row["rid"]}

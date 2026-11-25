@@ -26,7 +26,7 @@
      들어간다. 마일스톤을 자주 옮기는 운영이면 변화 기록에 마일스톤을 함께 남기도록 올린다.
 9. 대시보드는 QA팀 대응 현황만 보인다(S5-5c, 2026-11-25 경민 결정: 지표가 많아 무엇을 봐야 할지 흐려졌다). 마일스톤 하나의 BTS 티켓으로
    대응 흐름 4칸(QA Review·In Dev·Resolve·Check 건수와 기준 일수 config.BOTTLENECK_DAYS 를 넘긴 병목 수), 구성원별 부하(담당자 표시 이름별 미해결·병목)를 센다(response). 머문 일수는 내 담당 화면과 같은
-   계산(sync.stay_days)이다. 트리아지 품질 지표(compute)는 별도 화면(/triage)으로 옮겼다.
+   계산(stay_days)이다. 트리아지 품질 지표(compute)는 별도 화면(/triage)으로 옮겼다.
 10. 사람이 바꾼 배정 비율(assign_changed)은 모델 품질 지표라 트리아지 품질 화면의 기간 필터를 따른다(S5-4c 에서는 마일스톤별이었다).
    서비스가 등록하고 자동 배정을 쓴 건만 센다(규칙의 팀이 있어야 비교할 수 있다). 이미 있던 티켓에 연결해 배정을 적용하지 않은 건은
    뺀다. 재현 확인 뒤 팀을 옮긴 것(QA 기록)은 사람이 배정을 고친 것이 아니라 업무 흐름이라 세지 않는다.
@@ -39,11 +39,12 @@
 
 import math
 from collections import Counter
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 from triage_eval.contracts import ENUMS, split_modules
-from triage_service import config, flow, sync
-from triage_service.contracts import CHECK, CLOSED, IN_DEV, QA_REVIEW, RESOLVE
+from triage_service import config, flow
+from triage_service.qa import ACTIONS   # 이 파일의 qa() 함수와 이름이 겹쳐 모듈 대신 값을 가져온다
+from triage_service.contracts import CLOSED, IN_DEV, OPEN, RESOLVE, STATUSES
 
 PERIODS = {"7": 7, "30": 30, "all": None}
 
@@ -136,7 +137,6 @@ def compute(records: list[dict], history: dict, period: str = "30", now: datetim
         "period": period if period in PERIODS else "30", "since": since.date().isoformat() if since else None,
         "total": len(recs),
         "states": {s: sum(1 for r in recs if r["state"] == s) for s in flow.STATES},
-        "intake": [{"date": d, "total": sum(c.values()), "by_source": dict(c)} for d, c in sorted(by_day.items())],
         "intake_rows": [(d[5:], sum(c.values()), " · ".join(f"{k} {v}" for k, v in sorted(c.items())))
                         for d, c in sorted(by_day.items())],
         "sources": dict(Counter(r["report"].source for r in recs)),
@@ -164,6 +164,49 @@ def assign_changed(registered: list[dict]) -> dict:
     return ratio(sum(a["team"] != a["suggested"] for a in assigned), len(assigned))
 
 
+def reopened_(seen: list) -> bool:
+    """재오픈 = Resolve 에서 In Dev 로 돌아간 것을 본 적이 있다(회귀 테스트 실패). seen 은 그 티켓의 store.ticket_changes() 값."""
+    return any(src == RESOLVE and dst == IN_DEV for _, src, dst in seen)
+
+
+def aware(text: str) -> datetime:
+    t = datetime.fromisoformat(text)
+    return t if t.tzinfo else t.astimezone()   # 시간대가 없는 값(가짜 BTS·저장소 시각)은 이 PC 시각으로 본다
+
+
+def stay_days(seen: list, status: str, updated: str, at: datetime) -> float:
+    """지금 상태에 머문 일수: 그 상태로 들어온 것을 본 시각(없으면 BTS 가 마지막으로 바꾼 시각)부터. 내 담당 화면(sync.mine)과
+    대응 흐름(response)이 같은 계산을 쓴다. 시각을 못 읽으면(빈 값·이상한 값) 화면 전체를 막지 않고 0일로 둔다."""
+    since = next((a for a, _, d in reversed(seen) if d == status), None) or updated
+    try:
+        return max((at - aware(since)).total_seconds() / 86400, 0)
+    except ValueError:
+        return 0
+
+
+def milestone_summary(store, name: str, today: date | None = None) -> dict | None:
+    """마일스톤 성과(첫 화면 카드·대시보드). 현재 마일스톤을 고르는 규칙은 sync 설계 의도 9. 모르는 마일스톤이면 None. store 는 Store."""
+    m = next((m for m in store.milestones() if m["name"] == name), None)
+    if m is None:
+        return None
+    today = today or date.today()
+    tickets, changes = store.tickets(name), store.ticket_changes()
+    counts = Counter(t["status"] for t in tickets)
+    passed = ACTIONS["pass"][0]
+    log = store.qa_log()
+    qa_closed_keys = {r["ticket_key"] for r in store.list(flow.REGISTERED)
+                      if any(a["action"] == passed and not a["error"] for a in log.get(r["id"], []))}
+    total, closed = len(tickets), counts[CLOSED]
+    return {"name": name, "release": m["release"], "released": m["released"],
+            "d_day": (date.fromisoformat(m["release"]) - today).days if m["release"] else None,
+            "total": total, "closed": closed, "rate": round(closed / total * 100, 1) if total else None,
+            "left": {s: counts[s] for s in OPEN},
+            "other": {s: n for s, n in counts.items() if s not in STATUSES},
+            "reopened": sum(reopened_(changes.get(t["key"], [])) for t in tickets),
+            "qa_closed": sum(1 for t in tickets if t["status"] == CLOSED and t["key"] in qa_closed_keys),
+            "synced_at": max((t["synced_at"] for t in tickets), default=m["synced_at"])}
+
+
 def qa(tickets: list[dict], changes: dict, now: datetime | None = None) -> dict:
     """설계 의도 8 — 마일스톤 하나의 QA 지표. tickets 는 store.tickets(이름), changes 는 store.ticket_changes().
     시간은 시간(h) 단위."""
@@ -184,7 +227,7 @@ def qa(tickets: list[dict], changes: dict, now: datetime | None = None) -> dict:
         if t["status"] == RESOLVE and entered is not None:
             waiting.append((now - entered).total_seconds() / 3600)
         reached += any(dst == RESOLVE for _, _, dst in seen)
-        reopened += any(src == RESOLVE and dst == IN_DEV for _, src, dst in seen)
+        reopened += reopened_(seen)
     teams = Counter(t["team"] or "팀 없음" for t in tickets if t["status"] != CLOSED)
     return {"total": len(tickets),
             "resolve_now": sum(t["status"] == RESOLVE for t in tickets),
@@ -193,21 +236,18 @@ def qa(tickets: list[dict], changes: dict, now: datetime | None = None) -> dict:
             "teams": sorted(teams.items(), key=lambda x: (-x[1], x[0]))}
 
 
-FLOW = (QA_REVIEW, IN_DEV, RESOLVE, CHECK)
-
-
 def response(tickets: list[dict], changes: dict, now: datetime | None = None) -> dict:
     """설계 의도 9 — 마일스톤 하나의 QA팀 대응 현황. {"flow": [(상태, 건수, 병목)], "members": [(담당자, 미해결, 병목)] 미해결 많은 순}. tickets 는 store.tickets(이름), changes 는 store.ticket_changes()."""
     at = (now or datetime.now()).astimezone()
-    flow_, members = {s: [0, 0] for s in FLOW}, {}
+    flow_, members = {s: [0, 0] for s in OPEN}, {}
     for t in tickets:
         if t["status"] not in flow_:   # Closed 와 다섯 상태 밖의 이름은 흐름에 넣지 않는다
             continue
-        late = sync.stay_days(changes.get(t["key"], []), t["status"], t["updated"], at) > config.BOTTLENECK_DAYS[t["status"]]
+        late = stay_days(changes.get(t["key"], []), t["status"], t["updated"], at) > config.BOTTLENECK_DAYS[t["status"]]
         for box in (flow_[t["status"]], members.setdefault(t["assignee"] or "담당 없음", [0, 0])):
             box[0] += 1
             box[1] += late
-    return {"flow": [(s, *flow_[s]) for s in FLOW],
+    return {"flow": [(s, *flow_[s]) for s in OPEN],
             "members": sorted(((n, *v) for n, v in members.items()), key=lambda x: (-x[1], x[0]))}
 
 
@@ -221,5 +261,5 @@ def sprint(tickets: list[dict], name: str, carries: dict | None = None) -> dict:
     repeat = sorted(({"key": t["key"], "title": t["title"], "status": t["status"], "assignee": t["assignee"], "n": len(carries[t["key"]])}
                      for t in mine if t["status"] != CLOSED and len(carries.get(t["key"], [])) >= 2), key=lambda x: (-x["n"], x["key"]))
     return {"name": name, "total": len(mine), "closed": closed, "rate": ratio(closed, len(mine))["pct"],
-            "left": [(s, left[s]) for s in FLOW] + sorted((s, n) for s, n in left.items() if s not in FLOW),
+            "left": [(s, left[s]) for s in OPEN] + sorted((s, n) for s, n in left.items() if s not in OPEN),
             "carried_in": sum(1 for t in mine if carries.get(t["key"]) and carries[t["key"]][-1][2] == name), "repeat": repeat}

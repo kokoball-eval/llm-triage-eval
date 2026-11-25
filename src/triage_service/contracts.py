@@ -35,6 +35,7 @@ REPORTERS = ("내부 QA", "퍼블리셔 QA", "운영/CS")
 # BTS 티켓 상태 (설계 의도 4). QA Review: QA 재현 확인 중 / In Dev: 개발 대응 중 / Resolve: 수정 완료, QA 회귀 테스트 필요 /
 # Check: 일정 지연 등으로 대응 보류(사유 코멘트 필수) / Closed: 대응 종료
 STATUSES = QA_REVIEW, IN_DEV, RESOLVE, CHECK, CLOSED = ("QA Review", "In Dev", "Resolve", "Check", "Closed")
+OPEN = (QA_REVIEW, IN_DEV, RESOLVE, CHECK)   # 아직 끝나지 않은 상태, 흐름 순서 (QA 동작·대응 흐름·병목 기준이 함께 쓴다)
 SOURCE_NAMES = ("paste", "jira", "redmine", "board", "discord")   # Report.source 로 올 수 있는 출처 이름
 
 

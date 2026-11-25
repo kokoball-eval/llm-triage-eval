@@ -30,7 +30,7 @@
 <h2>스프린트 <span class="muted" style="font-size:14px;font-weight:400">(목표 수정 버전 · 매주 목요일 업데이트)</span></h2>
 <nav class="filter">
   {% for s in sprints %}
-    {% if s == sprint %}<strong>{{ sprint_label(s) }}</strong>{% else %}<a href="/dashboard?{{ {"milestone": milestone, "sprint": s} | urlencode }}">{{ sprint_label(s) }}</a>{% endif %}{% if loop.index0 == 2 %} <span class="muted">(진행 중)</span>{% endif %}
+    {% if s == sprint %}<strong>{{ sprint_label(s) }}</strong>{% else %}<a href="/dashboard?{{ {"milestone": milestone, "sprint": s} | urlencode }}">{{ sprint_label(s) }}</a>{% endif %}{% if s == sprint_now %} <span class="muted">(진행 중)</span>{% endif %}
   {% endfor %}
 </nav>
 <p>목표 <strong>{{ sp.total }}</strong>건 · 완료 <strong>{{ sp.closed }}</strong>건{% if sp.total - sp.closed %} · 남음: {% for s, n in sp.left if n %}{{ s }} {{ n }}건{% if not loop.last %} · {% endif %}{% endfor %}{% endif %}</p>
@@ -61,7 +61,7 @@
   <div class="card"><h2>회귀 테스트</h2>
     <p>지금 Resolve <strong>{{ q.resolve_now }}</strong>건{% if q.oldest_wait is not none %} · 가장 오래 {{ "%.1f"|format(q.oldest_wait) }}시간{% endif %}</p>
     <p>재오픈률 (Resolve → In Dev): {% if q.reopen.pct is none %}<span class="muted">데이터 없음</span>{% else %}<strong>{{ q.reopen.pct }}%</strong> <span class="muted">({{ q.reopen.n }} / {{ q.reopen.d }}건)</span>{% endif %}</p>
-    <p class="muted">Resolve 에 머문 시간: {% if q.resolve_wait.n %}중앙값 {{ "%.1f"|format(q.resolve_wait.p50) }}시간 · p95 {{ "%.1f"|format(q.resolve_wait.p95) }}시간 ({{ q.resolve_wait.n }}건){% else %}데이터 없음{% endif %}</p></div>
+    <p class="muted">Resolve 에 머문 시간: {% if q.resolve_wait.n %}중앙값 {{ "%.1f"|format(q.resolve_wait.p50) }}시간 · p95 {{ "%.1f"|format(q.resolve_wait.p95) }}시간 ({{ q.resolve_wait.n }}건){% else %}데이터 없음{% endif %}{% if q.unknown_entry %} · 처음 읽었을 때 이미 Resolve 였던 {{ q.unknown_entry }}건은 들어간 시각을 몰라 뺐습니다{% endif %}</p></div>
 </div>
 <p class="muted">모델이 얼마나 맞혔는지(사람 수정 비율·처리 시간 등)는 <a href="/triage">트리아지 품질</a>에서 봅니다.</p>
 {% else %}

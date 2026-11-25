@@ -15,17 +15,17 @@
 8. 상태가 바뀔 때마다 같은 트랜잭션 안에서 이력(transitions: 시각, 이전 → 다음 상태)을 한 줄 남긴다. 접수 시각과 마지막
    변경 시각만으로는 "검토 대기에 얼마나 머물렀는지" 같은 처리 시간을 셀 수 없기 때문이다(대시보드, metrics.py).
    허용되지 않은 전이는 되돌리므로 이력도 남지 않는다. 이 표가 생기기 전에 접수한 리포트는 이력이 없다.
-9. BTS 에서 읽은 마지막 상태는 reports.bts 에 두고, 동기화 때 상태가 바뀐 것을 발견하면 같은 트랜잭션에서 bts_changes 에
-   한 줄 남긴다(처음 읽은 상태도 한 줄). 재오픈률·검증 대기 시간(S5-4)은 이 기록이 있어야 셀 수 있고, 지난 변화는 나중에
-   되살릴 수 없어서 지금부터 쌓는다. 시각은 BTS 가 바뀐 때가 아니라 우리가 읽다가 발견한 때다(동기화 사이의 변화는 한 번으로
-   합쳐진다). BTS 가 원본이라 이 기록은 리포트 흐름(state·transitions)에 영향을 주지 않는다.
+9. BTS 에서 읽은 마지막 상태는 reports.bts 에 둔다. BTS 가 원본이라 리포트 흐름(state·transitions)에 영향을 주지 않는다.
+   상태 변화 기록은 마일스톤 티켓 단위(bts_ticket_changes, 설계 의도 11)로만 쌓는다. 처음에는 리포트 단위 기록(bts_changes)도
+   쌓았지만 지표·화면·마일스톤과 스프린트 성과가 모두 티켓 단위 기록을 써서 읽는 곳이 없어 없앴다(2026-11-25 코드 정리, 경민
+   결정). 이미 만든 DB 의 그 표는 지우지 않고 그대로 둔다.
 10. 서비스가 BTS 에 쓴 것(qa.py 의 QA 동작, 등록 직후의 첫 상태)은 qa_actions 에 한 줄씩 남긴다: 동작, 쓰기 전·후 BTS 상태,
    바꾼 팀, 코멘트, 오류. 실패하거나 일부만 된 것도 남겨, BTS 와 서비스 화면이 다를 때 무엇을 보냈는지 확인할 수 있게 한다.
    재현 확인으로 바꾼 팀은 이 기록의 마지막 팀이 현재 팀이다(assignment 는 등록 때 배정으로 두어 S5-4c 의 "사람이 바꾼 비율"을 지킨다).
 11. 마일스톤(BTS 버전) 목록은 bts_milestones 에, 마일스톤에 속한 BTS 티켓 전체(서비스가 등록하지 않은 것 포함)는 bts_tickets 에
    티켓 키로 둔다(팀은 BTS 팀 표식, 스프린트는 BTS 스프린트 표식 — contracts 설계 의도 7·9). 스프린트 이월(sync 설계 의도 15)은
    티켓 키로 sprint_carries 에 한 줄씩 남긴다(이월 횟수의 근거). 리포트(reports)와는 티켓 키로만 이어진다. 상태가 처음이거나 바뀐 것을 발견하면 bts_ticket_changes 에 한 줄
-   남긴다(설계 의도 9 와 같은 방식, 재오픈 수의 근거). 동기화에서 그 마일스톤 검색에 더는 나오지 않는 티켓은 마일스톤을 비운다
+   남긴다(처음 읽은 상태도 한 줄, 재오픈 수의 근거). 시각은 BTS 가 바뀐 때가 아니라 동기화가 발견한 때다. 동기화에서 그 마일스톤 검색에 더는 나오지 않는 티켓은 마일스톤을 비운다
    (BTS 에서 다른 버전으로 옮겼거나 버전을 뺀 경우). shortcut: 티켓 하나에 마일스톤 하나 — Jira 는 버전을 여러 개 걸 수 있지만
    마지막에 읽은 마일스톤에만 센다. 한 티켓을 여러 마일스톤에 거는 운영을 하게 되면 키를 (티켓, 마일스톤)으로 올린다.
 """
@@ -63,12 +63,6 @@ CREATE TABLE IF NOT EXISTS reports (
 );
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS transitions (
-    report_id INTEGER NOT NULL,
-    at TEXT NOT NULL,
-    src TEXT,
-    dst TEXT NOT NULL
-);
-CREATE TABLE IF NOT EXISTS bts_changes (
     report_id INTEGER NOT NULL,
     at TEXT NOT NULL,
     src TEXT,
@@ -114,7 +108,6 @@ CREATE TABLE IF NOT EXISTS qa_actions (
     error TEXT
 );
 """
-FAILED_STEPS = ("트리아지", "등록")
 JSON_COLUMNS = ("result", "pipeline", "routing", "model_fields", "final_fields", "edits",
                 "assignment", "bts")   # assignment: {"suggested": 규칙의 팀, "team": 배정한 팀} (assign.py), bts: BTS 에서 읽은 마지막 상태 (sync.py)
 ADDED_COLUMNS = ("failed_step", "assignment", "bts")   # 앞 단계 DB 에 붙이는 칸 (설계 의도 6)
@@ -201,30 +194,10 @@ class Store:
             return [_decode(r) for r in c.execute(sql + " ORDER BY id DESC", args)]
 
     def save_bts(self, rid: int, bts: dict) -> None:
-        """BTS 에서 읽은 상태를 남기고, 상태가 처음이거나 바뀌었으면 변화 한 줄을 더한다 (설계 의도 9)."""
+        """BTS 에서 읽은 마지막 상태 (설계 의도 9)."""
         with connect(self.path) as c:
-            c.execute("BEGIN IMMEDIATE")
-            try:
-                row = c.execute("SELECT bts FROM reports WHERE id = ?", (rid,)).fetchone()
-                if row is None:
-                    raise KeyError(rid)
-                old = json.loads(row["bts"]) if row["bts"] else None
-                if old is None or old["status"] != bts["status"]:
-                    c.execute("INSERT INTO bts_changes (report_id, at, src, dst) VALUES (?, ?, ?, ?)",
-                              (rid, bts["synced_at"], old and old["status"], bts["status"]))
-                c.execute("UPDATE reports SET bts = ? WHERE id = ?", (json.dumps(bts, ensure_ascii=False), rid))
-                c.execute("COMMIT")
-            except BaseException:
-                c.execute("ROLLBACK")
-                raise
-
-    def bts_history(self) -> dict:   # list 이름을 이 클래스의 list() 가 가려 타입을 적지 않는다
-        """리포트 번호 → [(발견한 시각, 이전 BTS 상태, 다음 BTS 상태)] 시간순 (설계 의도 9)."""
-        out: dict = {}
-        with connect(self.path) as c:
-            for r in c.execute("SELECT report_id, at, src, dst FROM bts_changes ORDER BY rowid"):
-                out.setdefault(r["report_id"], []).append((r["at"], r["src"], r["dst"]))
-        return out
+            if c.execute("UPDATE reports SET bts = ? WHERE id = ?", (json.dumps(bts, ensure_ascii=False), rid)).rowcount == 0:
+                raise KeyError(rid)
 
     def save_milestones(self, milestones, at: str) -> None:
         """BTS 버전 목록을 통째로 바꾼다(BTS 에서 지운 버전은 사라진다, 설계 의도 11)."""

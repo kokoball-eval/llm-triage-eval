@@ -141,8 +141,8 @@ class JiraTracker:
         found = call(self.http, "GET", f"/rest/api/3/project/{self.s['project_key']}/versions").json()
         return [Milestone(v["name"], v.get("releaseDate", ""), bool(v.get("released") or v.get("archived"))) for v in found]
 
-    def milestone_tickets(self, name: str) -> list[BtsTicket]:   # 설계 의도 11
-        quoted = name.replace("\\", "\\\\").replace('"', '\\"')   # 버전 이름의 따옴표가 JQL 을 깨지 않게
+    def milestone_tickets(self, version: str) -> list[BtsTicket]:   # 설계 의도 11
+        quoted = version.replace("\\", "\\\\").replace('"', '\\"')   # 버전 이름의 따옴표가 JQL 을 깨지 않게
         jql = f'project = "{self.s["project_key"]}" AND fixVersion = "{quoted}" ORDER BY key'
         recent = list(self.ids.values())[-config.SYNC_CHUNK:]   # 설계 의도 10·11 — 50개까지, 페이지 토큰이 첫 질의에 묶여 한 번만 정한다
         out, token = [], None
@@ -154,7 +154,7 @@ class JiraTracker:
                 self.seen(i["key"], i["id"])
                 f = i["fields"]
                 out.append(BtsTicket(i["key"], f.get("summary", ""), BtsState(
-                    name_of(f["status"]), (f.get("assignee") or {}).get("displayName", ""), f.get("updated", "")),
+                    name(f["status"]), (f.get("assignee") or {}).get("displayName", ""), f.get("updated", "")),
                     team_of(f.get("labels", [])), sprint_of(f.get("labels", []))))
             token = page.get("nextPageToken")
             if page.get("isLast", True) or not token:
@@ -228,8 +228,6 @@ def name(status: dict) -> str:
     """설계 의도 8 — 완료 범주는 CLOSED, 나머지는 이름 그대로."""
     return CLOSED if (status.get("statusCategory") or {}).get("key") == "done" else status["name"]
 
-
-name_of = name
 
 
 def team_label(team: str) -> str:

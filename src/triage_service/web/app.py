@@ -167,7 +167,7 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
         milestones = store.milestones()
         name = shown(milestones, milestone)
         return synced_page(request, "home.html", counts=counts(), recent=store.list()[:5], milestones=milestones,
-                    summary=sync.milestone_summary(store, name) if name else None)
+                    summary=metrics.milestone_summary(store, name) if name else None)
 
     @app.get("/reports", response_class=HTMLResponse)
     def index(request: Request, state: str | None = None):
@@ -207,15 +207,15 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
     def dashboard(request: Request, milestone: str = "", sprint: str = ""):   # 설계 의도 14·17·18 — QA팀 대응 현황
         milestones = store.milestones()
         name = shown(milestones, milestone)
-        sprints = sprint_mod.window(date.today(), before=2, after=3)
-        chosen = sprint if sprint in sprints else sprints[2]
+        sprints, now_ = sprint_mod.window(date.today(), before=2, after=3), sprint_mod.current(date.today()).isoformat()
+        chosen = sprint if sprint in sprints else now_
         ctx = {}
         if name:
             tickets, changes = store.tickets(name), store.ticket_changes()
             everything = [t for m in milestones for t in store.tickets(m["name"])]
-            ctx = {"ms": sync.milestone_summary(store, name), "q": metrics.qa(tickets, changes), "r": metrics.response(tickets, changes),
+            ctx = {"ms": metrics.milestone_summary(store, name), "q": metrics.qa(tickets, changes), "r": metrics.response(tickets, changes),
                    "sp": metrics.sprint(everything, chosen, store.carries())}
-        return synced_page(request, "dashboard.html", milestones=milestones, milestone=name, sprints=sprints, sprint=chosen,
+        return synced_page(request, "dashboard.html", milestones=milestones, milestone=name, sprints=sprints, sprint=chosen, sprint_now=now_,
                            sprint_label=sprint_mod.label, **ctx)
 
     @app.get("/triage", response_class=HTMLResponse)

@@ -22,6 +22,7 @@ import os
 from pathlib import Path
 
 from triage_eval.config import DATA, ROOT
+from triage_service.contracts import CHECK, IN_DEV, QA_REVIEW, RESOLVE
 
 DB_PATH = DATA / "서비스" / "service.db"
 HOST = "127.0.0.1"
@@ -37,7 +38,7 @@ TITLE_MAX = 100
 BODY_MAX = 1000
 STATUS_REFRESH_SEC = 1    # 트리아지가 끝날 때까지 상세 화면을 다시 읽는 간격
 AUTO_SYNC_MINUTES = 10    # 화면을 열 때 마지막 동기화가 이보다 오래됐으면 뒤에서 다시 읽는다(분, None·0 이하면 끈다. sync 설계 의도 10)
-BOTTLENECK_DAYS = {"QA Review": 2, "Resolve": 2, "In Dev": 7, "Check": 14}   # 상태별로 이만큼(일) 넘게 머물면 병목으로 본다 (sync 설계 의도 13)
+BOTTLENECK_DAYS = {QA_REVIEW: 2, IN_DEV: 7, RESOLVE: 2, CHECK: 14}   # 상태별로 이만큼(일) 넘게 머물면 병목으로 본다 (sync 설계 의도 13)
 SPRINT_WEEKDAY = 3        # 스프린트 = 매주 이 요일의 정기 업데이트 (월=0 … 목=3, sprint 설계 의도 1)
 SPRINT_WEEKS = {"Critical": 0, "Major": 1, "Minor": 2, "Trivial": 3}   # 우선순위별 기본 목표: 기준 업데이트에서 몇 주 뒤 (sprint 설계 의도 3)
 CARRY_RECHECK_MINUTES = 10   # 이월한 티켓은 이 시간 안에는 다시 옮기지 않는다 — Jira 검색 색인이 늦어 옛 스프린트가 읽혀도 두 번 옮기지 않게 (sync 설계 의도 15)

@@ -6,7 +6,7 @@
 2. 동작마다 할 수 있는 BTS 상태가 정해져 있다(ACTIONS). 쓰기 직전에 BTS 상태를 다시 읽고, 그 사이 개발자가 바꿔 허용
    상태가 아니면 쓰지 않는다. 화면은 마지막 동기화 값을 보여 주므로 오래된 화면에서 누른 동작을 여기서 막는다. 상태를 바꾸는
    동작은 두 번 눌러도 두 번째가 이미 바뀐 상태에 걸린다(코멘트만 하는 동작은 상태가 그대로라 두 번 달린다). 서버 프로세스
-   안에서는 잠금 하나로 동작을 한 번에 하나씩 한다. 다시 읽기에 실패하면 보내지 않는다.
+   안에서는 동기화 잠금(sync.Syncer.hold) 안에서 동작을 한 번에 하나씩 한다. 다시 읽기에 실패하면 보내지 않는다.
 3. 쓴 뒤에 상태를 다시 읽어 목표 상태가 됐는지 확인한다. Redmine 은 워크플로가 허용하지 않는 상태 변경을 오류 없이
    무시할 수 있고, Jira 는 상태·코멘트를 따로 보내 일부만 될 수 있다. 결과가 목표와 다르거나 도중에 실패하면 그대로
    "실패"로 기록하고 지금 BTS 상태와 함께 보인다(대체 처리 없음). 확인 읽기는 단건 조회(tracker.status)로 한다 — Jira 검색
@@ -29,13 +29,10 @@
    입력은 두지 않는다(실패는 원래 팀으로 돌려주는 동작이라).
 """
 
-import threading
-
 from triage_service import assign, flow
-from triage_service.contracts import CHECK, CLOSED, IN_DEV, QA_REVIEW, RESOLVE
+from triage_service.contracts import CHECK, CLOSED, IN_DEV, OPEN, QA_REVIEW, RESOLVE
 from triage_service.store import Store, now
 
-OPEN = (QA_REVIEW, IN_DEV, RESOLVE, CHECK)
 INTAKE = "회귀 접수"   # 동기화가 하는 유일한 BTS 쓰기의 기록 이름 (sync 설계 의도 14)
 # 동작 → (화면 이름, 할 수 있는 BTS 상태, 목표 상태, 코멘트 필수) — 설계 의도 2·4
 ACTIONS = {
@@ -47,7 +44,6 @@ ACTIONS = {
     "comment": ("코멘트", OPEN, "", True),
 }
 FIRST = "첫 상태"   # 등록 직후 첫 상태를 쓴 기록의 동작 이름 (설계 의도 6)
-_lock = threading.Lock()
 
 
 class Conflict(Exception):
@@ -99,30 +95,28 @@ def act(store: Store, tracker, rid: int, action: str, comment: str = "", team: s
             new_team = assign.dev_team(rules, rec["final_fields"])
         if new_team == rules["qa"]:   # [모듈]이 없어 규칙도 QA팀이면 담당은 두고 상태만 바꾼다(QA 로 되돌리지 않는다)
             new_team = ""
-    with _lock:
-        who = {}
-        try:
-            if action == "sign" and tracker.me() != tracker.lead(rules["qa"]):
-                raise assign.BadChoice([f"{rules['qa']}팀장만 사인할 수 있습니다 (BTS 토큰 주인이 설정의 팀장이 아님)"])
-            if new_team:   # 설계 의도 5·7 — 개발팀 그룹에서 한 사람
-                who = assign.assignee(tracker, rules, new_team, {**rec["final_fields"], "처리": "개발 배정"},
-                                      assign.recent(store.list(flow.REGISTERED)))
-        except assign.BadChoice:
-            raise
-        except Exception as e:
-            raise Conflict(f"BTS 계정·그룹을 읽지 못해 보내지 않았습니다: {e}")
-        try:   # 설계 의도 2
-            before = tracker.status(rec["ticket_key"])
-        except Exception as e:
-            raise Conflict(f"BTS 상태를 읽지 못해 보내지 않았습니다: {e}")
-        if before not in ok:
-            _remember(store, tracker, rid)
-            raise Conflict(f"BTS 상태가 지금 {before} 라 {label}을(를) 할 수 없습니다. QA 화면에서 동기화한 뒤 다시 확인하세요")
-        note = f"[트리아지 서비스 · {label}] {comment}".rstrip() if comment or who else ""
-        if who:
-            note += f" (담당: {who['name']})"
-        return write(store, tracker, rid, label, before, target, new_team, note, who.get("id", ""))
-
+    who = {}
+    try:
+        if action == "sign" and tracker.me() != tracker.lead(rules["qa"]):
+            raise assign.BadChoice([f"{rules['qa']}팀장만 사인할 수 있습니다 (BTS 토큰 주인이 설정의 팀장이 아님)"])
+        if new_team:   # 설계 의도 5·7 — 개발팀 그룹에서 한 사람
+            who = assign.assignee(tracker, rules, new_team, {**rec["final_fields"], "처리": "개발 배정"},
+                                  assign.recent(store.list(flow.REGISTERED)))
+    except assign.BadChoice:
+        raise
+    except Exception as e:
+        raise Conflict(f"BTS 계정·그룹을 읽지 못해 보내지 않았습니다: {e}")
+    try:   # 설계 의도 2
+        before = tracker.status(rec["ticket_key"])
+    except Exception as e:
+        raise Conflict(f"BTS 상태를 읽지 못해 보내지 않았습니다: {e}")
+    if before not in ok:
+        _remember(store, tracker, rid)
+        raise Conflict(f"BTS 상태가 지금 {before} 라 {label}을(를) 할 수 없습니다. QA 화면에서 동기화한 뒤 다시 확인하세요")
+    note = f"[트리아지 서비스 · {label}] {comment}".rstrip() if comment or who else ""
+    if who:
+        note += f" (담당: {who['name']})"
+    return write(store, tracker, rid, label, before, target, new_team, note, who.get("id", ""))
 
 def write(store: Store, tracker, rid: int, label: str, before: str | None, target: str, team: str, note: str,
           assignee: str = "") -> dict:

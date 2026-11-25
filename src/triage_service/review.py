@@ -31,7 +31,7 @@ from datetime import date
 
 from triage_eval.contracts import FIELDS, FREE_TEXT_FIELDS, check_format, enum_errors, language_errors
 from triage_service import assign, flow, qa, sprint
-from triage_service.contracts import Issue
+from triage_service.contracts import CHECK, Issue
 from triage_service.store import Store
 
 _decision_lock = threading.Lock()   # 등록·폐기·다시 시도를 한 번에 하나씩 (설계 의도 2)
@@ -119,7 +119,7 @@ def first_status(store: Store, tracker, rid: int, target: str) -> None:
         store.save_qa(rid, qa.FIRST, None, None, error=f"BTS 상태를 읽지 못해 첫 상태({target})로 바꾸지 못했습니다: {e}")
         return
     if before != target:
-        note = "[트리아지 서비스 · 첫 상태] CS 응대 건 — QA 재현이 필요 없어 개발 대응은 보류합니다" if target == qa.CHECK else ""
+        note = "[트리아지 서비스 · 첫 상태] CS 응대 건 — QA 재현이 필요 없어 개발 대응은 보류합니다" if target == CHECK else ""
         qa.write(store, tracker, rid, qa.FIRST, before, target, "", note)
 
 

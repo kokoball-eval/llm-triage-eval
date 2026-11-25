@@ -8,8 +8,10 @@
 3. 토큰은 환경 변수에서만 읽고 돌려주는 값에도 따로 담는다. 설정 내용을 화면·로그에 보여 줄 일이 생겨도 토큰이
    섞이지 않게 하기 위해서다.
 4. 자동 배정([assign], assign.py)은 쓰지 않아도 된다. 쓰면 10개 모듈이 모두 팀에 대응해야 하고, 고른 BTS 의 [<bts>.teams]
-   가 그 팀을 모두 BTS 계정(Jira 계정 ID, Redmine 사용자·그룹 번호)에 대응해야 한다. 빠진 모듈은 매번 QA팀으로,
-   빠진 팀은 매번 등록 실패로 이어지므로 시작 시점에 막는다.
+   가 그 팀을 모두 BTS 그룹(Jira 그룹 이름, Redmine 그룹 번호)에 대응해야 한다(S5-5a, 그 전에는 계정 하나). 빠진 모듈은 매번
+   QA팀으로, 빠진 팀은 매번 등록 실패로 이어지므로 시작 시점에 막는다. [<bts>.leads] 는 팀 → 팀장 계정(Jira 계정 ID,
+   Redmine 사용자 번호)이고 QA팀장은 꼭 있어야 한다 — 긴급 사인 요청(판정 기준서 §0, Critical 은 리드 QA 사인)을 받을
+   사람이라서다. 그룹·팀장이 BTS 에 실제로 있는지는 연결 확인(--check)이 본다.
 5. BTS 상태 이름은 설정에 두지 않는다. 서비스와 BTS 가 같은 다섯 이름을 쓰기로 해서(contracts 설계 의도 4) S5-2 의
    [jira.status]·[redmine.status] 는 없앴다. 남아 있으면 "모르는 키"로 서버를 멈춰 지운 설정이 조용히 무시되지 않게 한다.
 """
@@ -27,9 +29,9 @@ SCHEMA = {
              "priority": dict},
     "redmine": {"base_url": str, "project_id": str, "tracker_id": int, "timeout_sec": (int, float), "priority": dict},
 }
-OPTIONAL = {"jira": {"teams": dict},   # 자동 배정(설계 의도 4)을 쓸 때만
-            "redmine": {"teams": dict, "module_field_id": int}}   # 모듈 사용자 정의 필드 번호(redmine.py 설계 의도 9)
-PRIORITY_TYPE = {"jira": str, "redmine": int}   # 팀 → 계정 값의 형식도 같다(Jira 는 글자, Redmine 은 번호)
+OPTIONAL = {"jira": {"teams": dict, "leads": dict},   # 자동 배정(설계 의도 4)을 쓸 때만
+            "redmine": {"teams": dict, "leads": dict, "module_field_id": int}}   # 모듈 사용자 정의 필드 번호(redmine.py 설계 의도 9)
+PRIORITY_TYPE = {"jira": str, "redmine": int}   # 팀 → 그룹·팀장 값의 형식도 같다(Jira 는 글자, Redmine 은 번호)
 SECRETS = {"fake": (), "jira": ("JIRA_EMAIL", "JIRA_API_TOKEN"), "redmine": ("REDMINE_API_KEY",)}
 
 
@@ -65,7 +67,7 @@ def load(path: Path, env=os.environ) -> dict:
     if rules is not None:
         problems += _check_assign(rules)
         if use in SCHEMA and use in data and not problems:
-            problems += _check_teams(use, rules, data[use].get("teams"))
+            problems += _check_teams(use, rules, data[use].get("teams"), data[use].get("leads"))
     secrets = {k: env.get(k, "") for k in SECRETS.get(use, ())}
     problems += [f"환경 변수 {k} 가 없습니다 (.env 또는 시스템 환경 변수)" for k, v in secrets.items() if not v]
     if problems:
@@ -132,12 +134,18 @@ def _check_assign(rules: dict) -> list[str]:
     return out
 
 
-def _check_teams(name: str, rules: dict, teams) -> list[str]:
-    """설계 의도 4 — 고른 BTS 에서 각 팀을 받을 계정."""
+def _check_teams(name: str, rules: dict, teams, leads) -> list[str]:
+    """설계 의도 4 — 고른 BTS 에서 각 팀의 그룹과 팀장."""
     if not isinstance(teams, dict):
-        return [f"[{name}.teams] 표가 없습니다 (자동 배정의 팀 → {name} 계정)"]
+        return [f"[{name}.teams] 표가 없습니다 (자동 배정의 팀 → {name} 그룹)"]
+    out = []
+    if not isinstance(leads, dict) or rules["qa"] not in leads:
+        out.append(f"[{name}.leads] 에 {rules['qa']} 팀장이 없습니다 (긴급 사인 요청을 받을 리드 QA 계정. S5-5a 부터 [{name}.teams] 는"
+                   f" 팀 → 계정이 아니라 팀 → BTS 그룹이고, 팀장 계정은 [{name}.leads] 에 적는다)")
+        leads = leads if isinstance(leads, dict) else {}
     typ = PRIORITY_TYPE[name]
-    out = [f"[{name}.teams] 계정이 없는 팀: {t}" for t in assign.teams(rules) if t not in teams]
-    out += [f"[{name}.teams] {t} 의 계정 형식이 맞지 않습니다" for t, v in teams.items()
+    out += [f"[{name}.teams] 그룹이 없는 팀: {t}" for t in assign.teams(rules) if t not in teams]
+    out += [f"[{name}.leads] 설정에 없는 팀: {t}" for t in leads if t not in assign.teams(rules)]
+    out += [f"[{name}.{k}] {t} 의 값 형식이 맞지 않습니다" for k, table in (("teams", teams), ("leads", leads)) for t, v in table.items()
             if not isinstance(v, typ) or isinstance(v, bool) or (typ is str and not v.strip())]
     return out

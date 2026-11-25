@@ -35,12 +35,13 @@ ROUTES = {   # (방법, 경로) → 녹화 응답 이름. {key} 는 녹화한 �
              ("PUT", "/rest/api/3/issue/{key}"): "edit", ("GET", "/rest/api/3/issue/{key}/transitions"): "transitions",
              ("POST", "/rest/api/3/issue/{key}/transitions"): "transition_done", ("POST", "/rest/api/3/issue/{key}/comment"): "comment",
              ("GET", "/rest/api/3/project/{project}/statuses"): "project_statuses",
-             ("GET", "/rest/api/3/project/{project}/versions"): "versions"},
+             ("GET", "/rest/api/3/project/{project}/versions"): "versions",
+             ("GET", "/rest/api/3/group/member"): "group_members", ("GET", "/rest/api/3/myself"): "myself"},
     "redmine": {("POST", "/issues.json"): "create", ("GET", "/issues.json"): "find",
                 ("GET", "/issues/{key}.json"): "status", ("GET", "/projects/triage/memberships.json"): "memberships",
                 ("GET", "/issue_statuses.json"): "issue_statuses", ("PUT", "/issues/{key}.json"): "update",
                 ("GET", "/projects/triage/issue_categories.json"): "issue_categories",
-                ("GET", "/projects/triage/versions.json"): "versions"},
+                ("GET", "/projects/triage/versions.json"): "versions", ("GET", "/users/current.json"): "current_user"},
 }
 
 
@@ -126,7 +127,12 @@ class Recorder:
         self.requests.append(request)
         routes = {(m, p.format(key=self.data["ticket_key"], project=MAPPING["jira"]["project_key"])): v
                   for (m, p), v in ROUTES[self.name].items()}
-        what = routes[(request.method, request.url.path)]
+        path = request.url.path
+        what = "group" if path.startswith("/groups/") else routes[(request.method, path)]   # Redmine 그룹 번호는 팀마다 다르다
+        if what in ("group", "group_members") and (path == "/groups/99.json" or request.url.params.get("groupname") == "없는그룹"):
+            what = "group_missing"
+        if what == "find" and ("assigned_to_id" in request.url.params or "assignee =" in request.url.params.get("jql", "")):
+            what = "open_count"   # 한 사람의 미해결 수 (jira.py 설계 의도 13, redmine.py 설계 의도 11)
         if what == "find" and ("issue_id" in request.url.params or "status" in request.url.params.get("fields", "")):
             what = "snapshot"   # 같은 검색 주소로 여러 티켓의 상태를 읽는 요청 (jira.py 설계 의도 7, redmine.py 설계 의도 6)
         if what in ("find", "snapshot") and ("fixVersion" in request.url.params.get("jql", "") or "fixed_version_id" in request.url.params):

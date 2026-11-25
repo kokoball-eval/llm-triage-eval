@@ -40,6 +40,9 @@
    바로 연다. 도는 동안은 상세 화면처럼 자동으로 다시 읽어 끝난 값을 보인다. 모든 화면 머리에 BTS 연결 표시(sync 설계 의도 12)를
    두고, 누르면 마지막 동기화 결과가 있는 QA 화면으로 간다. 설계 의도 11 의 "BTS 를 부르는 것은 버튼뿐"은 이것으로 바뀌었다.
    등록과 QA 동작은 동기화와 같은 잠금 안에서 한다(sync 설계 의도 11).
+16. 검토 화면에서 규칙의 팀 그룹 구성원과 각자의 미해결 수를 보이고 담당자를 고르게 한다(assign 설계 의도 8·9). BTS 를
+   부르므로 검토 대기 건을 열 때만 읽고, 읽지 못해도 화면은 열며 등록할 때 다시 읽는다. 고른 구성원은 팀을 "규칙대로"로 둘
+   때만 쓴다 — 팀을 바꾸면 그 팀에서 규칙대로 정한다. 긴급 사인 요청은 QA팀장으로 고정이라 고르지 않는다.
 """
 
 from contextlib import asynccontextmanager
@@ -110,13 +113,26 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
         syncer.start()
         return page(request, name, auto_refresh=True, **ctx)
 
+    def candidates(rec: dict, values: dict, suggested: str) -> dict:
+        """설계 의도 16 — 검토 화면의 담당자 미리 보기. BTS 를 부르므로 검토 대기 건에서만, 실패해도 화면은 연다."""
+        if rec["state"] != flow.REVIEW or not assign_rules or not suggested or values.get("처리") == assign.URGENT:
+            return {}
+        try:
+            cands = assign.candidates(tracker, suggested)
+        except Exception as e:
+            return {"cands_error": str(e)}
+        return {"cands": cands, "rule_member": assign.least_busy(cands, assign.recent(store.list(flow.REGISTERED)))}
+
     def detail_page(request: Request, rec: dict, values: dict, problems: list, status_code: int = 200,
-                    team: str = assign.AUTO, repro: str = assign.AUTO, milestone: str | None = None, **ctx) -> HTMLResponse:
+                    team: str = assign.AUTO, repro: str = assign.AUTO, milestone: str | None = None,
+                    member: str = assign.AUTO, **ctx) -> HTMLResponse:
         repro_now = assign.cs_repro(values, repro)
+        suggested = assign.suggest(assign_rules, values, repro_now)
         milestones = store.milestones()   # 설계 의도 13
         return page(request, "detail.html", status_code=status_code, rec=rec, values=values, problems=problems,
                     teams=assign.teams(assign_rules), team=team, AUTO=assign.AUTO, repro=repro, REPRO_CHOICES=assign.REPRO_CHOICES,
-                    repro_default=assign.cs_repro(values), suggested=assign.suggest(assign_rules, values, repro_now),
+                    repro_default=assign.cs_repro(values), suggested=suggested, member=member, URGENT=assign.URGENT,
+                    urgent=qa.urgent(rec) and bool(assign_rules), **candidates(rec, values, suggested),
                     allowed=qa.allowed, ACTIONS=qa.ACTIONS,
                     dev_team=assign.dev_team(assign_rules, rec["final_fields"] or {}),
                     qa_log=store.qa_log().get(rec["id"], []),
@@ -223,10 +239,11 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
         team = t if isinstance(t := form.get("team", assign.AUTO), str) else assign.AUTO
         repro = t if isinstance(t := form.get("repro", assign.AUTO), str) else assign.AUTO
         milestone = t if isinstance(t := form.get("milestone", ""), str) else ""
+        member = t if isinstance(t := form.get("member", assign.AUTO), str) and team == assign.AUTO else assign.AUTO   # 설계 의도 16
         try:   # DB·BTS 호출은 기다리는 동안 다른 요청을 막지 않게 스레드에서 (설계 의도 6)
-            await run_in_threadpool(syncer.hold, review.register, store, tracker, rid, values, assign_rules, team, repro, milestone)
-        except ValueError as e:
-            return detail_page(request, store.get(rid), values, e.args[0], 422, team, repro, milestone)
+            await run_in_threadpool(syncer.hold, review.register, store, tracker, rid, values, assign_rules, team, repro, milestone, member)
+        except ValueError as e:   # 다시 그릴 때도 구성원을 BTS 에서 읽으므로 스레드에서 (설계 의도 6)
+            return await run_in_threadpool(detail_page, request, store.get(rid), values, e.args[0], 422, team, repro, milestone, member)
         except flow.FlowError as e:
             return refused(request, rid, e)
         return go(rid)

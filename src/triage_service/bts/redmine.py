@@ -27,6 +27,9 @@
 10. 마일스톤은 목표 버전(fixed_version)이다. 버전 번호는 이름으로 찾고, 상태가 open 이 아니면(locked·closed) 출시한 것으로 본다.
    한 버전의 티켓은 fixed_version_id 목록 조회를 offset 으로 끝까지 읽는다(status_id=* 로 닫힌 티켓 포함). 팀은 일감 범주
    이름이다(설계 의도 8의 역, 목록 응답에 범주가 들어 있어 요청이 늘지 않는다).
+11. 팀은 Redmine 그룹이다([redmine.teams] 팀 → 그룹 번호, contracts 설계 의도 8). 그룹은 프로젝트 구성원이어야 하고,
+   구성원은 그룹 조회(include=users)로 읽는다 — 관리자 API 키가 필요하다. 담당자는 그룹이 아니라 구성원 한 사람으로 넣는다
+   (Jira 와 같게). 미해결 수는 그 사람이 담당인 열린 일감 수(status_id=open, total_count)다.
 """
 
 import httpx2
@@ -35,7 +38,7 @@ from triage_eval.contracts import NO_MODULE, split_modules
 from triage_service import config
 from triage_service.bts import clients
 from triage_service.bts.common import call, description_lines, marker_line
-from triage_service.contracts import STATUSES, BtsState, BtsTicket, Issue, Milestone, Ticket, TrackerError
+from triage_service.contracts import STATUSES, BtsState, BtsTicket, Issue, Member, Milestone, Ticket, TrackerError
 
 
 class RedmineTracker:
@@ -64,9 +67,10 @@ class RedmineTracker:
             "description": "\n".join(description_lines(issue)),
             "priority_id": self.s["priority"][issue.fields["우선순위"]],
         }}
-        if issue.team:   # 설계 의도 5·8
-            body["issue"]["assigned_to_id"] = self.s["teams"][issue.team]
+        if issue.team:   # 설계 의도 8
             body["issue"]["category_id"] = self.category(issue.team)
+        if issue.assignee:   # 설계 의도 11
+            body["issue"]["assigned_to_id"] = int(issue.assignee)
         if issue.milestone:   # 설계 의도 10
             body["issue"]["fixed_version_id"] = self.version_id(issue.milestone)
         modules = [m for m in split_modules(issue.fields.get("모듈", "")) if m != NO_MODULE]
@@ -86,7 +90,7 @@ class RedmineTracker:
     def statuses(self) -> dict[str, int]:
         return {s["name"]: s["id"] for s in call(self.http, "GET", "/issue_statuses.json").json()["issue_statuses"]}
 
-    def update(self, key: str, status: str = "", team: str = "", comment: str = "") -> None:   # 설계 의도 7
+    def update(self, key: str, status: str = "", team: str = "", comment: str = "", assignee: str = "") -> None:   # 설계 의도 7
         body = {}
         if status:
             ids = self.statuses()
@@ -94,8 +98,9 @@ class RedmineTracker:
                 raise TrackerError(f"Redmine 에 {status} 상태가 없습니다")
             body["status_id"] = ids[status]
         if team:
-            body["assigned_to_id"] = self.s["teams"][team]
             body["category_id"] = self.category(team)
+        if assignee:
+            body["assigned_to_id"] = int(assignee)
         if comment:
             body["notes"] = comment
         call(self.http, "PUT", f"/issues/{key}.json", json={"issue": body})
@@ -139,8 +144,24 @@ class RedmineTracker:
         have = self.statuses()
         return [f"Redmine 에 {s} 상태가 없습니다" for s in STATUSES if s not in have]
 
+    def members(self, team: str) -> list[Member]:   # 설계 의도 11
+        group = call(self.http, "GET", f"/groups/{self.s['teams'][team]}.json", params={"include": "users"}).json()["group"]
+        # shortcut: 그룹 조회는 잠긴 사용자를 가리지 않는다 — 잠긴 사람이 그룹에 남으면 배정이 거절된다(그룹에서 빼면 된다).
+        return [Member(str(u["id"]), u.get("name") or str(u["id"])) for u in group.get("users", [])]
+
+    def lead(self, team: str) -> str:
+        lead = self.s.get("leads", {}).get(team)
+        return str(lead) if lead else ""
+
+    def open_count(self, member: str) -> int:   # 설계 의도 11
+        return call(self.http, "GET", "/issues.json", params={"project_id": self.s["project_id"], "assigned_to_id": member,
+                                                              "status_id": "open", "limit": 1}).json()["total_count"]
+
+    def me(self) -> str:
+        return str(call(self.http, "GET", "/users/current.json").json()["user"]["id"])
+
     def check_assignees(self) -> list[str]:
-        """[redmine.teams] 의 번호가 이 프로젝트의 구성원(사용자·그룹)인지 (연결 확인 --check, 설계 의도 5)."""
+        """[redmine.teams] 의 그룹이 이 프로젝트의 구성원이고 사람이 들어 있는지, 팀장이 그룹 구성원인지 (--check, 설계 의도 5·11)."""
         teams = self.s.get("teams", {})
         if not teams:
             return []
@@ -155,6 +176,17 @@ class RedmineTracker:
             members |= {m[k]["id"] for m in batch for k in ("user", "group") if k in m}
             offset, total = offset + len(batch), page.get("total_count", 0) if batch else 0
         have = self.categories()   # 설계 의도 8
-        return ([f"{team}: 번호 {n} 은 {self.s['project_id']} 프로젝트의 구성원이 아닙니다"
-                 for team, n in teams.items() if n not in members]
-                + [f"{team}: {self.s['project_id']} 프로젝트에 같은 이름의 일감 범주가 없습니다" for team in teams if team not in have])
+        out = ([f"{team}: 그룹 번호 {n} 은 {self.s['project_id']} 프로젝트의 구성원이 아닙니다"
+                for team, n in teams.items() if n not in members]
+               + [f"{team}: {self.s['project_id']} 프로젝트에 같은 이름의 일감 범주가 없습니다" for team in teams if team not in have])
+        for team, n in teams.items():   # 설계 의도 11
+            try:
+                found = {m.id for m in self.members(team)}
+            except TrackerError as e:
+                out.append(f"{team}: 그룹 {n} 을 읽지 못했습니다(관리자 API 키 필요) — {e}")
+                continue
+            if not found:
+                out.append(f"{team}: 그룹 {n} 에 구성원이 없습니다")
+            if self.lead(team) and found and self.lead(team) not in found:
+                out.append(f"{team}: 팀장 번호 {self.lead(team)} 이 그룹 {n} 의 구성원이 아닙니다")
+        return out

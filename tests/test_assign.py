@@ -40,7 +40,7 @@ def store(tmp_path):
     ("정보 요청 후 보류", "네트워크", "QA"),
     ("개발 배정", "결제·재화 / UI·텍스트", "서버"),   # 첫 모듈의 팀 (병기)
     ("개발 배정", "UI·텍스트 / 결제·재화", "클라"),
-    ("긴급 사인 요청", "그래픽·사운드", "아트"),
+    ("긴급 사인 요청", "그래픽·사운드", "QA"),     # 리드 QA 사인 먼저 (판정 기준서 §0)
     ("개발 배정", "해당 없음", "QA"),               # 모듈이 없으면 QA 가 나눈다
     ("CS 응대", "계정·로그인", "운영"),
     ("폐기", "결제·재화", ""),
@@ -105,9 +105,12 @@ def test_mapping_without_assign_still_loads(tmp_path):
     ('cs = "운영"', 'cs = "  "', "fake", "cs 팀 이름이 공백뿐"),
     ('"아트"\n"게임플레이', '" 아트"\n"게임플레이', "fake", "앞뒤에 공백"),
     ('qa = "QA"', 'qa = "QA"\nlead = "x"', "fake", "모르는 키: lead"),
-    ('"그래픽·사운드" = "아트"', '"그래픽·사운드" = "사운드"', "jira", "계정이 없는 팀: 사운드"),
-    ('"기획" = 10', '"기획" = "10"', "redmine", "기획 의 계정 형식"),
-    ('QA = "your-qa-account-id"', 'QA = ""', "jira", "QA 의 계정 형식"),
+    ('"그래픽·사운드" = "아트"', '"그래픽·사운드" = "사운드"', "jira", "그룹이 없는 팀: 사운드"),
+    ('"기획" = 16', '"기획" = "16"', "redmine", "기획 의 값 형식"),
+    ('QA = "QA팀"', 'QA = ""', "jira", "QA 의 값 형식"),
+    ('QA = "your-qa-lead-account-id"', 'QA = 3', "jira", r"\[jira.leads\] QA 의 값 형식"),
+    ('[jira.leads]        #', '[jira.leadz]        #', "jira", "leadz"),
+    ('[redmine.leads]     #', '[redmine.leads]\n"사운드" = 2\n#', "redmine", "설정에 없는 팀: 사운드"),
     ("[jira.teams]        #", "[jira.teamz]        #", "jira", "teamz"),
 ])
 def test_bad_assign_is_refused(tmp_path, old, new, use, message):
@@ -116,6 +119,15 @@ def test_bad_assign_is_refused(tmp_path, old, new, use, message):
     env = {"JIRA_EMAIL": "a@b.c", "JIRA_API_TOKEN": "t", "REDMINE_API_KEY": "k"}
     with pytest.raises(settings.SettingsError, match=message):
         settings.load(write_mapping(tmp_path, text.replace(old, new, 1)), env=env)
+
+
+def test_qa_lead_is_required(tmp_path):
+    """긴급 사인 요청을 받을 리드 QA 가 없으면 시작하지 않는다 (settings 설계 의도 4)."""
+    text = config.MAPPING_PATH.read_text(encoding="utf-8").replace('use = "fake"', 'use = "redmine"')
+    assert text.count("\nQA = 1\n") == 1
+    text = text.replace("\nQA = 1\n", "\n")
+    with pytest.raises(settings.SettingsError, match=r"\[redmine.leads\] 에 QA 팀장이 없습니다"):
+        settings.load(write_mapping(tmp_path, text), env={"REDMINE_API_KEY": "k"})
 
 
 def test_selected_tracker_needs_teams_table(tmp_path):
@@ -135,16 +147,16 @@ def sent_issue(rec) -> dict:
 def test_jira_sends_assignee_and_team_label(store):
     tracker, rec = adapter("jira", store)
     issue = an_issue(store)
-    tracker.create(issue.__class__(**{**issue.__dict__, "team": "서버"}))
+    tracker.create(issue.__class__(**{**issue.__dict__, "team": "서버", "assignee": "dev-account-id"}))
     f = sent_issue(rec)["fields"]
-    assert f["assignee"] == {"accountId": MAPPING["jira"]["teams"]["서버"]} and "팀_서버" in f["labels"]
+    assert f["assignee"] == {"accountId": "dev-account-id"} and "팀_서버" in f["labels"]
 
 
 def test_redmine_sends_assigned_to(store):
     tracker, rec = adapter("redmine", store)
     issue = an_issue(store)
-    tracker.create(issue.__class__(**{**issue.__dict__, "team": "기획"}))
-    assert sent_issue(rec)["issue"]["assigned_to_id"] == MAPPING["redmine"]["teams"]["기획"]
+    tracker.create(issue.__class__(**{**issue.__dict__, "team": "기획", "assignee": "10"}))
+    assert sent_issue(rec)["issue"]["assigned_to_id"] == 10   # 기획 팀장 (그룹이 아니라 사람)
 
 
 def test_redmine_sends_team_category_and_module_field(store):
@@ -209,17 +221,24 @@ def test_no_team_sends_no_assignee(name, store):
 
 
 def test_jira_check_assignees(store):
-    tracker, _ = adapter("jira", store)
-    assert len(tracker.check_assignees()) == len(MAPPING["jira"]["teams"])   # 예시 계정 ID 는 담당자가 될 수 없다
-    tracker.s = {**tracker.s, "teams": {"QA": "qa-account-id", "서버": "qa-account-id"}}
+    """녹화한 그룹(QA 담당·개발 담당) 중 qa-account-id 만 담당자가 될 수 있다(녹화의 assignable)."""
+    tracker, rec = adapter("jira", store)
+    found = tracker.check_assignees()
+    assert sum("개발 담당 은 TRI 의 담당자가 될 수 없습니다" in p for p in found) == len(MAPPING["jira"]["teams"])
+    assert "QA: 팀장 계정 your-qa-lead-account-id 이 그룹 QA팀 의 구성원이 아닙니다" in found
+    rec.data["group_members"]["body"]["values"] = [v for v in rec.data["group_members"]["body"]["values"] if v["accountId"] == "qa-account-id"]
+    tracker.s = {**tracker.s, "leads": {"QA": "qa-account-id"}}
     assert tracker.check_assignees() == []
+    tracker.s = {**tracker.s, "teams": {"QA": "없는그룹"}}
+    assert tracker.check_assignees()[0].startswith("QA: 그룹 없는그룹 을 읽지 못했습니다")
 
 
 def test_redmine_check_assignees(store):
     tracker, rec = adapter("redmine", store)
-    assert tracker.check_assignees() == []   # 사용자(5·6)와 그룹(7~10) 모두 구성원
+    assert tracker.check_assignees() == []   # 녹화: 그룹 11~16 이 구성원, QA팀장(1)이 QA팀 구성원
     tracker.s = {**tracker.s, "teams": {**tracker.s["teams"], "서버": 99}}
-    assert tracker.check_assignees() == ["서버: 번호 99 은 triage 프로젝트의 구성원이 아닙니다"]
+    found = tracker.check_assignees()
+    assert found[0] == "서버: 그룹 번호 99 은 triage 프로젝트의 구성원이 아닙니다" and found[1].startswith("서버: 그룹 99 을 읽지 못했습니다")
 
 
 def test_fake_keeps_team_name(store):
@@ -237,8 +256,10 @@ def test_register_assigns_by_confirmed_fields(store):
     rid = triaged(store)
     values = {**store.get(rid)["model_fields"], "처리": "개발 배정", "모듈": "그래픽·사운드"}
     rec = review.register(store, tracker, rid, values, RULES)
-    assert rec["assignment"] == {"suggested": "아트", "team": "아트", "milestone": ""}
-    assert tracker.get(rec["ticket_key"])["team"] == "아트"
+    who = {"id": "아트팀장", "name": "아트팀장"}   # 가짜 BTS 그룹의 첫 구성원(둘 다 미해결 0건, 배정한 적 없음)
+    assert rec["assignment"] == {"suggested": "아트", "team": "아트", "milestone": "", "member": who, "member_rule": "아트팀장",
+                                 "qa_owner": None}
+    assert (tracker.get(rec["ticket_key"])["team"], tracker.get(rec["ticket_key"])["assignee"]) == ("아트", "아트팀장")
 
 
 def test_register_keeps_human_choice(store):
@@ -246,7 +267,7 @@ def test_register_keeps_human_choice(store):
     rid = triaged(store)
     values = {**store.get(rid)["model_fields"], "처리": "개발 배정", "모듈": "그래픽·사운드"}
     rec = review.register(store, tracker, rid, values, RULES, "기획")
-    assert rec["assignment"] == {"suggested": "아트", "team": "기획", "milestone": ""}
+    assert (rec["assignment"]["suggested"], rec["assignment"]["team"], rec["assignment"]["member"]["id"]) == ("아트", "기획", "기획팀장")
 
 
 def test_register_failure_keeps_assignment(store):
@@ -302,16 +323,18 @@ def test_redmine_reads_every_member_page(store):
     people = [{"user": {"id": n}} for n in range(1, 151)]
 
     def pages(request):
+        if request.url.path.startswith("/groups/"):   # 그룹 구성원 (redmine 설계 의도 11)
+            return httpx2.Response(200, json={"group": {"id": 1, "name": "g", "users": [{"id": 5, "name": "사람"}]}})
         if request.url.path.endswith("issue_categories.json"):   # 팀 범주 (redmine 설계 의도 8)
             return httpx2.Response(200, json={"issue_categories": [{"id": 1, "name": "QA"}, {"id": 4, "name": "서버"}]})
         off, lim = int(request.url.params["offset"]), int(request.url.params["limit"])
         return httpx2.Response(200, json={"memberships": people[off:off + lim], "total_count": len(people)})
-    s = {**MAPPING["redmine"], "teams": {"QA": 5, "서버": 140}}
+    s = {**MAPPING["redmine"], "teams": {"QA": 5, "서버": 140}, "leads": {}}
     http = httpx2.Client(base_url=s["base_url"], transport=httpx2.MockTransport(pages))
     assert RedmineTracker(s, {"REDMINE_API_KEY": "k"}, http).check_assignees() == []
     s["teams"]["서버"] = 151
     assert RedmineTracker(s, {"REDMINE_API_KEY": "k"}, http).check_assignees() == [
-        "서버: 번호 151 은 triage 프로젝트의 구성원이 아닙니다"]
+        "서버: 그룹 번호 151 은 triage 프로젝트의 구성원이 아닙니다"]
 
 
 def test_redmine_member_list_refused_names_the_permission(store):

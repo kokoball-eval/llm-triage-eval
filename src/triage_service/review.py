@@ -19,6 +19,9 @@
    이미 있어 등록 완료로 두고, 실패는 QA 기록에 남겨 상세 화면에 보인다. 이미 있던 티켓에 연결할 때는 상태도 바꾸지 않는다.
 9. 마일스톤은 마지막 동기화로 읽어 둔 BTS 버전 중 출시 전인 것만 받는다(화면 입력은 신뢰 경계라 여기서 확인한다). 고른
    마일스톤은 배정 기록(assignment)에 함께 남긴다. 이미 있던 티켓에 연결할 때는 그 티켓의 버전을 바꾸지 않는다.
+10. 담당자는 팀 그룹의 구성원 한 사람이다(assign 설계 의도 8). 등록할 때 BTS 에서 그룹을 읽어 정하고, 배정 기록에 담당자
+   (member)·규칙이 고른 사람(member_rule)·QA 담당(qa_owner: QA팀으로 간 건의 담당자)을 남긴다. QA 담당은 이슈가 개발로 넘어가도
+   그대로라, Resolve 가 되면 그 사람의 회귀 테스트 차례다(S5-5b). 그룹을 읽지 못하면 BTS 등록 실패와 같이 다룬다.
 """
 
 import threading
@@ -59,9 +62,10 @@ def edits(model_fields: dict | None, final: dict[str, str]) -> list[dict]:
 
 
 def register(store: Store, tracker, rid: int, fields: dict[str, str], rules: dict | None = None,
-             team: str = assign.AUTO, repro: str = assign.AUTO, milestone: str = "") -> dict:
+             team: str = assign.AUTO, repro: str = assign.AUTO, milestone: str = "", member: str = assign.AUTO) -> dict:
     """검토 대기 → 등록 완료. 입력 문제가 있으면 ValueError(문제 목록), 상태가 맞지 않으면 flow.FlowError.
-    rules·team 은 자동 배정 규칙과 검토 화면에서 고른 팀(설계 의도 7), repro 는 CS 응대 건의 QA 재현 필요 선택(assign 설계 의도 7)."""
+    rules·team 은 자동 배정 규칙과 검토 화면에서 고른 팀(설계 의도 7), repro 는 CS 응대 건의 QA 재현 필요 선택(assign 설계 의도 7),
+    member 는 고른 구성원 ID(assign 설계 의도 9)."""
     found = problems(fields)
     if found:
         raise ValueError(found)
@@ -75,13 +79,20 @@ def register(store: Store, tracker, rid: int, fields: dict[str, str], rules: dic
         flow.check(rec["state"], flow.REGISTERED)
         changed = edits(rec["model_fields"], final)
         ref = store.ref(rid)
-        issue = Issue(report=rec["report"], fields=final, ref=ref, team=assignment["team"], milestone=milestone)
         try:   # 설계 의도 5 — 같은 리포트의 티켓이 이미 있으면 새로 만들지 않는다
             ticket = tracker.find(ref)
-            if ticket:   # 설계 의도 7·9 — 그 티켓의 담당자·버전은 바꾸지 않았으니 남기지 않는다
-                assignment = {**assignment, "linked_existing": True, "milestone": ""}
+            if ticket:   # 설계 의도 7·9 — 그 티켓의 담당자·버전은 바꾸지 않으니 그룹도 읽지 않는다
+                assignment = {**assignment, "linked_existing": True, "milestone": "", "member": None, "qa_owner": None}
             else:
-                ticket = tracker.create(issue)
+                who = assign.assignee(tracker, rules, assignment["team"], final,   # 설계 의도 10
+                                      assign.recent(store.list(flow.REGISTERED)), member)
+                assignment = {**assignment, "member": {"id": who["id"], "name": who["name"]} if who else None,
+                              "member_rule": who.get("rule", ""),
+                              "qa_owner": {"id": who["id"], "name": who["name"]} if who and assignment["team"] == rules["qa"] else None}
+                ticket = tracker.create(Issue(report=rec["report"], fields=final, ref=ref, team=assignment["team"],
+                                              milestone=milestone, assignee=who.get("id", "")))
+        except assign.BadChoice:   # 고른 구성원이 그룹에 없다 — 입력 문제라 검토 대기에 둔다
+            raise
         except Exception as e:   # 설계 의도 4
             return store.move(rid, flow.FAILED, final_fields=final, edits=changed, assignment=assignment,
                               failed_step="등록", error=f"BTS 등록 실패: {e}")

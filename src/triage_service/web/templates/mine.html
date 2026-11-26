@@ -3,6 +3,13 @@
 {% macro days(r) %}{{ r.days }}일{% if r.late %} <span class="late">기준 {{ r.limit }}일 초과</span>{% endif %}{% endmacro %}
 {% block body %}
 <h1>내 업무{% if m %} <span class="muted" style="font-size:15px;font-weight:400">{{ m.me }} 님</span>{% endif %}</h1>
+{% if team %}
+<form method="get" action="/mine" class="row" style="margin-top:0;align-items:center">
+  <label for="who" style="margin:0">팀원 업무 보기 <span class="muted">(리더)</span></label>
+  <select id="who" name="who" style="width:auto">{% for p in team %}<option value="{{ p.id }}" {% if p.id == viewing %}selected{% endif %}>{{ p.name }}</option>{% endfor %}</select>
+  <button type="submit">보기</button>
+</form>
+{% endif %}
 {% if not rules %}
 <div class="box">자동 배정 설정(<code>[assign]</code>)이 없어 "나"를 알 수 없습니다. 내 이슈는 보이지 않고 검토 대기·실패 리포트만 보입니다.</div>
 {% elif not m %}

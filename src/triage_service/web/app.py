@@ -61,6 +61,9 @@
    확인은 로그인한 사람의 BTS 계정이고, 등록·QA 동작에는 누른 사람의 이름을 남긴다(배정 기록 by, QA 동작 기록 actor, BTS 코멘트
    "(실행: 이름)"). BTS 에 쓰는 토큰은 서비스 공용이라 BTS 화면에는 공용 계정으로 보인다 — 누가 했는지는 이 기록으로 안다.
    메뉴·동작을 역할(리더·실무자)로 나누는 것은 다음 단계다.
+22. 역할(auth 설계 의도 6): 리더만 대시보드·트리아지 품질을 열고(실무자에게는 메뉴에서 숨기고, 주소로 와도 "권한이 없습니다"),
+   내 업무에서 QA팀 구성원을 골라 그 사람의 일을 보고(?who=), 긴급 사인·담당 바꾸기를 한다. 담당 바꾸기의 사람은 동기화로 읽은
+   BTS 구성원 표에서만 받는다(화면 입력은 신뢰 경계). 사람별 로그인이 아니면 역할이 없어 예전처럼 모두 열린다.
 """
 
 from contextlib import asynccontextmanager
@@ -91,7 +94,7 @@ from triage_service.worker import Worker
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 templates.env.globals.update(TITLE_MAX=config.TITLE_MAX, BODY_MAX=config.BODY_MAX, split_modules=split_modules, FIELDS=FIELDS, ENUMS=ENUMS, MODULES=MODULES, NO_MODULE=NO_MODULE, TRACKS=TRACKS, REPORTERS=REPORTERS,
                              STATES=flow.STATES, PENDING=flow.PENDING, REVIEW=flow.REVIEW, FAILED=flow.FAILED,
-                             REFRESH=config.STATUS_REFRESH_SEC, BOTTLENECK_DAYS=config.BOTTLENECK_DAYS, ROLES=auth.ROLES)
+                             REFRESH=config.STATUS_REFRESH_SEC, BOTTLENECK_DAYS=config.BOTTLENECK_DAYS, ROLES=auth.ROLES, can=auth.can)
 
 
 def create_app(store: Store | None = None, worker: Worker | None = None, tracker=None,
@@ -168,7 +171,7 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
                     teams=assign.teams(assign_rules), team=team, AUTO=assign.AUTO, repro=repro, REPRO_CHOICES=assign.REPRO_CHOICES,
                     repro_default=assign.cs_repro(values), suggested=suggested, member=member, URGENT=assign.URGENT,
                     urgent=qa.urgent(rec) and bool(assign_rules), **candidates(rec, values, suggested),
-                    allowed=qa.allowed, ACTIONS=qa.ACTIONS,
+                    allowed=qa.allowed, ACTIONS=qa.ACTIONS, members=reassignable(request, rec),
                     dev_team=assign.dev_team(assign_rules, rec["final_fields"] or {}),
                     qa_log=store.qa_log().get(rec["id"], []),
                     open_milestones=[m for m in milestones if not m["released"]],
@@ -252,19 +255,34 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
         return RedirectResponse("/", status_code=303)
 
     @app.get("/mine", response_class=HTMLResponse)
-    def mine(request: Request, mode: str = ""):   # 설계 의도 20, sync 설계 의도 13 — 화면은 읽어 둔 값만 보여 준다
+    def mine(request: Request, mode: str = "", who: str = ""):   # 설계 의도 20·22, sync 설계 의도 13 — 화면은 읽어 둔 값만 보여 준다
         tickets = [t for m in store.milestones() for t in store.tickets(m["name"])]
-        me = person(request)
+        team = syncer.groups.get(assign_rules["qa"], []) if assign_rules and auth.can(user_of(request), "team") else []
+        me = next((p for p in team if p.id == who), None) or person(request)   # 리더는 팀원을 골라 본다(설계 의도 22)
         m = me and sync.mine(sync.targets(store), tickets, store.ticket_changes(), store.qa_log(), me)
         return synced_page(request, "mine.html", m=m, rules=bool(assign_rules), synced=syncer.last is not None, me_error=syncer.me_error,
                            review=store.list(flow.REVIEW), failed=store.list(flow.FAILED), open_new=bool(mode),
                            form={"track": "A"}, mode="link" if mode == "link" else "paste",
-                           sources_on=sorted({s.name for s in sources}), sources_off=sources_off)
+                           sources_on=sorted({s.name for s in sources}), sources_off=sources_off, team=team, viewing=me.id if me else "")
 
     @app.post("/qa/sync")
     async def qa_sync():   # 결과는 홈이 보인다(syncer.last)
         await run_in_threadpool(syncer.now)
         return RedirectResponse("/", status_code=303)
+
+    def reassignable(request: Request, rec: dict) -> list:
+        """설계 의도 22 — 담당 바꾸기 후보: 리더에게만, 그 이슈의 지금 담당 팀 그룹 구성원(팀은 그대로 두므로 다른 팀 사람에게 주면
+        BTS 팀 표식과 회귀 실패 때 돌려줄 팀이 어긋난다)."""
+        if not auth.can(user_of(request), "reassign"):
+            return []
+        return sorted(syncer.groups.get(qa.team_now(rec, store.qa_log().get(rec["id"], [])), []), key=lambda p: p.name)
+
+    def user_of(request: Request):
+        return getattr(request.state, "user", None)
+
+    def forbidden(request: Request, what: str) -> HTMLResponse:
+        """설계 의도 22 — 역할로 막힌 화면·동작."""
+        return page(request, "forbidden.html", status_code=403, what=auth.LEADER_ONLY[what])
 
     def person(request: Request):
         """설계 의도 21 — 내 업무의 "나". 사람별 로그인이면 로그인한 사람의 BTS 계정, 아니면 BTS 토큰 주인(sync 설계 의도 13·16)."""
@@ -286,6 +304,8 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
 
     @app.get("/dashboard", response_class=HTMLResponse)
     def dashboard(request: Request, milestone: str = "", sprint: str = ""):   # 설계 의도 14·17·18 — QA팀 대응 현황
+        if not auth.can(user_of(request), "/dashboard"):   # 설계 의도 22
+            return forbidden(request, "/dashboard")
         milestones = store.milestones()
         name = shown(milestones, milestone)
         sprints, now_ = sprint_mod.window(date.today(), before=2, after=3), sprint_mod.current(date.today()).isoformat()
@@ -301,6 +321,8 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
 
     @app.get("/triage", response_class=HTMLResponse)
     def triage_quality(request: Request, period: str = "30"):   # 설계 의도 17 — BTS 를 읽지 않는 화면이라 자동 동기화하지 않는다
+        if not auth.can(user_of(request), "/triage"):   # 설계 의도 22
+            return forbidden(request, "/triage")
         return page(request, "triage.html", m=metrics.compute(store.list(), store.history(), period))
 
     @app.get("/new", response_class=HTMLResponse)
@@ -367,11 +389,18 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
     async def qa_action(request: Request, rid: int):   # 설계 의도 12
         get_or_404(rid)
         form = await request.form()
-        action, comment, team = (v if isinstance(v := form.get(k, d), str) else d
-                                 for k, d in (("action", ""), ("comment", ""), ("team", assign.AUTO)))
+        action, comment, team, chosen = (v if isinstance(v := form.get(k, d), str) else d
+                                         for k, d in (("action", ""), ("comment", ""), ("team", assign.AUTO), ("assignee", "")))
+        user = user_of(request)
+        if action in ("sign", "reassign") and not auth.can(user, action):   # 설계 의도 22 — 서버가 역할로 거절
+            return forbidden(request, action)
+        picked = next((p for p in reassignable(request, get_or_404(rid)) if p.id == chosen), None) if action == "reassign" else None
+        if action == "reassign" and picked is None:   # 화면 입력은 신뢰 경계 — 동기화로 읽은 구성원만
+            return qa_refused(request, rid, ["담당자는 이 이슈의 지금 담당 팀 그룹 구성원 중에서 고르세요(홈에서 동기화하면 목록이 새로 읽힙니다)"], 422, comment, team)
         try:
             result = await run_in_threadpool(syncer.hold, qa.act, store, tracker, rid, action, comment, team, assign_rules,
-                                          *actor(request))
+                                             *actor(request), bool(user and user.id and user.role == "leader"),
+                                             picked.id if picked else "", picked.name if picked else "")
         except ValueError as e:
             return qa_refused(request, rid, e.args[0], 422, comment, team)
         except qa.Conflict as e:

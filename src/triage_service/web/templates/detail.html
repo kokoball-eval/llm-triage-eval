@@ -160,6 +160,17 @@
   <p class="muted">BTS 상태 {{ now_status }} 기준입니다. 보내기 직전에 BTS 상태를 다시 읽어, 그사이 바뀌었으면 보내지 않습니다.</p>
 </form>
 {% endif %}
+{% if members and now_status in ACTIONS["reassign"][1] %}
+<form method="post" action="/reports/{{ rec.id }}/qa" class="box">
+  <label for="assignee">담당 바꾸기 <span class="muted">(리더 · 팀장 부재나 업무 분배 때. 상태는 그대로 두고 BTS 담당자만 바꿉니다)</span></label>
+  <select id="assignee" name="assignee">
+    {% for p in members %}<option value="{{ p.id }}" {% if rec.bts and rec.bts.assignee == p.name %}selected{% endif %}>{{ p.name }}</option>{% endfor %}
+  </select>
+  <label for="reassign-comment">사유 <span class="muted">(선택)</span></label>
+  <input type="text" id="reassign-comment" name="comment">
+  <div class="row"><button type="submit" name="action" value="reassign">담당 바꾸기</button></div>
+</form>
+{% endif %}
 {% if qa_log %}
 <table>
   <tr><th>시각</th><th>동작</th><th>실행</th><th>BTS 상태</th><th>코멘트 · 결과</th></tr>

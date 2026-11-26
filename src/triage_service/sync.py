@@ -179,6 +179,7 @@ class Syncer:
         self.store, self.tracker, self.qa_team, self.teams, self.lock = store, tracker, qa_team, teams, threading.Lock()
         self.me: Member | None = None   # 설계 의도 13
         self.people: dict[str, Member] = {}   # 설계 의도 16 — BTS 계정 ID → 구성원(이름), 사람별 로그인일 때만 읽는다
+        self.groups: dict[str, list[Member]] = {}   # 팀 → 구성원 (리더의 팀원 고르기·담당 바꾸기)
         self.me_error = ""   # 내 계정을 못 읽은 이유 — 티켓 동기화는 멀쩡하니 연결 표시(status)에는 섞지 않고 /mine 에서만 보인다
         self.last: dict | None = None   # {"at": 시각, "result": run() 의 결과}
         self.thread: threading.Thread | None = None
@@ -235,7 +236,8 @@ class Syncer:
                 self.me_error = str(e)
             if self.teams:   # 설계 의도 16 — 토큰 주인을 못 읽어도 구성원 표는 따로 읽는다(실패하면 이전 표를 둔다)
                 try:
-                    self.people = {m.id: m for team in self.teams for m in self.tracker.members(team)}
+                    self.groups = {team: self.tracker.members(team) for team in self.teams}
+                    self.people = {m.id: m for members in self.groups.values() for m in members}
                 except Exception as e:
                     self.me_error = str(e)
         self.last = {"at": datetime.now(), "result": result}

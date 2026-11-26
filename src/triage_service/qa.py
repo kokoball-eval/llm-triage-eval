@@ -29,6 +29,9 @@
    입력은 두지 않는다(실패는 원래 팀으로 돌려주는 동작이라).
 9. 사람별 로그인이면 누른 사람(actor)을 받는다: 긴급 사인은 누른 사람이 QA팀장인지 보고(없으면 예전처럼 BTS 토큰 주인), BTS 코멘트
    끝에 "(실행: 이름)"을 붙이고 QA 동작 기록에 남긴다. 동기화가 하는 쓰기(Resolve 접수·이월)는 사람이 없어 비워 둔다.
+10. 리더(auth 설계 의도 6)는 긴급 사인을 할 수 있고(팀장 부재 시 파트장 대행 — QA팀장 확인을 건너뛴다), [담당 바꾸기]로 BTS 담당자를
+   팀 구성원 중 한 사람으로 바꾼다(상태는 그대로, 코멘트 "(담당: 이름)", 기록에 남김). 누가 리더인지, 고른 사람이 실제 구성원인지는
+   화면 쪽(web/app.py)이 로그인한 사람과 동기화로 읽은 구성원 표로 확인해 넘긴다.
 """
 
 from triage_service import assign, flow
@@ -44,6 +47,7 @@ ACTIONS = {
     "fail": ("회귀 테스트 실패", (RESOLVE,), IN_DEV, True),
     "hold": ("보류", (QA_REVIEW, IN_DEV, RESOLVE), CHECK, True),
     "comment": ("코멘트", OPEN, "", True),
+    "reassign": ("담당 바꾸기", OPEN, "", False),   # 설계 의도 10 — 리더만(화면이 따로 그린다)
 }
 FIRST = "첫 상태"   # 등록 직후 첫 상태를 쓴 기록의 동작 이름 (설계 의도 6)
 
@@ -55,7 +59,7 @@ class Conflict(Exception):
 def allowed(status: str | None, urgent: bool = False) -> list[str]:
     """이 BTS 상태에서 할 수 있는 동작 (화면이 버튼을 고를 때). urgent: 긴급 사인 요청 건(설계 의도 7)."""
     skip = "repro" if urgent else "sign"
-    return [a for a, (_, ok, _, _) in ACTIONS.items() if status in ok and a != skip]
+    return [a for a, (_, ok, _, _) in ACTIONS.items() if status in ok and a not in (skip, "reassign")]
 
 
 def team_now(rec: dict, log: list[dict]) -> str:
@@ -69,7 +73,8 @@ def urgent(rec: dict) -> bool:
 
 
 def act(store: Store, tracker, rid: int, action: str, comment: str = "", team: str = assign.AUTO,
-        rules: dict | None = None, actor_bts: str = "", actor_name: str = "") -> dict:
+        rules: dict | None = None, actor_bts: str = "", actor_name: str = "", actor_leader: bool = False,
+        assignee: str = "", assignee_name: str = "") -> dict:
     """QA 동작 하나. 입력 문제는 ValueError(문제 목록), 상태가 맞지 않으면 Conflict. 결과 {"ok", "after", "error"}."""
     rec = store.get(rid)
     if action not in ACTIONS:
@@ -80,6 +85,8 @@ def act(store: Store, tracker, rid: int, action: str, comment: str = "", team: s
     comment = comment.strip()
     if needs_comment and not comment:
         raise ValueError([f"{label}에는 코멘트(사유)가 필요합니다"])
+    if action == "reassign" and not assignee:   # 설계 의도 10
+        raise ValueError(["누구에게 맡길지 고르세요"])
     signing = urgent(rec) and bool(rules)   # 설계 의도 7
     if action in ("repro", "sign") and action not in allowed(QA_REVIEW, signing):
         raise ValueError(["긴급 사인 요청 건은 [사인 후 개발 전달]로 넘깁니다" if signing
@@ -99,8 +106,10 @@ def act(store: Store, tracker, rid: int, action: str, comment: str = "", team: s
             new_team = ""
     who = {}
     try:
-        if action == "sign" and (actor_bts or tracker.me()) != tracker.lead(rules["qa"]):   # 설계 의도 9 — 누른 사람, 없으면 토큰 주인
+        if action == "sign" and not actor_leader and (actor_bts or tracker.me()) != tracker.lead(rules["qa"]):   # 설계 의도 9 — 누른 사람, 없으면 토큰 주인
             raise assign.BadChoice([f"{rules['qa']}팀장만 사인할 수 있습니다" + ("" if actor_bts else " (BTS 토큰 주인이 설정의 팀장이 아님)")])
+        if action == "reassign":   # 설계 의도 10
+            who = {"id": assignee, "name": assignee_name or assignee}
         if new_team:   # 설계 의도 5·7 — 개발팀 그룹에서 한 사람
             who = assign.assignee(tracker, rules, new_team, {**rec["final_fields"], "처리": "개발 배정"},
                                   assign.recent(store.list(flow.REGISTERED)))

@@ -180,3 +180,74 @@ def test_cli_refuses_bad_users_file_and_lan_needs_no_demo_password(tmp_path, mon
     monkeypatch.setattr(cli.uvicorn, "run", lambda app, host, port, proxy_headers: seen.update(app=app, proxy=proxy_headers))
     assert cli.main(["--lan"]) == 0 and "사람별 계정으로 로그인" in capsys.readouterr().out   # 공용 비밀번호 없이도
     assert seen["proxy"] is False
+
+
+# ── 역할 (2단계) ─────────────────────────────────────────
+
+def test_can_table():
+    lead, mem = auth.User("a", "가", "leader", "x"), auth.User("b", "나", "member", "y")
+    for what in auth.LEADER_ONLY:
+        assert auth.can(lead, what) and not auth.can(mem, what)
+        assert auth.can(None, what) and auth.can(auth.SHARED, what)   # 사람별 로그인이 아니면 역할이 없다(예전처럼)
+    assert auth.can(mem, "/") and auth.can(mem, "/mine")
+
+
+def test_member_menu_hidden_and_server_refuses(store, tmp_path):
+    app, _ = app_with_users(store, tmp_path)
+    mem, lead = TestClient(app), TestClient(app)
+    login(mem, "mem")
+    login(lead, "lead")
+    page = mem.get("/").text
+    assert 'href="/dashboard"' not in page and 'href="/triage"' not in page and 'href="/mine"' in page
+    for path in ("/dashboard", "/triage"):
+        r = mem.get(path)
+        assert r.status_code == 403 and "권한이 없습니다" in r.text      # 주소를 직접 쳐도 거절
+        assert lead.get(path).status_code == 200
+    assert 'href="/dashboard"' in lead.get("/").text
+
+
+def test_leader_sees_teammate_work_member_cannot(store, tmp_path):
+    app, tracker = app_with_users(store, tmp_path)
+    key = register(store, tracker)["ticket_key"]                     # QA팀장(=리더 경민)의 재현 대기
+    lead, mem = TestClient(app), TestClient(app)
+    login(lead, "lead")
+    login(mem, "mem")
+    lead.post("/qa/sync")
+    page = lead.get("/mine?who=QA팀원").text
+    assert "팀원 업무 보기" in page and key not in page and "QA팀원 님" in page   # 팀원의 일로 바뀐다
+    assert '<option value="QA팀원" selected>' in page                            # 고른 사람이 선택돼 보인다
+    page = mem.get("/mine?who=QA팀장").text
+    assert "팀원 업무 보기" not in page and key not in page                     # 실무자는 남의 일을 고를 수 없다
+
+
+def test_member_can_act_on_any_issue_but_not_sign_or_reassign(store, tmp_path):
+    app, tracker = app_with_users(store, tmp_path)
+    rec = register(store, tracker)                                    # 담당은 QA팀장인 이슈
+    mem = TestClient(app)
+    login(mem, "mem")
+    mem.post("/qa/sync")
+    assert mem.post(f"/reports/{rec['id']}/qa", data={"action": "comment", "comment": "대신 확인"}, follow_redirects=False).status_code == 303
+    assert "담당 바꾸기" not in mem.get(f"/reports/{rec['id']}").text
+    r = mem.post(f"/reports/{rec['id']}/qa", data={"action": "reassign", "assignee": "QA팀원"})
+    assert r.status_code == 403 and tracker.get(rec["ticket_key"])["assignee"] == "QA팀장"
+    urgent = register(store, tracker, 처리="긴급 사인 요청", i=1)
+    assert mem.post(f"/reports/{urgent['id']}/qa", data={"action": "sign"}).status_code == 403
+
+
+def test_leader_reassigns_and_part_lead_can_sign(store, tmp_path):
+    app, tracker = app_with_users(store, tmp_path)
+    rec = register(store, tracker)
+    lead = TestClient(app)
+    login(lead, "lead")
+    lead.post("/qa/sync")
+    assert "담당 바꾸기" in lead.get(f"/reports/{rec['id']}").text
+    r = lead.post(f"/reports/{rec['id']}/qa", data={"action": "reassign", "assignee": "QA팀원", "comment": "휴가 대체"}, follow_redirects=False)
+    assert r.status_code == 303 and tracker.get(rec["ticket_key"])["assignee"] == "QA팀원"
+    last = store.qa_log()[rec["id"]][-1]
+    assert last["action"] == "담당 바꾸기" and last["actor"] == "경민" and "(담당: QA팀원)" in last["comment"]
+    assert lead.post(f"/reports/{rec['id']}/qa", data={"action": "reassign", "assignee": "없는사람"}).status_code == 422   # 구성원 표 밖은 거절
+    assert lead.post(f"/reports/{rec['id']}/qa", data={"action": "reassign", "assignee": "서버팀원"}).status_code == 422   # 다른 팀 사람도 거절
+    # 파트장(리더 역할이지만 설정의 QA팀장은 아님)도 사인할 수 있다
+    urgent = register(store, tracker, 처리="긴급 사인 요청", i=1)
+    out = qa.act(store, tracker, urgent["id"], "sign", rules=RULES, actor_bts="기획팀장", actor_name="파트장", actor_leader=True)
+    assert out["ok"]

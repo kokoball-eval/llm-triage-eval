@@ -96,7 +96,7 @@
 <body>
   <header><a class="logo" href="/"><b>●</b> 트리아지 작업 페이지</a>{% if not guest %}{% set path = menu or request.url.path %}
     <nav class="menu" aria-label="메뉴">{% for href, name, here in [("/", "홈", path == "/"), ("/mine", "내 업무", path == "/mine"),
-        ("/reports", "리포트", path.startswith("/reports")), ("/dashboard", "대시보드", path == "/dashboard"), ("/triage", "트리아지 품질", path == "/triage")] %}
+        ("/reports", "리포트", path.startswith("/reports")), ("/dashboard", "대시보드", path == "/dashboard"), ("/triage", "트리아지 품질", path == "/triage")] if can(user, href) %}
       <a href="{{ href }}"{% if here %} aria-current="page"{% endif %}>{{ name }}</a>{% endfor %}{% if lan %}
       <a href="/connect"{% if path == "/connect" %} aria-current="page"{% endif %}>휴대폰 접속</a>{% endif %}</nav>{% endif %}
     {% if bts %}{% set who = {"jira": "Jira", "redmine": "Redmine", "fake": "가짜 BTS"}.get(bts.bts, bts.bts or "BTS") %}

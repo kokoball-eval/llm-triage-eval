@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}권한 없음{% endblock %}
+{% block body %}
+<h1>권한이 없습니다</h1>
+<div class="box">{{ what }}은(는) 리더(팀장·파트장)만 할 수 있습니다. 필요하면 리더에게 요청하세요.</div>
+<p><a class="button primary" href="/">홈으로</a> <a class="button" href="/mine">내 업무</a></p>
+{% endblock %}

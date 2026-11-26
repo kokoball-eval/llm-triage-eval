@@ -39,6 +39,7 @@ def test_mine_classifies_turn_and_handed():
     assert [r["key"] for r in m["mine"]] == ["A", "C", "H"] or sorted(r["key"] for r in m["mine"]) == ["A", "C", "H"]
     assert sorted(r["key"] for r in m["handed"]) == ["E", "F"]
     assert {r["key"]: r["title"] for r in m["mine"]}["A"] == "리포트 A" and m["me"] == "경민"
+    assert {r["key"]: r["action"] for r in m["mine"]} == {"A": "repro", "C": "retest", "H": "retest"}   # 화면이 고를 버튼
 
 
 def test_mine_days_and_bottleneck():
@@ -50,12 +51,12 @@ def test_mine_days_and_bottleneck():
     assert (a["days"], a["late"], b["days"], b["late"]) == (1.0, False, 0.5, False)
     changes = {"A": [("2026-11-22T12:00:00", None, QA_REVIEW)]}                 # 3일 > 기준 2일
     m = sync.mine(records, [], changes, {}, ME, AT)
-    assert [r["key"] for r in m["late"]] == ["A"] and m["mine"][0]["key"] == "A"   # 오래 머문 순
+    assert [r["late"] for r in m["mine"]] == [True, False] and m["mine"][0]["key"] == "A"   # 오래 머문 순, 기준 초과 표시
 
 
 def test_mine_bad_time_does_not_break():
     m = sync.mine([rec(1, "A", QA_REVIEW, "경민", updated="")], [], {}, {}, ME, AT)
-    assert m["mine"][0]["days"] == 0 and not m["late"]
+    assert m["mine"][0]["days"] == 0 and not m["mine"][0]["late"]
 
 
 def test_syncer_remembers_me(store):
@@ -93,12 +94,26 @@ def test_web_mine(store):
     key = register(store, tracker)["ticket_key"]                     # 재현 대기 → QA팀 구성원(미해결이 같으면 첫 사람 = 팀장)
     client.post("/qa/sync")
     page = client.get("/mine").text
-    assert "내 담당" in page and key in page and "내 차례 1건" in page
+    assert "내 업무" in page and key in page and "재현 확인하기" in page and "#qa" in page   # 처리 칸으로 데려가는 버튼
     tracker.set_status(key, IN_DEV)
     client.post("/qa/sync")
     page = client.get("/mine").text
-    assert "내 차례 0건 · 넘긴 이슈 0건" in page or "넘긴 이슈 1건" in page   # QA Review 에서 In Dev 로 갔으나 QA 담당은 나
-    assert "지금 내가 처리할 이슈가 없습니다" in page
+    assert "지금 처리할 일이 없습니다" in page and "내가 넘긴 이슈" in page and key in page   # QA 담당은 나라 넘긴 이슈에
+
+
+def test_web_mine_lists_review_and_failed_reports_and_new_form(store):
+    from test_service import DEV_ITEMS, triaged
+    from triage_service import flow
+    tracker = fake(store)
+    client = web(store, tracker)
+    rid = triaged(store, DEV_ITEMS[0])                              # 모델이 8칸을 채워 검토 대기
+    failed = triaged(store, DEV_ITEMS[1])
+    store.move(failed, flow.FAILED, error="모델 응답 없음", failed_step="트리아지")
+    page = client.get("/mine").text
+    assert f'href="/reports/{rid}#review"' in page and "8칸 확인하고 등록" in page
+    assert f'href="/reports/{failed}"' in page and "모델 응답 없음" in page
+    assert "+ 새 리포트 넣기" in page and 'action="/reports"' in page and '<details class="more" id="new" >' in page   # 평소에는 접혀 있음
+    assert 'action="/fetch"' in client.get("/mine?mode=link").text and "open" in client.get("/mine?mode=link").text.split('id="new"')[1][:10]
 
 
 def test_web_mine_without_rules(store):

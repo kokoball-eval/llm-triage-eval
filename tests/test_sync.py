@@ -1,4 +1,4 @@
-"""BTS 상태 동기화와 QA 보드 시험 (S5-2, S5-3 에서 다섯 상태로 바꿈) — 어댑터가 읽는 상태, 동기화(묶음·실패·상태 변화 기록),
+"""BTS 상태 동기화 시험 (S5-2, S5-3 에서 다섯 상태로 바꿈, QA 보드는 2026-11-26 홈·내 업무로 옮김) — 어댑터가 읽는 상태, 동기화(묶음·실패·상태 변화 기록),
 보드, 화면.
 
 실제 BTS 는 부르지 않는다. Jira·Redmine 응답은 실제 서버에서 녹화한 것이다(tests/bts_responses/*.json 의 snapshot_source).
@@ -176,7 +176,7 @@ def test_sync_only_reads_the_latest_limit(store, monkeypatch):
         register(store, tracker, i % len(DEV_ITEMS), 처리="등록(재현 대기)")
     assert sync.run(store, tracker)["synced"] == 2
     assert [r["bts"] is not None for r in store.list()] == [True, True, False]   # 번호 큰 순
-    assert sync.board(sync.targets(store), {})["unsynced"] == 0   # 대상 밖은 "동기화 전"으로 세지 않는다
+    assert len(sync.targets(store)) == 2   # 대상 밖은 읽지도 화면에 세지도 않는다
 
 
 def test_old_database_gets_new_columns_and_tables(tmp_path):
@@ -194,59 +194,7 @@ def test_old_database_gets_new_columns_and_tables(tmp_path):
     assert store.get(1)["bts"] is None and store.qa_log() == {}
 
 
-# ── 보드 ───────────────────────────────────────────────
-
-def synced_store(store):
-    """재현 대기 1건·회귀 테스트 대기 2건(오래된 쪽이 먼저)·개발 중 1건·보류 1건·종료 1건·동기화 전 1건.
-    등록 때 첫 상태를 바꾼 건은 바꾼 뒤 읽은 상태가 저장된다(qa.write) — 아래에서 시험할 상태로 덮어쓴다."""
-    tracker = FakeTracker(store.path)
-    recs = [register(store, tracker, i % len(DEV_ITEMS), 처리, 모듈) for i, (처리, 모듈) in enumerate([
-        ("등록(재현 대기)", "네트워크"), ("개발 배정", "결제·재화"), ("개발 배정", "그래픽·사운드"),
-        ("개발 배정", "UI·텍스트"), ("개발 배정", "콘텐츠 진행"), ("개발 배정", "네트워크"), ("등록(재현 대기)", "UI·텍스트")])]   # 마지막 건은 첫 상태를 쓰지 않아 동기화 전
-    old, new = "2026-11-23T09:00:00+09:00", "2026-11-23T11:30:00+09:00"
-    for rec, status, updated in [(recs[0], QA_REVIEW, new), (recs[1], RESOLVE, old), (recs[2], RESOLVE, new),
-                                 (recs[3], IN_DEV, new), (recs[4], CHECK, new), (recs[5], CLOSED, new)]:
-        store.save_bts(rec["id"], {"status": status, "assignee": "누군가", "updated": updated, "synced_at": "2026-11-23T12:00:00"})
-    return recs, datetime(2026, 11, 23, 12, 0, tzinfo=timezone(timedelta(hours=9)))
-
-
-def test_board_lists(store):
-    recs, at = synced_store(store)
-    b = sync.board(sync.targets(store), store.qa_log(), at)
-    assert [r["id"] for r in b["repro"]] == [recs[0]["id"]]
-    assert [(r["id"], w) for r, w in b["verify"]] == [(recs[1]["id"], "3시간"), (recs[2]["id"], "30분")]   # 오래된 순
-    assert [r["id"] for r in b["hold"]] == [recs[4]["id"]]
-    assert b["unsynced"] == 1 and b["synced_at"] == "2026-11-23T12:00:00" and b["unknown"] == []
-
-
-def test_board_counts_reassigned_team(store):
-    """재현 확인으로 넘긴 팀이 있으면 그 팀이 지금 팀이다(sync 설계 의도 7). 쓰기 요청이 실패한 기록은 팀이 비어 바뀌지 않고,
-    요청은 받았지만 상태 확인에서 실패한 기록의 팀은 바뀐 것으로 본다."""
-    recs, at = synced_store(store)
-    store.save_qa(recs[0]["id"], "재현 확인", QA_REVIEW, IN_DEV, team="서버")
-    store.save_qa(recs[3]["id"], "재현 확인", QA_REVIEW, QA_REVIEW, team="", error="BTS 쓰기 실패")
-    store.save_qa(recs[4]["id"], "재현 확인", QA_REVIEW, QA_REVIEW, team="아트", error="BTS 가 바꾸지 않았습니다")
-    records = sync.targets(store)
-    sync.board(records, store.qa_log(), at)
-    now_team = {r["id"]: r["team_now"] for r in records if "team_now" in r}
-    assert now_team[recs[0]["id"]] == "서버" and now_team[recs[4]["id"]] == "아트"
-    assert now_team[recs[3]["id"]] == recs[3]["assignment"]["team"]   # 쓰기 실패한 기록은 팀을 바꾸지 않는다
-
-
-def test_board_shows_unknown_status_names(store):
-    recs, at = synced_store(store)
-    store.save_bts(recs[3]["id"], {"status": "해야 할 일", "assignee": "", "updated": "", "synced_at": "2026-11-23T12:00:00"})
-    b = sync.board(sync.targets(store), {}, at)
-    assert b["unknown"] == ["해야 할 일"]   # 다섯 상태 밖 — 워크플로가 바뀐 것을 알린다
-
-
-def test_board_survives_unreadable_updated(store):
-    recs, at = synced_store(store)
-    store.save_bts(recs[1]["id"], {"status": RESOLVE, "assignee": "", "updated": "엉뚱한 값", "synced_at": "2026-11-23T12:00:00"})
-    store.save_bts(recs[2]["id"], {"status": RESOLVE, "assignee": "", "updated": "2026-11-23T13:00:00+09:00", "synced_at": "2026-11-23T12:00:00"})   # 앞선 시각
-    waits = {r["id"]: w for r, w in sync.board(sync.targets(store), {}, at)["verify"]}
-    assert waits[recs[1]["id"]] == "0분" and waits[recs[2]["id"]] == "0분"   # 화면이 죽지 않고 음수도 없다
-
+# ── 표시 ───────────────────────────────────────────────
 
 def test_ago():
     assert (sync.ago(5), sync.ago(90), sync.ago(3000)) == ("5분", "2시간", "2일")
@@ -261,36 +209,35 @@ def web_client(store, tracker=None):
     return TestClient(app), tracker
 
 
-def test_web_qa_syncs_only_on_button(store):
+def test_web_sync_button_reads_and_returns_home(store):
+    """[지금 동기화]는 홈에 있고, 끝나면 홈으로 돌아가 마지막 결과를 보인다. 예전 QA 보드 주소는 홈으로 넘긴다."""
     client, tracker = web_client(store)
-    key = register(store, tracker, 처리="등록(재현 대기)")["ticket_key"]   # 첫 상태를 바꾸지 않는 건이라 아직 읽은 값이 없다
+    key = register(store, tracker, 처리="등록(재현 대기)")["ticket_key"]
     tracker.set_status(key, RESOLVE)
-    page = client.get("/qa").text
-    assert "마지막 동기화: 아직 없음" in page and "회귀 테스트를 기다리는 티켓이 없습니다" in page   # 열기만 해서는 읽지 않는다
-    page = client.post("/qa/sync").text
-    assert "1건을 읽었습니다" in page and key in page and "회귀 테스트를 기다리는 티켓이 없습니다" not in page
-    assert "마지막 동기화: 아직 없음" not in client.get("/qa").text
+    assert client.get("/qa", follow_redirects=False).headers["location"] == "/"
+    r = client.post("/qa/sync", follow_redirects=False)
+    assert r.status_code == 303 and r.headers["location"] == "/"
+    assert "1건 읽음" in client.get("/").text
     assert RESOLVE in client.get(f"/reports/{store.list()[0]['id']}").text   # 상세 화면에도 읽어 둔 상태
 
 
-def test_web_qa_shows_sync_failure_and_keeps_old_values(store):
+def test_web_home_shows_sync_failure_and_keeps_old_values(store):
     tracker = ChunkTracker(store.path)
     client, _ = web_client(store, tracker)
     register(store, tracker)
     client.post("/qa/sync")
     tracker.calls, tracker.fail_chunks = [], {0}   # 다음 동기화의 첫 호출이 실패
     page = client.post("/qa/sync").text
-    assert "읽지 못했습니다" in page and "응답하지 않습니다" in page and "이전에 읽은 값은 그대로" in page
+    assert "읽지 못한 것" in page and "응답하지 않습니다" in page and "이전에 읽은 값은 그대로" in page
     assert store.list()[0]["bts"]["status"] == IN_DEV
 
 
-def test_web_qa_warns_unknown_status(store):
-    client, tracker = web_client(store)
-    key = register(store, tracker)["ticket_key"]
-    tracker.set_status(key, "해야 할 일")
-    assert "다섯 상태" in client.post("/qa/sync").text
-
-
-def test_web_header_links_qa(store):
+def test_web_menu_marks_current_page(store):
+    """메뉴는 누를 수 있는 탭이고 지금 있는 메뉴에 표시가 붙는다(문서/화면_설계.md)."""
     client, _ = web_client(store)
-    assert 'href="/qa"' in client.get("/").text and client.get("/qa").status_code == 200
+    for path, name in (("/", "홈"), ("/mine", "내 업무"), ("/new", "내 업무"), ("/reports", "리포트"), ("/dashboard", "대시보드"), ("/triage", "트리아지 품질")):
+        page = client.get(path).text
+        assert f'aria-current="page">{name}</a>' in page and page.count('aria-current="page">') == 1, path
+    assert 'href="/qa"' not in client.get("/").text and '<nav class="menu"' in client.get("/").text
+    bad = client.post("/reports", data={"track": "A", "title": "", "body": ""})   # 입력 오류로 새 리포트를 다시 그려도
+    assert bad.status_code == 422 and 'aria-current="page">내 업무</a>' in bad.text   # 메뉴는 내 업무

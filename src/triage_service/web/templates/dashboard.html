@@ -11,7 +11,7 @@
   </table>
 {% endmacro %}
 {% block body %}
-<h1>대시보드 <span class="muted" style="font-size:15px;font-weight:400">QA팀 대응 현황</span></h1>
+<h1>대시보드 <span class="muted" style="font-size:15px;font-weight:400">QA팀 대응 분석 — 어디서 막혔나</span></h1>
 {% if ms %}
 <nav class="filter">마일스톤:
   {% for m in milestones %}
@@ -19,31 +19,7 @@
   {% endfor %}
 </nav>
 
-<div class="kpis">
-  <div class="card"><span class="muted">마일스톤 {{ ms.name }}{% if ms.release %} · 출시 {{ ms.release }}{% endif %}</span><br>
-    <span class="big">{% if ms.released %}출시함{% elif ms.d_day is none %}출시일 없음{% elif ms.d_day >= 0 %}D-{{ ms.d_day }}{% else %}D+{{ -ms.d_day }}{% endif %}</span></div>
-  <div class="card"><span class="muted">완료 (Closed)</span><br>{% if ms.rate is none %}<span class="muted">티켓 없음</span>{% else %}<span class="big">{{ ms.rate }}%</span> <span class="muted">({{ ms.closed }} / {{ ms.total }}건)</span>{% endif %}</div>
-  <div class="card"><span class="muted">스프린트 {{ sprint_label(sp.name) }}</span><br>{% if sp.rate is none %}<span class="muted">목표로 단 이슈 없음</span>{% else %}<span class="big">{{ sp.rate }}%</span> <span class="muted">({{ sp.closed }} / {{ sp.total }}건 완료)</span>{% endif %}</div>
-  <div class="card"><span class="muted">병목 (기준 초과)</span><br><span class="big">{{ r.flow | map(attribute=2) | sum }}</span> <span class="muted">건</span></div>
-</div>
-
-<h2>스프린트 <span class="muted" style="font-size:14px;font-weight:400">(목표 수정 버전 · 매주 목요일 업데이트)</span></h2>
-<nav class="filter">
-  {% for s in sprints %}
-    {% if s == sprint %}<strong>{{ sprint_label(s) }}</strong>{% else %}<a href="/dashboard?{{ {"milestone": milestone, "sprint": s} | urlencode }}">{{ sprint_label(s) }}</a>{% endif %}{% if s == sprint_now %} <span class="muted">(진행 중)</span>{% endif %}
-  {% endfor %}
-</nav>
-<p>목표 <strong>{{ sp.total }}</strong>건 · 완료 <strong>{{ sp.closed }}</strong>건{% if sp.total - sp.closed %} · 남음: {% for s, n in sp.left if n %}{{ s }} {{ n }}건{% if not loop.last %} · {% endif %}{% endfor %}{% endif %}</p>
-{% if sp.carried_in %}<p>지난 업데이트에서 넘어온 이슈 <strong>{{ sp.carried_in }}</strong>건</p>{% endif %}
-{% if sp.repeat %}
-<table>
-  <tr><th>이월 2회 이상</th><th>티켓</th><th>상태</th><th>담당자</th><th>이월</th></tr>
-  {% for t in sp.repeat %}<tr><td>{{ t.title }}</td><td style="white-space:nowrap">{{ t.key }}</td><td>{{ t.status }}</td><td>{{ t.assignee or "없음" }}</td><td><span class="late">{{ t.n }}회</span></td></tr>{% endfor %}
-</table>
-{% endif %}
-<p class="muted">BTS 스프린트 표식(Jira 스프린트_ 라벨, Redmine 스프린트 필드)으로 셉니다. 마일스톤에 들어 있지 않은 티켓은 빠집니다. 목표 업데이트가 지나도 닫히지 않은 이슈는 동기화가 진행 중인 업데이트로 옮깁니다.</p>
-
-<h2>대응 흐름</h2>
+<h2>대응 흐름 <span class="muted" style="font-weight:400">— 병목(기준 초과) {{ r.flow | map(attribute=2) | sum }}건</span></h2>
 <div class="flow">
   {% for status, n, late in r.flow %}
   <div class="card"><span class="muted">{{ status }}</span><br><span class="big">{{ n }}</span> <span class="muted">건</span>
@@ -55,7 +31,7 @@
 
 <div class="grid" style="margin-top:16px">
   <div class="card"><h2>구성원별 부하 <span class="muted">(미해결 · 기준 초과)</span></h2>{{ bars(r.members, True) }}
-    <p class="muted">BTS 담당자 기준입니다. 팀원별 내 차례는 각자 <a href="/mine">내 담당</a>에서 봅니다.</p></div>
+    <p class="muted">BTS 담당자 기준입니다. 각자 처리할 일은 <a href="/mine">내 업무</a>에서 봅니다.</p></div>
   <div class="card"><h2>팀별 미해결</h2>{{ bars(q.teams) }}
     <p class="muted">BTS 팀 표식(Jira 팀_ 라벨, Redmine 일감 범주) 기준입니다.</p></div>
   <div class="card"><h2>회귀 테스트</h2>
@@ -63,8 +39,23 @@
     <p>재오픈률 (Resolve → In Dev): {% if q.reopen.pct is none %}<span class="muted">데이터 없음</span>{% else %}<strong>{{ q.reopen.pct }}%</strong> <span class="muted">({{ q.reopen.n }} / {{ q.reopen.d }}건)</span>{% endif %}</p>
     <p class="muted">Resolve 에 머문 시간: {% if q.resolve_wait.n %}중앙값 {{ "%.1f"|format(q.resolve_wait.p50) }}시간 · p95 {{ "%.1f"|format(q.resolve_wait.p95) }}시간 ({{ q.resolve_wait.n }}건){% else %}데이터 없음{% endif %}{% if q.unknown_entry %} · 처음 읽었을 때 이미 Resolve 였던 {{ q.unknown_entry }}건은 들어간 시각을 몰라 뺐습니다{% endif %}</p></div>
 </div>
+<h2>스프린트 이월 <span class="muted" style="font-size:14px;font-weight:400">(목표 업데이트를 넘긴 이슈)</span></h2>
+<nav class="filter">
+  {% for s in sprints %}
+    {% if s == sprint %}<strong>{{ sprint_label(s) }}</strong>{% else %}<a href="/dashboard?{{ {"milestone": milestone, "sprint": s} | urlencode }}">{{ sprint_label(s) }}</a>{% endif %}{% if s == sprint_now %} <span class="muted">(진행 중)</span>{% endif %}
+  {% endfor %}
+</nav>
+<p>지난 업데이트에서 넘어온 이슈 <strong>{{ sp.carried_in }}</strong>건{% if not sp.repeat %} · 2회 이상 이월된 이슈는 없습니다{% endif %}</p>
+{% if sp.repeat %}
+<table>
+  <tr><th>이월 2회 이상</th><th>티켓</th><th>상태</th><th>담당자</th><th>이월</th></tr>
+  {% for t in sp.repeat %}<tr><td>{{ t.title }}</td><td style="white-space:nowrap">{{ t.key }}</td><td>{{ t.status }}</td><td>{{ t.assignee or "없음" }}</td><td><span class="late">{{ t.n }}회</span></td></tr>{% endfor %}
+</table>
+{% endif %}
+<p class="muted">목표 업데이트가 지나도 닫히지 않은 이슈는 동기화가 진행 중인 업데이트로 옮깁니다. 스프린트 완료 현황은 <a href="/">홈</a>에 있습니다.</p>
+
 <p class="muted">모델이 얼마나 맞혔는지(사람 수정 비율·처리 시간 등)는 <a href="/triage">트리아지 품질</a>에서 봅니다.</p>
 {% else %}
-<p class="muted">마일스톤이 없습니다. QA 화면에서 [지금 동기화]를 누르면 BTS 버전을 읽어 옵니다. 모델 지표는 <a href="/triage">트리아지 품질</a>에서 봅니다.</p>
+<p class="muted">마일스톤이 없습니다. <a href="/">홈</a>에서 [지금 동기화]를 누르면 BTS 버전을 읽어 옵니다. 모델 지표는 <a href="/triage">트리아지 품질</a>에서 봅니다.</p>
 {% endif %}
 {% endblock %}

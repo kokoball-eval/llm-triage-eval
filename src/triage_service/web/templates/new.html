@@ -4,53 +4,5 @@
 {% block body %}
 <h1>새 리포트</h1>
 {{ steps(["링크", "가져오기", "검토"] if mode == "link" else ["입력", "8칸 검토", "BTS 등록"], 0) }}
-<nav class="tabs">
-  <a href="/new?mode=paste" {% if mode != "link" %}class="on"{% endif %}>직접 붙여넣기</a>
-  <a href="/new?mode=link" {% if mode == "link" %}class="on"{% endif %}>링크로 가져오기</a>
-</nav>
-{% if error %}<div class="box error">{{ error }}{% if existing %} — <a href="/reports/{{ existing.id }}">#{{ existing.id }} {{ existing.report.title }}</a> ({{ existing.state }}){% endif %}</div>{% endif %}
-{% if notice %}<div class="box">{{ notice }}{% if form.url %}<br><span class="muted">원문: {{ form.url }}</span>{% endif %}</div>{% endif %}
-{% if mode == "link" %}
-<form method="post" action="/fetch">
-  <label for="link" style="margin-top:0">링크</label>
-  <input type="text" id="link" name="link" class="big-input" value="{{ form.link or '' }}" placeholder="Jira·Redmine 이슈, 게시판 글, 디스코드 메시지 링크">
-  <div class="row" style="margin-top:8px"><button class="primary" type="submit">가져오기</button></div>
-</form>
-{% else %}
-<p class="muted">본문을 붙여 넣거나 링크로 가져온 내용을 확인한 뒤 [트리아지]를 누르면 검토 대기로 넘어갑니다.</p>
-<form method="post" action="/reports">
-  <input type="hidden" name="source" value="{{ form.source or 'paste' }}">
-  <input type="hidden" name="url" value="{{ form.url or '' }}">
-  <input type="hidden" name="link" value="{{ form.link or '' }}">
-  <label>입력 종류</label>
-  <div class="checks">
-    {% for k, name in TRACKS.items() %}
-    <label><input type="radio" name="track" value="{{ k }}" {% if form.track == k %}checked{% endif %}> {{ k }} · {{ name }}</label>
-    {% endfor %}
-  </div>
-  <label for="title">제목 <span class="muted">({{ TITLE_MAX }}자까지)</span></label>
-  <input type="text" id="title" name="title" value="{{ form.title or '' }}" required>
-  <label for="body">본문 <span class="muted">({{ BODY_MAX }}자까지)</span></label>
-  <textarea id="body" name="body" required>{{ form.body or '' }}</textarea>
-  <details class="more" {% if form.board or form.posted_at or form.reporter or form.update_note or form.known_issues %}open{% endif %}>
-    <summary>추가 정보 (게시판·작성자·참고)</summary>
-    <label for="board">게시판 <span class="muted">(A · 커뮤니티 제보)</span></label>
-    <input type="text" id="board" name="board" value="{{ form.board or '' }}" list="boards" placeholder="예: 공식 홈페이지 > 버그 제보">
-    <datalist id="boards"><option value="공식 홈페이지 > 버그 제보"><option value="자유게시판"><option value="건의게시판"><option value="공략게시판"></datalist>
-    <label for="posted_at">게시 일시 <span class="muted">(A · 비우면 지금)</span></label>
-    <input type="text" id="posted_at" name="posted_at" value="{{ form.posted_at or '' }}" placeholder="예: 2026-11-19 22:47">
-    <label for="reporter">작성자 <span class="muted">(B · QA 이슈)</span></label>
-    <select id="reporter" name="reporter">
-      <option value="">(선택)</option>
-      {% for p in REPORTERS %}<option {% if form.reporter == p %}selected{% endif %}>{{ p }}</option>{% endfor %}
-    </select>
-    <label for="update_note">참고: 최근 업데이트 공지 <span class="muted">(선택)</span></label>
-    <input type="text" id="update_note" name="update_note" value="{{ form.update_note or '' }}">
-    <label for="known_issues">참고: 기존 등록 이슈 <span class="muted">(선택, 한 줄에 하나)</span></label>
-    <textarea id="known_issues" name="known_issues" style="min-height:80px">{{ form.known_issues or '' }}</textarea>
-  </details>
-  <div class="row"><button class="primary" type="submit">트리아지</button></div>
-</form>
-{% endif %}
-<p class="muted">켜진 출처: {{ sources_on | join(", ") if sources_on else "없음" }}{% for k, why in sources_off.items() %} · {{ k }} 꺼짐({{ why }}){% endfor %}</p>
+{% set tab_base, tab_anchor = "/new", "" %}{% include "_new_form.html" %}
 {% endblock %}

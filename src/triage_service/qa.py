@@ -112,7 +112,7 @@ def act(store: Store, tracker, rid: int, action: str, comment: str = "", team: s
         raise Conflict(f"BTS 상태를 읽지 못해 보내지 않았습니다: {e}")
     if before not in ok:
         _remember(store, tracker, rid)
-        raise Conflict(f"BTS 상태가 지금 {before} 라 {label}을(를) 할 수 없습니다. QA 화면에서 동기화한 뒤 다시 확인하세요")
+        raise Conflict(f"BTS 상태가 지금 {before} 라 {label}을(를) 할 수 없습니다. 홈에서 [지금 동기화]를 누른 뒤 다시 확인하세요")
     note = f"[트리아지 서비스 · {label}] {comment}".rstrip() if comment or who else ""
     if who:
         note += f" (담당: {who['name']})"

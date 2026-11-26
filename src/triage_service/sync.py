@@ -1,4 +1,4 @@
-"""BTS 상태 동기화와 QA 보드 — 등록한 티켓의 BTS 상태를 읽어 와 재현 대기·회귀 테스트 대기·보류로 보여 준다.
+"""BTS 상태 동기화 — 등록한 티켓과 마일스톤 티켓의 BTS 상태를 읽어 저장하고, 내 업무 목록(mine)을 만든다.
 
 [설계 의도]
 1. BTS 가 원본이다. 서비스는 읽어 온 값을 복사해 두고 보여 줄 뿐이다. BTS 에 쓰는 것은 QA 가 누른 동작뿐이다(qa.py).
@@ -6,8 +6,7 @@
 2. 읽기는 끌어오기다. 서비스는 이 PC(127.0.0.1)에서만 열려 있어 BTS 가 변경을 알려 주는 웹훅을 받을 수 없다. [지금 동기화]
    버튼과 화면을 열 때의 자동 동기화(설계 의도 10) 두 길로만 읽는다.
 3. 상태는 다섯 이름(contracts.STATUSES)으로 나눈다: QA Review → 재현 대기, Resolve → 회귀 테스트 대기, Check → 보류.
-   팀별 미해결은 대시보드가 BTS 팀 표식 기준으로 보인다(QA 보드에서는 2026-11-25 코드 정리 때 뺐다, 같은 이름의 숫자가 두 화면에서
-   다르게 나오지 않게). 다섯 이름 밖의 상태를 읽으면 그 이름을 화면에 그대로 보여 BTS 워크플로가 바뀐 것을 알아챈다.
+   팀별 미해결은 대시보드가 BTS 팀 표식 기준으로 보인다. (옛 QA 보드는 2026-11-26 화면 개편 때 홈·내 업무로 나눠 옮겼다.) 다섯 이름 밖의 상태를 읽으면 그 이름을 화면에 그대로 보여 BTS 워크플로가 바뀐 것을 알아챈다.
    (S5-2 의 상태 대응 설정 [<bts>.status] 는 상태 이름을 통일하면서 없앴다.)
 4. 읽기에 실패한 묶음은 이전에 읽은 값을 그대로 두고 이유를 보여 준다. 일부만 실패해도 성공한 묶음은 갱신한다. BTS 에서
    찾지 못한 티켓(지워졌거나 접근 권한 밖)은 갱신하지 않고 목록으로 알린다.
@@ -22,7 +21,7 @@
 9. 현재 마일스톤은 출시 전 버전 중 출시일이 가장 이른 것이다(출시일이 지났어도 출시 처리 전이면 현재). 마일스톤 성과는 그
    버전의 BTS 티켓 전체로 센다: Closed 수·완료율, 남은 상태별 건수, 재오픈(Resolve → In Dev 를 본 티켓) 수, QA 가 서비스에서
    회귀 테스트 통과로 닫은 수(QA 기록). 상태 변화는 발견한 시각 기준이라 동기화 사이에 오간 것은 놓칠 수 있다.
-10. 첫 화면·QA 보드·내 담당·대시보드를 열 때 마지막 동기화(실패 포함)가 config.AUTO_SYNC_MINUTES 분보다 오래됐으면 뒤에서 동기화한다
+10. 홈·내 업무·대시보드를 열 때 마지막 동기화(실패 포함)가 config.AUTO_SYNC_MINUTES 분보다 오래됐으면 뒤에서 동기화한다
    (2026-11-25 경민 결정: 변화 시각이 동기화 간격만큼 늦게 잡히는 것을 줄인다). 화면은 기다리지 않고 읽어 둔 값으로 열린다.
    BTS 가 느리거나 멈춰도 화면이 묶이지 않게 하려는 것이다. 실패해도 다음 시도는 다시 그 간격 뒤라 BTS 가 멈춘 동안 화면을 열
    때마다 부르지 않는다. 마지막 시각은 서버 메모리에만 둔다(다시 켜면 처음 여는 화면에서 읽는다).
@@ -32,7 +31,7 @@
    저장해 되돌리는 일을 막는다(독립 검토에서 발견). 동기화가 도는 중이면 QA 동작은 그것이 끝날 때까지 기다린다.
 12. 화면 구석의 BTS 연결 표시는 마지막 동기화 결과로 정한다(표시하려고 BTS 를 따로 부르지 않는다): 다 읽었으면 연결됨, 일부만
    실패했으면 일부 실패, 아무것도 읽지 못하고 실패했으면 연결 안 됨, 도는 중이면 읽는 중. 언제 읽은 값인지도 함께 보인다.
-13. "내 담당"(mine)의 나는 BTS 토큰 주인이다. 저장된 담당자는 표시 이름이라, 동기화할 때 QA팀 그룹 구성원 중 me() ID 와 같은
+13. 내 업무(mine)의 나는 BTS 토큰 주인이다. 저장된 담당자는 표시 이름이라, 동기화할 때 QA팀 그룹 구성원 중 me() ID 와 같은
    사람을 찾아 이름까지 함께 기억한다(QA팀 구성원이 아니면 None — 화면이 안내한다). 내 차례는 QA Review(BTS 담당자가 나)와
    Resolve(QA 담당 qa_owner 가 나, 서비스를 거치지 않은 티켓은 BTS 담당자가 나)이고, 넘긴 이슈는 서비스가 QA 담당으로 기억한
    In Dev·Check 다. 머문 시간은 상태 변화 기록에서 그 상태로 들어온 것을 본 시각(없으면 BTS 가 마지막으로 바꾼 시각)부터 센다.
@@ -261,50 +260,21 @@ def team(record: dict, log: list[dict]) -> str:
     return qa.team_now(record, log) or "배정 없음"
 
 
-def board(records: list[dict], log: dict, at: datetime | None = None) -> dict:
-    """QA 보드 — {"repro": [기록], "verify": [(기록, 대기 문자열)] 오래된 순, "hold": [기록],
-    "unsynced": 건수, "synced_at": 가장 최근에 읽은 시각, "unknown": 다섯 상태 밖의 이름들}. log 는 store.qa_log().
-    읽어 둔 기록에는 지금 담당 팀(team_now)을 붙인다."""
-    at = at or datetime.now().astimezone()
-    repro, verify, hold, unsynced, unknown = [], [], [], 0, set()
-    for r in records:
-        b = r["bts"]
-        if b is None:
-            unsynced += 1
-            continue
-        status, r["team_now"] = b["status"], team(r, log.get(r["id"], []))
-        if status not in STATUSES:
-            unknown.add(status)
-        if status == QA_REVIEW:
-            repro.append(r)
-        elif status == RESOLVE:
-            try:   # 시각을 못 읽으면(빈 값·이상한 값) 화면 전체를 막지 않고 0분으로 둔다
-                waited = max((at - metrics.aware(b["updated"])).total_seconds() / 60, 0)
-            except ValueError:
-                waited = 0
-            verify.append((waited, r))
-        elif status == CHECK:
-            hold.append(r)
-    verify.sort(key=lambda w: -w[0])
-    synced = [r["bts"]["synced_at"] for r in records if r["bts"]]
-    return {"repro": repro, "verify": [(r, ago(w)) for w, r in verify], "hold": hold,
-            "unsynced": unsynced, "synced_at": max(synced, default=None), "unknown": sorted(unknown)}
-
-
 def mine(records: list[dict], tickets: list[dict], changes: dict, log: dict, me: Member, at: datetime | None = None) -> dict:
-    """설계 의도 13 — {"me": 이름, "mine": 내 차례, "handed": 넘긴 이슈, "late": 기준을 넘긴 것}, 각 줄은 {key, title, status, team,
-    assignee, days, limit, late, rid}(rid 는 서비스가 등록한 건만). 오래 머문 순. tickets 는 마일스톤 티켓 전체,
+    """설계 의도 13 — {"me": 이름, "mine": 내 차례, "handed": 넘긴 이슈}, 각 줄은 {key, title, status, team,
+    assignee, days, limit, late, rid, action}(rid 는 서비스가 등록한 건만, action 은 내 차례의 할 일: repro 재현 확인·sign 팀장 사인·
+    retest 회귀 테스트 — 화면은 이 값으로 버튼 이름만 고른다). 오래 머문 순. tickets 는 마일스톤 티켓 전체,
     records 는 등록한 리포트(같은 키면 리포트 쪽이 이긴다), changes 는 store.ticket_changes(), log 는 store.qa_log()."""
     at = at or datetime.now().astimezone()
     rows = {t["key"]: {"key": t["key"], "title": t["title"], "status": t["status"], "assignee": t["assignee"],
-                       "team": t["team"] or "팀 없음", "updated": t["updated"], "rid": None, "owner": None} for t in tickets}
+                       "team": t["team"] or "팀 없음", "updated": t["updated"], "rid": None, "owner": None, "urgent": False} for t in tickets}
     for r in records:
         b = r["bts"]
         if b:
             rows[r["ticket_key"]] = {"key": r["ticket_key"], "title": r["report"].title, "status": b["status"], "assignee": b["assignee"],
                                      "team": team(r, log.get(r["id"], [])), "updated": b["updated"], "rid": r["id"],
-                                     "owner": (r["assignment"] or {}).get("qa_owner")}
-    out = {"me": me.name, "mine": [], "handed": [], "late": []}
+                                     "owner": (r["assignment"] or {}).get("qa_owner"), "urgent": qa.urgent(r)}
+    out = {"me": me.name, "mine": [], "handed": []}
     for key, row in rows.items():
         status, owner = row["status"], row["owner"]
         mine_ = ((status == QA_REVIEW and row["assignee"] == me.name)
@@ -315,10 +285,9 @@ def mine(records: list[dict], tickets: list[dict], changes: dict, log: dict, me:
         days = metrics.stay_days(changes.get(key, []), status, row["updated"], at)
         limit = config.BOTTLENECK_DAYS[status]
         line = {"key": key, "title": row["title"], "status": status, "team": row["team"], "assignee": row["assignee"],
-                "days": round(days, 1), "limit": limit, "late": days > limit, "rid": row["rid"]}
+                "days": round(days, 1), "limit": limit, "late": days > limit, "rid": row["rid"],
+                "action": "retest" if status == RESOLVE else "sign" if row["urgent"] else "repro"}
         out["mine" if mine_ else "handed"].append(line)
-        if line["late"]:
-            out["late"].append(line)
     for k in out:
         if k != "me":
             out[k].sort(key=lambda x: -x["days"])

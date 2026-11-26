@@ -74,7 +74,7 @@ def register(store: Store, tracker, rid: int, fields: dict[str, str], rules: dic
     if found:
         raise ValueError(found)
     if milestone and milestone not in {m["name"] for m in store.milestones() if not m["released"]}:   # 설계 의도 9
-        raise ValueError([f"출시 전 마일스톤이 아닙니다: {milestone!r} (QA 화면에서 동기화하면 목록이 새로 읽힙니다)"])
+        raise ValueError([f"출시 전 마일스톤이 아닙니다: {milestone!r} (홈에서 [지금 동기화]를 누르면 목록이 새로 읽힙니다)"])
     if sprint_ and not sprint.valid(sprint_):   # 설계 의도 11 — 화면 입력은 신뢰 경계
         raise ValueError([f"스프린트는 업데이트 요일의 날짜여야 합니다: {sprint_!r}"])
     if sprint_ and sprint_ < sprint.current(date.today()).isoformat():

@@ -15,8 +15,12 @@
     body { margin:0; font:15px/1.65 system-ui, "Malgun Gothic", sans-serif; color:var(--fg); background:var(--bg); }
     header { border-bottom:1px solid var(--line); padding:12px 24px; display:flex; gap:24px; align-items:center; flex-wrap:wrap; background:#fff; }
     header a { color:var(--muted); text-decoration:none; font-weight:600; }
-    header a:hover { color:var(--accent); }
     header a.logo { color:var(--fg); font-size:18px; margin-right:auto; }
+    /* 머리 메뉴 — 누를 수 있는 탭(알약)과 지금 있는 메뉴 표시. 새 리포트 화면의 탭(nav.tabs)과 같은 모양 (문서/화면_설계.md) */
+    nav.menu { display:flex; gap:6px; flex-wrap:wrap; }
+    nav.menu a { padding:6px 14px; border:1px solid var(--line); border-radius:999px; background:#fff; color:var(--muted); cursor:pointer; }
+    nav.menu a:hover { border-color:var(--accent); color:var(--accent); background:var(--soft); }
+    nav.menu a[aria-current="page"] { background:var(--tint); border-color:var(--accent); color:var(--accent-dark); }
     header a.logo b { color:var(--accent); }
     a.bts { font-size:13px; font-weight:600; padding:2px 12px; border:1px solid var(--line); border-radius:999px; white-space:nowrap; }
     a.bts.ok { color:var(--ok); border-color:var(--ok); }
@@ -45,17 +49,12 @@
     button:hover { border-color:var(--accent); }
     button.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
     button.primary:hover { background:var(--accent-dark); }
+    a.button { display:inline-block; padding:6px 16px; border-radius:999px; border:1px solid var(--line); background:#fff; color:var(--fg); text-decoration:none; font-weight:600; }
+    a.button:hover { border-color:var(--accent); }
+    a.button.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+    a.button.primary:hover { background:var(--accent-dark); }
     .row { display:flex; gap:8px; flex-wrap:wrap; margin-top:16px; }
     nav.filter a { margin-right:12px; }
-    /* 입구 카드와 단계 표시 (첫 화면) */
-    .hero { text-align:center; padding:32px 16px 24px; background:linear-gradient(180deg, var(--tint), #fff); border-radius:var(--radius); }
-    .hero h1 { font-size:30px; margin:0 0 8px; }
-    .entries { display:grid; grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)); gap:16px; margin:24px 0; }
-    a.entry { display:block; padding:20px; border:1px solid var(--line); border-radius:var(--radius); background:#fff; color:var(--fg);
-              text-decoration:none; box-shadow:var(--shadow); }
-    a.entry:hover { border-color:var(--accent); }
-    a.entry h2 { font-size:18px; margin:0 0 4px; }
-    a.entry .muted { display:block; min-height:3em; }
     .steps { display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-top:12px; font-size:13px; color:var(--accent-dark); }
     .steps span { background:var(--tint); border-radius:999px; padding:1px 10px; }
     .steps i { font-style:normal; color:var(--muted); }
@@ -91,13 +90,17 @@
     details.log { margin-top:16px; }
     details.log summary { cursor:pointer; font-weight:600; font-size:18px; }
     @media (max-width:820px) { .split, .fields { grid-template-columns:1fr; } }
-    @media (max-width:520px) { header { padding:10px 16px; gap:12px; } .hero h1 { font-size:24px; } }
+    @media (max-width:520px) { header { padding:10px 16px; gap:12px; } nav.menu a { padding:8px 14px; } }
   </style>
 </head>
 <body>
-  <header><a class="logo" href="/"><b>●</b> 트리아지 작업 페이지</a>{% if not guest %}<a href="/reports">리포트</a><a href="/new">새 리포트</a><a href="/qa">QA</a><a href="/mine">내 담당</a><a href="/dashboard">대시보드</a><a href="/triage">트리아지 품질</a>{% if lan %}<a href="/connect">휴대폰 접속</a>{% endif %}{% endif %}
+  <header><a class="logo" href="/"><b>●</b> 트리아지 작업 페이지</a>{% if not guest %}{% set path = menu or request.url.path %}
+    <nav class="menu" aria-label="메뉴">{% for href, name, here in [("/", "홈", path == "/"), ("/mine", "내 업무", path == "/mine"),
+        ("/reports", "리포트", path.startswith("/reports")), ("/dashboard", "대시보드", path == "/dashboard"), ("/triage", "트리아지 품질", path == "/triage")] %}
+      <a href="{{ href }}"{% if here %} aria-current="page"{% endif %}>{{ name }}</a>{% endfor %}{% if lan %}
+      <a href="/connect"{% if path == "/connect" %} aria-current="page"{% endif %}>휴대폰 접속</a>{% endif %}</nav>{% endif %}
     {% if bts %}{% set who = {"jira": "Jira", "redmine": "Redmine", "fake": "가짜 BTS"}.get(bts.bts, bts.bts or "BTS") %}
-    <a class="bts {{ bts.state }}" href="/qa" title="{{ bts.errors | join(' / ') if bts.errors else 'BTS 연결 상태 — 마지막 동기화 결과' }}">● {{ who }} {{ {"never": "확인 전", "running": "읽는 중", "ok": "연결됨", "partial": "일부 실패", "down": "연결 안 됨"}[bts.state] }}{% if bts.ago and bts.state != "running" %} · {{ bts.ago }} 전{% endif %}</a>{% endif %}{% if lan %}<form method="post" action="/logout" style="margin:0"><button class="quiet" type="submit">로그아웃</button></form>{% endif %}</header>
+    <a class="bts {{ bts.state }}" href="/" title="{{ bts.errors | join(' / ') if bts.errors else 'BTS 연결 상태 — 마지막 동기화 결과' }}">● {{ who }} {{ {"never": "확인 전", "running": "읽는 중", "ok": "연결됨", "partial": "일부 실패", "down": "연결 안 됨"}[bts.state] }}{% if bts.ago and bts.state != "running" %} · {{ bts.ago }} 전{% endif %}</a>{% endif %}{% if lan %}<form method="post" action="/logout" style="margin:0"><button class="quiet" type="submit">로그아웃</button></form>{% endif %}</header>
   <main>{% block body %}{% endblock %}</main>
 </body>
 </html>

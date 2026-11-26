@@ -35,6 +35,8 @@
    스프린트 현황으로 바꿨다(경민 결정: 주간 단위는 기간이 아니라 이슈의 목표 업데이트로 본다).
 12. 스프린트 이월(sync 설계 의도 15) 지표: 이 스프린트로 넘어온 건수와 이월 2회 이상인 미해결 목록. 이월 횟수는 store.carries 의 줄
    수다. 두 번 이상 밀린 이슈가 병목이라는 경민의 판단이다.
+13. 홈(QA 업무 현황, 2026-11-26 경민 요청)의 QA Review 표는 마일스톤 티켓 중 QA Review 인 것 전체다(내 것만이 아니라 팀 전체).
+   담당자·머문 일수·기준 초과와 할 일(긴급 사인 요청이면 팀장 사인, 아니면 재현 확인)을 보인다.
 """
 
 import math
@@ -43,8 +45,8 @@ from datetime import date, datetime, timedelta
 
 from triage_eval.contracts import ENUMS, split_modules
 from triage_service import config, flow
-from triage_service.qa import ACTIONS   # 이 파일의 qa() 함수와 이름이 겹쳐 모듈 대신 값을 가져온다
-from triage_service.contracts import CLOSED, IN_DEV, OPEN, RESOLVE, STATUSES
+from triage_service.qa import ACTIONS, urgent   # 이 파일의 qa() 함수와 이름이 겹쳐 모듈 대신 값을 가져온다
+from triage_service.contracts import CLOSED, IN_DEV, OPEN, QA_REVIEW, RESOLVE, STATUSES
 
 PERIODS = {"7": 7, "30": 30, "all": None}
 
@@ -263,3 +265,20 @@ def sprint(tickets: list[dict], name: str, carries: dict | None = None) -> dict:
     return {"name": name, "total": len(mine), "closed": closed, "rate": ratio(closed, len(mine))["pct"],
             "left": [(s, left[s]) for s in OPEN] + sorted((s, n) for s, n in left.items() if s not in OPEN),
             "carried_in": sum(1 for t in mine if carries.get(t["key"]) and carries[t["key"]][-1][2] == name), "repeat": repeat}
+
+
+def qa_review(tickets: list[dict], records: list[dict], changes: dict, now: datetime | None = None) -> list[dict]:
+    """설계 의도 13 — 홈의 QA Review 이슈 전체(누가 들고 있고 얼마나 머물렀나). tickets 는 마일스톤 티켓, records 는 등록한
+    리포트(같은 티켓이면 제목·긴급 여부·상세 화면 번호를 리포트에서 가져온다). 오래 머문 순."""
+    at = (now or datetime.now()).astimezone()
+    by_key = {r["ticket_key"]: r for r in records if r["ticket_key"]}
+    rows = []
+    for t in tickets:
+        if t["status"] != QA_REVIEW:
+            continue
+        r, days = by_key.get(t["key"]), stay_days(changes.get(t["key"], []), QA_REVIEW, t["updated"], at)
+        rows.append({"key": t["key"], "title": r["report"].title if r else t["title"], "assignee": t["assignee"],
+                     "days": round(days, 1), "limit": config.BOTTLENECK_DAYS[QA_REVIEW], "late": days > config.BOTTLENECK_DAYS[QA_REVIEW],
+                     "urgent": bool(r) and urgent(r),
+                     "rid": r["id"] if r else None})
+    return sorted(rows, key=lambda x: -x["days"])

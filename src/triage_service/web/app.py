@@ -26,7 +26,7 @@
 10. 검토 화면은 원문(왼쪽)과 8칸 폼(오른쪽)을 두 단으로 놓아 원문을 보며 바로 고친다. 좁은 화면에서는 한 단이 된다. 모델이
    낸 값과 달라진 칸은 테두리로 표시하고, 모델 원본 응답이 든 처리 기록은 검토에 필요한 정보가 아니라 접는다. 대시보드의
    카드·막대 스타일은 base.html 로 옮겨 첫 화면과 같은 틀을 쓰고, 맨 위 핵심 숫자는 metrics.compute() 결과를 그대로 보인다.
-11. QA 화면(/qa)은 BTS 에서 읽어 둔 상태(sync.py)를 목록으로 보여 주기만 한다. BTS 를 부르는 것은 [지금 동기화]
+11. 화면은 BTS 에서 읽어 둔 상태(sync.py)를 보여 주기만 한다(설계 의도 20 의 홈·내 업무). BTS 를 부르는 것은 [지금 동기화]
    (POST /qa/sync)뿐이고, 네트워크를 기다리는 동안 다른 요청을 막지 않도록 스레드에서 실행한다(설계 의도 6).
 12. QA 동작은 상세 화면에서만 누른다(POST /reports/{id}/qa). 원문과 확정한 8칸을 보며 판단하게 하려는 것이다. 버튼은 마지막으로
    읽은 BTS 상태에서 할 수 있는 동작만 보이고, 실제 허용 여부는 qa.act 가 BTS 를 다시 읽어 정한다. 결과는 QA 기록 표로 보인다.
@@ -36,9 +36,9 @@
 14. 대시보드의 QA 지표도 마일스톤 단위다(metrics 설계 의도 8). 고른 마일스톤이 없거나 모르는 이름이면 현재 마일스톤이고,
    (S5-5c 에서 기간 필터는 트리아지 품질 화면으로 옮겨 대시보드에는 마일스톤만 남았다.) 모든 마일스톤을 출시했으면 첫 화면과
    대시보드는 마지막 마일스톤을 보인다(읽어 둔 마일스톤이 있는데 "없다"고 안내하지 않게, 독립 검토에서 발견).
-15. 첫 화면·QA 보드·내 담당·대시보드는 열 때 마지막 동기화가 오래됐으면 뒤에서 동기화를 시작하고(sync 설계 의도 10), 읽어 둔 값으로
+15. 홈·내 업무·대시보드는 열 때 마지막 동기화가 오래됐으면 뒤에서 동기화를 시작하고(sync 설계 의도 10), 읽어 둔 값으로
    바로 연다. 도는 동안은 상세 화면처럼 자동으로 다시 읽어 끝난 값을 보인다. 모든 화면 머리에 BTS 연결 표시(sync 설계 의도 12)를
-   두고, 누르면 마지막 동기화 결과가 있는 QA 화면으로 간다. 설계 의도 11 의 "BTS 를 부르는 것은 버튼뿐"은 이것으로 바뀌었다.
+   두고, 누르면 마지막 동기화 결과가 있는 홈으로 간다. 설계 의도 11 의 "BTS 를 부르는 것은 버튼뿐"은 이것으로 바뀌었다.
    등록과 QA 동작은 동기화와 같은 잠금 안에서 한다(sync 설계 의도 11).
 16. 검토 화면에서 규칙의 팀 그룹 구성원과 각자의 미해결 수를 보이고 담당자를 고르게 한다(assign 설계 의도 8·9). BTS 를
    부르므로 검토 대기 건을 열 때만 읽고, 읽지 못해도 화면은 열며 등록할 때 다시 읽는다. 고른 구성원은 팀을 "규칙대로"로 둘
@@ -52,6 +52,11 @@
 19. 망 접속 모드(cli --lan, auth.py)에서는 로그인하지 않은 요청을 로그인 화면으로 보낸다. 이 PC 자신(127.0.0.1)에서 온 요청은
    지금처럼 받는다. 로그인 화면과 휴대폰 접속 화면(주소·QR)은 망 접속 모드에서만 있다. 받는 주소 목록과 다른 사이트 요청 차단은
    그대로라, 휴대폰은 이 PC 의 와이파이 주소로만 들어온다.
+20. 메뉴는 홈·내 업무·리포트·대시보드·트리아지 품질 다섯 개다(2026-11-26 경민 요청, 문서/화면_설계.md). 홈은 QA 업무 현황만
+   (현재 마일스톤·이번 스프린트·QA Review 이슈와 담당자, [지금 동기화]와 마지막 결과), 내 업무는 지금 처리할 일(내 QA Review·
+   회귀 테스트, 검토 대기·실패 리포트 — 버튼이 그 처리 칸으로 데려간다)과 새 리포트 넣기, 내가 넘긴 이슈다. 예전 QA 보드(/qa)는
+   홈으로 넘기고, [지금 동기화]는 끝나면 홈으로 돌아간다. 새 리포트 화면(/new)은 링크 미리보기·입력 오류를 다시 그릴 때 쓰고
+   메뉴에서는 내 업무에 속한다.
 """
 
 from contextlib import asynccontextmanager
@@ -130,7 +135,7 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
         return templates.TemplateResponse(request, name, {"bts": syncer.status(), "lan": bool(login), **ctx}, status_code=status_code)
 
     def synced_page(request: Request, name: str, **ctx) -> HTMLResponse:
-        """설계 의도 15 — 첫 화면·QA 보드·내 담당·대시보드: 때가 됐으면 뒤에서 동기화하고 읽어 둔 값으로 바로 연다."""
+        """설계 의도 15 — 홈·내 업무·대시보드: 때가 됐으면 뒤에서 동기화하고 읽어 둔 값으로 바로 연다."""
         syncer.start()
         return page(request, name, auto_refresh=True, **ctx)
 
@@ -210,8 +215,14 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
     def home(request: Request, milestone: str = ""):   # 설계 의도 8·13
         milestones = store.milestones()
         name = shown(milestones, milestone)
-        return synced_page(request, "home.html", counts=counts(), recent=store.list()[:5], milestones=milestones,
-                    summary=metrics.milestone_summary(store, name) if name else None)
+        ctx = {}
+        if name:   # 설계 의도 20 — 홈은 QA 업무 현황만: 마일스톤·이번 스프린트·QA Review 이슈
+            everything = [t for m in milestones for t in store.tickets(m["name"])]
+            ctx = {"summary": metrics.milestone_summary(store, name),
+                   "sp": metrics.sprint(everything, sprint_mod.current(date.today()).isoformat(), store.carries()),
+                   "review": metrics.qa_review(store.tickets(name), sync.targets(store), store.ticket_changes())}
+        return synced_page(request, "home.html", milestones=milestones, sprint_label=sprint_mod.label,
+                           result=syncer.last and syncer.last["result"], **ctx)
 
     @app.get("/reports", response_class=HTMLResponse)
     def index(request: Request, state: str | None = None):
@@ -223,23 +234,25 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
                  mode: str = "paste"):
         on = sorted({s.name for s in sources})
         return page(request, "new.html", status_code=status_code, form=form, error=error, notice=notice,
-                    existing=existing, sources_on=on, sources_off=sources_off, mode=mode)
+                    existing=existing, sources_on=on, sources_off=sources_off, mode=mode, menu="/mine")   # 메뉴는 내 업무가 켜진다
 
-    @app.get("/qa", response_class=HTMLResponse)
-    def qa_board(request: Request):   # 설계 의도 11·15 — 마지막 동기화 결과(자동 포함)를 함께 보인다
-        return synced_page(request, "qa.html", board=sync.board(sync.targets(store), store.qa_log()),
-                           result=syncer.last and syncer.last["result"])
+    @app.get("/qa")
+    def qa_board():   # 설계 의도 20 — QA 보드는 홈(QA Review)과 내 업무로 나눠 옮겼다. 예전 링크는 홈으로
+        return RedirectResponse("/", status_code=303)
 
     @app.get("/mine", response_class=HTMLResponse)
-    def mine(request: Request):   # sync 설계 의도 13 — 화면은 읽어 둔 값만 보여 준다
+    def mine(request: Request, mode: str = ""):   # 설계 의도 20, sync 설계 의도 13 — 화면은 읽어 둔 값만 보여 준다
         tickets = [t for m in store.milestones() for t in store.tickets(m["name"])]
         m = syncer.me and sync.mine(sync.targets(store), tickets, store.ticket_changes(), store.qa_log(), syncer.me)
-        return synced_page(request, "mine.html", m=m, rules=bool(assign_rules), synced=syncer.last is not None, me_error=syncer.me_error)
+        return synced_page(request, "mine.html", m=m, rules=bool(assign_rules), synced=syncer.last is not None, me_error=syncer.me_error,
+                           review=store.list(flow.REVIEW), failed=store.list(flow.FAILED), open_new=bool(mode),
+                           form={"track": "A"}, mode="link" if mode == "link" else "paste",
+                           sources_on=sorted({s.name for s in sources}), sources_off=sources_off)
 
     @app.post("/qa/sync")
-    async def qa_sync(request: Request):
-        result = await run_in_threadpool(syncer.now)
-        return page(request, "qa.html", board=sync.board(sync.targets(store), store.qa_log()), result=result)
+    async def qa_sync():   # 결과는 홈이 보인다(syncer.last)
+        await run_in_threadpool(syncer.now)
+        return RedirectResponse("/", status_code=303)
 
     def shown(milestones: list[dict], wanted: str) -> str:
         """설계 의도 13·14 — 고른 마일스톤, 없으면 현재, 모두 출시했으면 마지막 마일스톤."""

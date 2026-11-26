@@ -249,9 +249,9 @@ def test_web_home_milestone_card(store):
     tracker.set_status(key, CLOSED)
     client.post("/qa/sync")
     page = client.get("/").text
-    assert "마일스톤 0.0.1" in page and "/ 1건 (100.0%)" in page and "D-" in page
+    assert "마일스톤 0.0.1" in page and "100.0%" in page and "(1 / 1건 Closed)" in page and "D-" in page
     page = client.get("/?milestone=0.1.0").text
-    assert "마일스톤 0.1.0" in page and "/ 1건 (0.0%)" in page
+    assert "마일스톤 0.1.0" in page and "(0 / 1건 Closed)" in page and "QA Review" in page   # 재현 대기 건이 QA Review 표에
     assert "마일스톤 0.0.1" in client.get("/?milestone=없는것").text   # 모르는 값이면 현재 마일스톤
 
 

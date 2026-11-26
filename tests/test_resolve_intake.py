@@ -91,9 +91,9 @@ def test_lead_sees_returned_ticket_on_mine_screen(store):
     client.post("/qa/sync")
     assert key not in client.get("/mine").text            # In Dev — 내 차례가 아니다
     tracker.set_status(key, RESOLVE)
-    page = client.post("/qa/sync").text
-    assert "QA팀에 회귀 테스트를 배정했습니다" in page and key in page
-    assert "내 차례 1건" in client.get("/mine").text      # 토큰 주인(QA팀장)의 내 차례
+    page = client.post("/qa/sync").text                  # 동기화 뒤 홈의 마지막 결과
+    assert "QA팀에 배정했습니다" in page and key in page
+    assert "회귀 테스트 결과 넣기" in client.get("/mine").text      # 토큰 주인(QA팀장)의 지금 처리할 일
 
 
 def test_check_warns_about_same_display_name(tmp_path, monkeypatch, capsys):

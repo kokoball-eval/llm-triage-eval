@@ -57,10 +57,10 @@ def main(argv: list[str] | None = None) -> int:
             print(f"BTS 연결 실패 ({loaded['use']}): {e}")
             return 1
         print(f"BTS 연결 확인 ({loaded['use']}): 설정·토큰·검색 권한 정상")
-        if loaded["assign"]:   # 내 담당 화면은 담당자를 표시 이름으로 비교한다(sync 설계 의도 13)
+        if loaded["assign"]:   # 내 업무 화면은 담당자를 표시 이름으로 비교한다(sync 설계 의도 13)
             names = Counter(m.name for m in tracker.members(loaded["assign"]["qa"]))
             if same := sorted(n for n, c in names.items() if c > 1):
-                print(f"경고: QA팀 그룹에 표시 이름이 같은 구성원이 있습니다: {', '.join(same)} — 내 담당 화면이 서로 구분하지 못하니 이름을 다르게 하세요")
+                print(f"경고: QA팀 그룹에 표시 이름이 같은 구성원이 있습니다: {', '.join(same)} — 내 업무 화면이 서로 구분하지 못하니 이름을 다르게 하세요")
         if missing:
             print("자동 배정 계정 문제:\n- " + "\n- ".join(missing))
             return 1

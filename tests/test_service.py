@@ -349,13 +349,13 @@ def test_web_full_flow(web, store):
     assert "등록 완료 1" in web.get("/reports").text
 
 
-def test_web_home_shows_entries_and_recent(web, store):
-    """첫 화면은 입구 카드와 최근 리포트를 보이고, 표는 /reports 에 있다 (app 설계 의도 8)."""
+def test_web_home_is_qa_status_only_and_reports_live_in_list(web, store):
+    """홈은 QA 업무 현황만 보이고(app 설계 의도 20), 접수한 리포트는 리포트 목록(/reports)에 있다."""
     page = web.get("/").text
-    assert "지금 어떤 일이 필요하세요?" in page and "아직 리포트가 없습니다" in page
+    assert "QA 업무 현황" in page and "지금 동기화" in page and "최근 리포트" not in page
     rid = int(web.post("/reports", data=form_of(DEV_ITEMS[0]), follow_redirects=False).headers["location"].rsplit("/", 1)[1])
-    page = web.get("/").text
-    assert DEV_ITEMS[0]["input"]["title"] in page and f'href="/reports/{rid}"' in page
+    assert DEV_ITEMS[0]["input"]["title"] not in web.get("/").text
+    assert f'href="/reports/{rid}"' in web.get("/reports").text
     assert web.get("/reports?state=없는상태").status_code == 200
 
 

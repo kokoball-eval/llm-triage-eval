@@ -117,7 +117,8 @@ def test_web_dashboard_qa_section(store):
     tracker.set_status(qa_key, CLOSED)
     client.post("/qa/sync")
     page = client.get("/dashboard").text
-    assert "QA팀 대응 현황" in page and "<strong>0.0.1</strong>" in page and "(1 / 3건)" in page   # 완료율
+    assert "QA팀 대응 분석" in page and "<strong>0.0.1</strong>" in page and "(1 / 3건)" not in page   # 완료율은 홈에
+    assert "(1 / 3건 Closed)" in client.get("/").text
     assert "대응 흐름" in page and "구성원별 부하" in page and f"<th>{dev['assignment']['team']}</th>" in page
     assert "사람이 바꾼 배정" not in page                                  # 모델 품질 지표는 트리아지 품질 화면으로
     assert '사람이 바꾼 배정</span><br><span class="big">33.3%</span> <span class="muted">(1 / 3건)' in client.get("/triage").text
@@ -161,3 +162,29 @@ def test_response_flow_and_members():
 
 def test_response_empty():
     assert metrics.response([], {}) == {"flow": [(QA_REVIEW, 0, 0), (IN_DEV, 0, 0), (RESOLVE, 0, 0), (CHECK, 0, 0)], "members": []}
+
+
+# ── 홈의 QA Review (화면 개편) ───────────────────────────
+
+def test_qa_review_rows_whole_team_oldest_first_with_action():
+    from datetime import datetime
+    from types import SimpleNamespace
+    now = datetime.fromisoformat("2026-11-26T12:00:00")
+    tickets = [{"key": "A", "status": QA_REVIEW, "assignee": "박대무", "updated": "2026-11-26T11:00:00", "title": "BTS 제목 A", "team": ""},
+               {"key": "B", "status": QA_REVIEW, "assignee": "", "updated": "2026-11-20T00:00:00", "title": "BTS 제목 B", "team": ""},
+               {"key": "C", "status": IN_DEV, "assignee": "x", "updated": "", "title": "C", "team": ""}]
+    records = [{"id": 7, "ticket_key": "A", "report": SimpleNamespace(title="리포트 A"), "final_fields": {"처리": "긴급 사인 요청"}}]
+    rows = metrics.qa_review(tickets, records, {"A": [("2026-11-26T10:00:00", None, QA_REVIEW)]}, now=now)
+    assert [r["key"] for r in rows] == ["B", "A"]                          # 오래 머문 순, QA Review 만
+    b, a = rows
+    assert (b["late"], b["rid"], b["urgent"], b["title"]) == (True, None, False, "BTS 제목 B")   # 6일 > 2일, BTS 에서 직접 만든 이슈
+    assert (a["late"], a["rid"], a["urgent"], a["title"], a["assignee"]) == (False, 7, True, "리포트 A", "박대무")
+
+
+def test_web_home_lists_qa_review_with_assignee(store):
+    tracker = fake(store)
+    client = web(store, tracker)
+    register(store, tracker)                                               # 재현 대기 → QA Review
+    client.post("/qa/sync")
+    page = client.get("/").text
+    assert "QA Review" in page and "QA팀장" in page and "재현 확인" in page and "QA 업무 현황" in page

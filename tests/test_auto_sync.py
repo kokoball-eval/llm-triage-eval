@@ -1,4 +1,4 @@
-"""화면을 열 때 자동 동기화와 BTS 연결 표시 시험 (S5-4d) — sync.Syncer 와 첫 화면·QA 보드·대시보드.
+"""화면을 열 때 자동 동기화와 BTS 연결 표시 시험 (S5-4d) — sync.Syncer 와 홈·내 업무·대시보드.
 
 실제 BTS 는 부르지 않는다(가짜 BTS). conftest 가 끈 자동 동기화를 이 파일에서만 켠다.
 """
@@ -144,7 +144,7 @@ def test_web_opening_screen_starts_sync_and_shows_status(store):
     assert 'http-equiv="refresh"' not in page
 
 
-@pytest.mark.parametrize("path", ["/", "/qa", "/dashboard"])
+@pytest.mark.parametrize("path", ["/", "/mine", "/dashboard"])
 def test_web_refreshes_while_sync_runs(store, path, monkeypatch):
     gate = threading.Event()
     real = sync.run
@@ -157,11 +157,11 @@ def test_web_refreshes_while_sync_runs(store, path, monkeypatch):
     wait(app.state.syncer)
 
 
-def test_web_qa_shows_last_auto_sync_errors(store):
+def test_web_home_shows_last_auto_sync_errors(store):
     app, client = web(store, Down(store.path))
-    client.get("/qa")
+    client.get("/")
     wait(app.state.syncer)
-    page = client.get("/qa").text
+    page = client.get("/").text
     assert "가짜 BTS 연결 안 됨" in page and "읽지 못했습니다 — 마일스톤 목록: 연결 거부" in page
     assert 'title="마일스톤 목록: 연결 거부"' in page                     # 연결 표시에 이유
 

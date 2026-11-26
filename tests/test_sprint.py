@@ -113,7 +113,8 @@ def test_web_detail_offers_default_sprint_and_dashboard_counts_it(store):
     tracker.set_status(store.get(rid)["ticket_key"], CLOSED)
     client.post("/qa/sync")
     page = client.get("/dashboard").text
-    assert f"<strong>{sprint.label(now)}</strong>" in page and "(1 / 1건 완료)" in page
+    assert f"<strong>{sprint.label(now)}</strong>" in page and "넘어온 이슈" in page   # 대시보드는 이월 분석
+    assert sprint.label(now) in client.get("/").text and "(1 / 1건)" in client.get("/").text   # 스프린트 완료 현황은 홈
     bad = client.post(f"/reports/{triaged(store, DEV_ITEMS[2])}/register", data={**form, "sprint": "다음주"})
     assert bad.status_code == 422 and "업데이트 요일" in bad.text
 
@@ -123,4 +124,4 @@ def test_dashboard_ignores_unknown_sprint_param(store):
     client = web(store, tracker)
     client.post("/qa/sync")
     page = client.get("/dashboard?sprint=2020-01-02").text
-    assert f"<strong>{sprint.label(sprint.current(date.today()).isoformat())}</strong>" in page and "목표로 단 이슈 없음" in page
+    assert f"<strong>{sprint.label(sprint.current(date.today()).isoformat())}</strong>" in page and "2회 이상 이월된 이슈는 없습니다" in page

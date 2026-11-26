@@ -1,73 +1,61 @@
 {% extends "base.html" %}
 {% block body %}
-<section class="hero">
-  <h1>지금 어떤 일이 필요하세요?</h1>
-  <p class="muted">리포트를 넣으면 모델이 8칸으로 정리하고, 사람이 확인한 뒤 BTS에 등록합니다. 모든 응답은 사람이 확인합니다.</p>
-</section>
+<h1>홈 <span class="muted" style="font-size:15px;font-weight:400">QA 업무 현황</span></h1>
+<form method="post" action="/qa/sync" class="row" style="margin-top:0;align-items:center">
+  <button type="submit">지금 동기화</button>
+  <span class="muted">BTS에서 마일스톤·티켓 상태를 다시 읽습니다{% if result %} · 마지막 결과: {{ result.synced }}건 읽음{% if result.errors %}, <span style="color:var(--bad)">읽지 못한 것 {{ result.errors | length }}건</span>{% endif %}{% endif %}</span>
+</form>
+{% if result and (result.errors or result.missing or result.intake or result.carried) %}
+<details class="more"><summary>마지막 동기화 결과 자세히</summary>
+  {% if result.intake %}<p>Resolve 가 된 개발 배정 건을 QA팀에 배정했습니다: {{ result.intake | join(", ") }}</p>{% endif %}
+  {% if result.carried %}<p>목표 업데이트가 지난 미완료 이슈를 진행 중인 스프린트로 옮겼습니다: {{ result.carried | join(", ") }}</p>{% endif %}
+  {% if result.missing %}<p>BTS에서 찾지 못한 티켓: {{ result.missing | join(", ") }} (이전에 읽은 값은 그대로 둡니다)</p>{% endif %}
+  {% for e in result.errors %}<p class="error">읽지 못했습니다 — {{ e }} (이전에 읽은 값은 그대로 둡니다)</p>{% endfor %}
+</details>
+{% endif %}
+
 {% if summary %}
 {% set s = summary %}
-<section class="card" style="margin-bottom:16px">
-  <div class="row" style="justify-content:space-between; align-items:baseline; margin-top:0">
-    <h2 style="margin:0">마일스톤 {{ s.name }}</h2>
-    <span class="muted">{% if s.release %}출시 {{ s.release }} · {% if s.d_day >= 0 %}D-{{ s.d_day }}{% else %}출시일 {{ -s.d_day }}일 지남{% endif %}{% endif %}{% if s.released %} · 출시함{% endif %}</span>
-  </div>
-  {% if s.total %}
-  <div class="kpis">
-    <div class="card"><span class="muted">Closed</span><br><span class="big">{{ s.closed }}</span> <span class="muted">/ {{ s.total }}건 ({{ s.rate }}%)</span></div>
-    <div class="card"><span class="muted">QA 회귀 통과로 닫음</span><br><span class="big">{{ s.qa_closed }}</span> <span class="muted">건</span></div>
-    <div class="card"><span class="muted">회귀 실패(재오픈)</span><br><span class="big">{{ s.reopened }}</span> <span class="muted">건</span></div>
-    <div class="card"><span class="muted">남은 이슈</span><br><span class="big">{{ s.total - s.closed }}</span> <span class="muted">건</span></div>
-  </div>
-  <table class="bars">{% for st, n in s.left.items() %}
-    <tr><th>{{ st }}</th><td><span class="bar" style="width: {{ (n / s.total * 100) | round(1) }}%"></span></td><td class="num">{{ n }}</td></tr>
-  {% endfor %}</table>
-  {% if s.other %}<p class="muted">다섯 상태 밖: {% for st, n in s.other.items() %}{{ st }} {{ n }}건{% if not loop.last %}, {% endif %}{% endfor %} — BTS 워크플로를 확인하세요.</p>{% endif %}
-  {% else %}
-  <p class="muted">이 마일스톤에 티켓이 없거나 아직 읽지 않았습니다. <a href="/qa">QA 화면</a>에서 [지금 동기화]를 누르세요.</p>
-  {% endif %}
-  <p class="muted">BTS 티켓 전체 기준(BTS에 직접 등록한 이슈 포함) · 마지막 동기화 {{ s.synced_at }}{% if milestones | length > 1 %} · 다른 마일스톤:
-    {% for m in milestones if m.name != s.name %}<a href="/?milestone={{ m.name | urlencode }}">{{ m.name }}</a>{% if not loop.last %} · {% endif %}{% endfor %}{% endif %}</p>
-</section>
-{% elif not milestones %}
-<p class="muted">마일스톤(BTS 버전)을 아직 읽지 않았습니다. <a href="/qa">QA 화면</a>에서 [지금 동기화]를 누르면 여기에 마일스톤 성과가 보입니다.</p>
-{% endif %}
-<div class="entries">
-  <a class="entry" href="/new">
-    <h2>리포트 한 건 넣기</h2><span class="muted">제목과 본문을 붙여 넣어 바로 정리합니다.</span>
-    <div class="steps"><span>접수</span><i>→</i><span>검토</span><i>→</i><span>등록</span></div>
-  </a>
-  <a class="entry" href="/new?mode=link">
-    <h2>링크로 가져오기</h2><span class="muted">Jira·Redmine 이슈, 게시판, 디스코드 글 주소로 불러옵니다.</span>
-    <div class="steps"><span>링크</span><i>→</i><span>가져오기</span><i>→</i><span>검토</span></div>
-  </a>
-  <a class="entry" href="/reports?state={{ REVIEW }}">
-    <h2>검토 대기 <span class="badge">{{ counts[REVIEW] }}</span></h2><span class="muted">모델이 정리를 끝내 사람의 확인을 기다리는 건입니다.</span>
-    <div class="steps"><span>8칸 확인</span><i>→</i><span>BTS 등록</span></div>
-  </a>
-  <a class="entry" href="/qa">
-    <h2>QA 보드</h2><span class="muted">BTS 상태를 읽어 재현 대기·회귀 테스트 대기·보류와 팀별 미해결을 봅니다.</span>
-    <div class="steps"><span>동기화</span><i>→</i><span>재현 확인 · 회귀 테스트</span></div>
-  </a>
-  <a class="entry" href="/dashboard">
-    <h2>대시보드</h2><span class="muted">QA팀 대응 현황: 마일스톤 진행, 대응 흐름과 병목, 구성원별 부하를 봅니다.</span>
-    <div class="steps"><span>흐름</span><i>→</i><span>병목</span><i>→</i><span>부하</span></div>
-  </a>
+<div class="grid" style="margin-top:16px">
+  <section class="card">
+    <h2>마일스톤 {{ s.name }} <span class="muted">{% if s.released %}출시함{% elif s.d_day is not none %}{% if s.d_day >= 0 %}D-{{ s.d_day }}{% else %}출시일 {{ -s.d_day }}일 지남{% endif %}{% endif %}</span></h2>
+    {% if s.total %}
+    <p><span class="big">{{ s.rate }}%</span> <span class="muted">완료 ({{ s.closed }} / {{ s.total }}건 Closed)</span></p>
+    <table class="bars">{% for st, n in s.left.items() %}
+      <tr><th>{{ st }}</th><td><span class="bar" style="width: {{ (n / s.total * 100) | round(1) }}%"></span></td><td class="num">{{ n }}</td></tr>
+    {% endfor %}</table>
+    {% if s.other %}<p class="muted" style="color:var(--warn)">다섯 상태 밖: {% for st, n in s.other.items() %}{{ st }} {{ n }}건{% if not loop.last %}, {% endif %}{% endfor %} — BTS 워크플로를 확인하세요</p>{% endif %}
+    {% else %}<p class="muted">이 마일스톤에 티켓이 없습니다.</p>{% endif %}
+    {% if milestones | length > 1 %}<p class="muted">다른 마일스톤: {% for m in milestones if m.name != s.name %}<a href="/?milestone={{ m.name | urlencode }}">{{ m.name }}</a>{% if not loop.last %} · {% endif %}{% endfor %}</p>{% endif %}
+  </section>
+  <section class="card">
+    <h2>스프린트 <span class="muted">{{ sprint_label(sp.name) }}</span></h2>
+    {% if sp.total %}
+    <p><span class="big">{{ sp.rate }}%</span> <span class="muted">완료 ({{ sp.closed }} / {{ sp.total }}건)</span></p>
+    <table class="bars">{% for st, n in sp.left %}
+      <tr><th>{{ st }}</th><td><span class="bar" style="width: {{ (n / sp.total * 100) | round(1) }}%"></span></td><td class="num">{{ n }}</td></tr>
+    {% endfor %}</table>
+    {% if sp.carried_in %}<p class="muted">지난 업데이트에서 넘어온 이슈 {{ sp.carried_in }}건</p>{% endif %}
+    {% else %}<p class="muted">이번 업데이트를 목표로 단 이슈가 없습니다.</p>{% endif %}
+  </section>
 </div>
-<h2>최근 리포트</h2>
-{% if recent %}
+
+<h2>QA Review <span class="muted" style="font-weight:400">— QA가 재현을 확인하는 중인 이슈</span> <span class="badge">{{ review | length }}</span></h2>
+{% if review %}
 <table>
-  <tbody>
-  {% for r in recent %}
-    <tr>
-      <td><span class="state {{ r.state }}">{{ r.state }}</span></td>
-      <td><a href="/reports/{{ r.id }}">{{ r.report.title }}</a></td>
-      <td class="muted">{{ r.created_at }}</td>
-    </tr>
+  <tr><th>이슈</th><th>담당자</th><th>머문 기간</th><th>할 일</th></tr>
+  {% for r in review %}
+  <tr>
+    <td>{% if r.rid %}<a href="/reports/{{ r.rid }}">{{ r.title }}</a>{% else %}{{ r.title }}{% endif %} <span class="muted">{{ r.key }}</span></td>
+    <td>{{ r.assignee or "없음" }}</td>
+    <td style="white-space:nowrap">{{ r.days }}일{% if r.late %} <span class="late">기준 {{ r.limit }}일 초과</span>{% endif %}</td>
+    <td>{{ "긴급 사인 대기 (QA팀장)" if r.urgent else "재현 확인" }}</td>
+  </tr>
   {% endfor %}
-  </tbody>
 </table>
-<p><a href="/reports">전체 리포트 보기</a></p>
-{% else %}
-<p class="muted">아직 리포트가 없습니다. <a href="/new">새 리포트</a>를 넣어 보세요.</p>
+<p class="muted">오래 머문 순서입니다. 내 이슈를 처리하려면 <a href="/mine">내 업무</a>로 가세요.</p>
+{% else %}<p class="muted">재현을 기다리는 이슈가 없습니다.</p>{% endif %}
+{% elif not milestones %}
+<div class="box">마일스톤(BTS 버전)을 아직 읽지 않았습니다. [지금 동기화]를 누르면 QA 업무 현황이 보입니다.</div>
 {% endif %}
 {% endblock %}

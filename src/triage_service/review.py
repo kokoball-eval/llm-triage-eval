@@ -66,7 +66,7 @@ def edits(model_fields: dict | None, final: dict[str, str]) -> list[dict]:
 
 def register(store: Store, tracker, rid: int, fields: dict[str, str], rules: dict | None = None,
              team: str = assign.AUTO, repro: str = assign.AUTO, milestone: str = "", member: str = assign.AUTO,
-             sprint_: str = "") -> dict:
+             sprint_: str = "", actor: str = "") -> dict:
     """검토 대기 → 등록 완료. 입력 문제가 있으면 ValueError(문제 목록), 상태가 맞지 않으면 flow.FlowError.
     rules·team 은 자동 배정 규칙과 검토 화면에서 고른 팀(설계 의도 7), repro 는 CS 응대 건의 QA 재현 필요 선택(assign 설계 의도 7),
     member 는 고른 구성원 ID(assign 설계 의도 9), sprint_ 은 목표 스프린트(업데이트 날짜, 빈 문자열이면 없음, 설계 의도 11)."""
@@ -81,7 +81,8 @@ def register(store: Store, tracker, rid: int, fields: dict[str, str], rules: dic
         raise ValueError([f"이미 지난 업데이트입니다: {sprint.label(sprint_)} (진행 중이거나 그 뒤의 업데이트를 고르세요)"])
     final = {f: fields[f].strip() for f in FIELDS}
     needs_repro = assign.cs_repro(final, repro)
-    assignment = {**assign.resolve(rules, team, final, needs_repro), "milestone": milestone, "sprint": sprint_}
+    assignment = {**assign.resolve(rules, team, final, needs_repro), "milestone": milestone, "sprint": sprint_,
+                  **({"by": actor} if actor else {})}   # by: 등록한 사람(사람별 로그인, app 설계 의도 21)
     with _decision_lock:
         rec = store.get(rid)
         flow.check(rec["state"], flow.REGISTERED)

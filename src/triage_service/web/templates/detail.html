@@ -134,6 +134,7 @@
 <table>{% for f in FIELDS %}<tr><th>{{ f }}</th><td>{{ rec.final_fields.get(f) }}</td></tr>{% endfor %}</table>
 {% if rec.assignment %}<p class="muted">배정 팀: {{ rec.assignment.team or "배정 안 함" }}{% if rec.assignment.team != rec.assignment.suggested %} (규칙: {{ rec.assignment.suggested or "배정 안 함" }} → 사람이 바꿈){% endif %}{% if rec.assignment.linked_existing %} — 이미 있던 티켓에 연결해 담당자는 바꾸지 않음{% endif %}</p>{% endif %}
 {% if rec.assignment and rec.assignment.member %}<p class="muted">담당자: {{ rec.assignment.member.name }}{% if rec.assignment.member_rule and rec.assignment.member_rule != rec.assignment.member.id %} (사람이 고름){% endif %}{% if rec.assignment.qa_owner %} · QA 담당: {{ rec.assignment.qa_owner.name }}{% endif %}</p>{% endif %}
+{% if rec.assignment and rec.assignment.by %}<p class="muted">등록한 사람: {{ rec.assignment.by }}</p>{% endif %}
 {% if rec.assignment and rec.assignment.milestone %}<p class="muted">마일스톤: {{ rec.assignment.milestone }}</p>{% endif %}
 {% if rec.assignment and rec.assignment.sprint %}<p class="muted">목표 스프린트: {{ sprint_label(rec.assignment.sprint) }}</p>{% endif %}
 {% if rec.edits %}<p class="muted">사람이 고친 칸: {% for e in rec.edits %}{{ e.field }}({{ e.before or "없음" }} → {{ e.after }}){% if not loop.last %}, {% endif %}{% endfor %}</p>{% endif %}
@@ -161,9 +162,9 @@
 {% endif %}
 {% if qa_log %}
 <table>
-  <tr><th>시각</th><th>동작</th><th>BTS 상태</th><th>코멘트 · 결과</th></tr>
+  <tr><th>시각</th><th>동작</th><th>실행</th><th>BTS 상태</th><th>코멘트 · 결과</th></tr>
   {% for a in qa_log %}
-  <tr><td>{{ a.at | replace("T", " ") }}</td><td>{{ a.action }}{% if a.team %} → {{ a.team }}{% endif %}</td><td>{{ a.before or "?" }} → {{ a.after or "?" }}</td>
+  <tr><td>{{ a.at | replace("T", " ") }}</td><td>{{ a.action }}{% if a.team %} → {{ a.team }}{% endif %}</td><td>{{ a.actor or "—" }}</td><td>{{ a.before or "?" }} → {{ a.after or "?" }}</td>
       <td>{{ a.comment }}{% if a.error %} <span class="state 실패">실패</span> {{ a.error }}{% else %} <span class="muted">완료</span>{% endif %}</td></tr>
   {% endfor %}
 </table>

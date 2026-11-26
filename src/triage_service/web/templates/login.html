@@ -2,9 +2,13 @@
 {% block title %}로그인{% endblock %}
 {% block body %}
 <h1>로그인</h1>
-<p class="muted">망 접속 모드입니다. 시연 비밀번호를 넣으세요.</p>
+<p class="muted">{% if named %}내 이름(로그인 이름)과 비밀번호를 넣으세요.{% else %}망 접속 모드입니다. 시연 비밀번호를 넣으세요.{% endif %}</p>
 {% if error %}<div class="box error">{{ error }}</div>{% endif %}
 <form method="post" action="/login" style="max-width:360px">
+  {% if named %}
+  <label for="id">로그인 이름</label>
+  <input type="text" id="id" name="id" value="{{ user_id or '' }}" autocomplete="username" autocapitalize="off" required>
+  {% endif %}
   <label for="password">비밀번호</label>
   <input type="password" id="password" name="password" autocomplete="current-password" required style="width:100%;padding:8px 10px;font:inherit;border:1px solid var(--line);border-radius:10px">
   <div class="row"><button class="primary" type="submit">로그인</button></div>

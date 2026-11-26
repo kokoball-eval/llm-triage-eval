@@ -15,6 +15,9 @@
    망에 있는지 모른다(실제 시연 준비에서 QR 이 유선 주소를 가리켜 휴대폰이 접속하지 못했다). 그래서 하나만 고르지 않고 모두 보여
    주며, 주소가 둘 이상이면 QR 은 /connect 화면에서 주소별로 본다. shortcut: 카드 이름 단어로 짐작하는 것이라 낯선 이름은
    "알 수 없음"으로 나온다 — 그런 이름이 나오면 kind_of 의 단어를 더한다.
+7. 사람별 계정 파일(config.USERS_PATH, auth 설계 의도 5)이 있으면 그 사람들로 로그인한다 — 이 PC 에서도, --lan 에서도(공용 시연
+   비밀번호는 쓰지 않는다). 파일이 틀리면 시작하지 않는다. --check 는 사람마다 적은 BTS 계정이 자동 배정 팀 그룹의 구성원인지
+   본다 — 틀리면 그 사람의 내 업무가 비어 보이기 때문이다.
 """
 
 import os
@@ -42,7 +45,8 @@ def main(argv: list[str] | None = None) -> int:
     try:   # 설계 의도 1
         loaded = settings.load(config.mapping_path())
         loaded_sources = intake_settings.load(config.sources_path(), config.mapping_path())
-    except settings.SettingsError as e:
+        users, hashes = auth.load_users(config.USERS_PATH) if config.USERS_PATH.is_file() else ({}, {})   # 설계 의도 7
+    except (settings.SettingsError, auth.UsersError) as e:
         print(e)
         return 2
     store = Store(config.DB_PATH)
@@ -72,13 +76,21 @@ def main(argv: list[str] | None = None) -> int:
         print(f"BTS 상태: {' · '.join(STATUSES)} 확인")
         print("마일스톤(BTS 버전): " + (" · ".join(f"{v.name}({v.release or '출시일 없음'}{', 출시함' if v.released else ''})" for v in versions)
                                       or "없음 — BTS 에 버전을 만들면 첫 화면에 마일스톤 성과가 보입니다"))
+        if users:   # 설계 의도 7 — 사람마다 적은 BTS 계정이 팀 그룹 구성원인지
+            known = {m.id for team in assign.teams(loaded["assign"]) for m in tracker.members(team)} if loaded["assign"] else set()
+            strangers = [f"{u.id}({u.bts})" for u in users.values() if u.bts not in known]
+            if strangers:
+                print("사용자 파일 문제 — BTS 팀 그룹에 없는 계정: " + ", ".join(strangers))
+                return 1
+            print(f"사용자: {len(users)}명(리더 {sum(u.role == 'leader' for u in users.values())}명) — 모두 BTS 팀 그룹 구성원")
         on = [s.name for s in intake.make_sources(loaded_sources)]
         print(f"링크 출처: 켜짐 {on or '없음'}" + "".join(f" · {k} 꺼짐({v})" for k, v in loaded_sources["off"].items()))
         return 0
-    login, hosts, urls, host = None, config.ALLOWED_HOSTS, [], config.HOST
+    login = auth.Login(users=users, hashes=hashes) if users else None   # 설계 의도 7
+    hosts, urls, host = config.ALLOWED_HOSTS, [], config.HOST
     if "--lan" in argv:   # 설계 의도 5
         password = os.environ.get("TRIAGE_DEMO_PASSWORD", "")
-        if len(password) < config.PASSWORD_MIN:
+        if not users and len(password) < config.PASSWORD_MIN:
             print("망 접속 모드에는 .env 의 TRIAGE_DEMO_PASSWORD(시연 비밀번호) 줄이 필요합니다" if not password else
                   f"TRIAGE_DEMO_PASSWORD 가 {len(password)}자입니다 — {config.PASSWORD_MIN}자 이상으로 바꾸세요")
             return 2
@@ -87,18 +99,21 @@ def main(argv: list[str] | None = None) -> int:
             print("이 PC 의 와이파이 주소를 찾지 못했습니다 — 와이파이나 핫스팟에 연결했는지 확인하세요")
             return 2
         urls = [(f"http://{ip}:{config.PORT}", kind) for ip, kind in found]
-        login, hosts, host = auth.Login(password), (*config.ALLOWED_HOSTS, *(ip for ip, _ in found)), config.LAN_HOST
-        print("망 접속 모드 — 휴대폰이 붙은 망의 주소로 여세요 (공용 시연 비밀번호로 로그인, 암호화하지 않는 HTTP):")
+        login = login or auth.Login(password)
+        hosts, host = (*config.ALLOWED_HOSTS, *(ip for ip, _ in found)), config.LAN_HOST
+        print(f"망 접속 모드 — 휴대폰이 붙은 망의 주소로 여세요 ({'사람별 계정으로' if users else '공용 시연 비밀번호로'} 로그인, 암호화하지 않는 HTTP):")
         for u, kind in urls:
             print(f"  {u}   [{config.KINDS[kind]}]")
         if len(urls) == 1:
             segno.make(urls[0][0]).terminal(compact=True)
         else:   # 유선·와이파이·가상 망이 함께 있으면 어느 주소가 휴대폰의 망인지 서버는 모른다 — QR 은 화면에서 주소별로 본다
             print(f"망이 여러 개입니다. 노트북 브라우저에서 http://127.0.0.1:{config.PORT}/connect 를 열면 주소별 QR 코드가 있습니다.")
+    if users:
+        print(f"사람별 로그인: {len(users)}명 ({config.USERS_PATH.name})")
     print(f"작업 페이지: http://{config.HOST}:{config.PORT}  · BTS: {loaded['use']} ({config.mapping_path().name})  (종료: Ctrl+C)")
     app = create_app(store, tracker=make_tracker(loaded, store), sources=intake.make_sources(loaded_sources),
                      sources_off=loaded_sources["off"], assign_rules=loaded["assign"], allowed_hosts=hosts, login=login, lan_urls=urls)
-    uvicorn.run(app, host=host, port=config.PORT, proxy_headers=login is None)   # 망 접속 모드에서는 X-Forwarded-For 로 이 PC 인 척하는 것을 막는다
+    uvicorn.run(app, host=host, port=config.PORT, proxy_headers=login is None)   # 로그인이 있으면 X-Forwarded-For 로 이 PC 인 척하는 것을 막는다
     return 0
 
 

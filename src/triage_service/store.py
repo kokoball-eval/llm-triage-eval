@@ -105,7 +105,8 @@ CREATE TABLE IF NOT EXISTS qa_actions (
     after TEXT,
     team TEXT NOT NULL DEFAULT '',
     comment TEXT NOT NULL DEFAULT '',
-    error TEXT
+    error TEXT,
+    actor TEXT NOT NULL DEFAULT ''
 );
 """
 JSON_COLUMNS = ("result", "pipeline", "routing", "model_fields", "final_fields", "edits",
@@ -138,6 +139,8 @@ class Store:
             for name in ADDED_COLUMNS:   # 설계 의도 6
                 if name not in columns:
                     c.execute(f"ALTER TABLE reports ADD COLUMN {name} TEXT")
+            if "actor" not in {r["name"] for r in c.execute("PRAGMA table_info(qa_actions)")}:   # 사람별 로그인 전에 만든 DB
+                c.execute("ALTER TABLE qa_actions ADD COLUMN actor TEXT NOT NULL DEFAULT ''")
             ticket_columns = {r["name"] for r in c.execute("PRAGMA table_info(bts_tickets)")}
             for name in ("team", "sprint"):   # S5-4b·S5-5c 에서 만든 DB
                 if name not in ticket_columns:
@@ -284,11 +287,11 @@ class Store:
         return out
 
     def save_qa(self, rid: int, action: str, before: str | None, after: str | None, team: str = "", comment: str = "",
-                error: str | None = None) -> None:
-        """BTS 에 쓴 것 한 줄 (설계 의도 10)."""
+                error: str | None = None, actor: str = "") -> None:
+        """BTS 에 쓴 것 한 줄 (설계 의도 10). actor 는 누른 사람(사람별 로그인, 없으면 빈 값)."""
         with connect(self.path) as c:
-            c.execute("INSERT INTO qa_actions (report_id, at, action, before, after, team, comment, error) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                      (rid, now(), action, before, after, team, comment, error))
+            c.execute("INSERT INTO qa_actions (report_id, at, action, before, after, team, comment, error, actor) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                      (rid, now(), action, before, after, team, comment, error, actor))
 
     def qa_log(self) -> dict:
         """리포트 번호 → [{at, action, before, after, team, comment, error}] 시간순 (설계 의도 10)."""

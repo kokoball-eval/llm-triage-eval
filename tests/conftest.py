@@ -20,6 +20,7 @@ NO_ALL = {f"q{i}": "아니오" for i in range(1, 7)}
 def no_auto_sync(monkeypatch):
     from triage_service import config
     monkeypatch.setattr(config, "AUTO_SYNC_MINUTES", None)
+    monkeypatch.setattr(config, "USERS_PATH", config.ROOT / "설정" / "시험에서는_없는_사용자.toml")   # 이 PC 의 실제 사용자 파일이 시험에 끼지 않게
 
 
 class FakeClient:

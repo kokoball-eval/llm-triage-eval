@@ -40,6 +40,7 @@ LOCAL_MAPPING_PATH = ROOT / "설정" / "bts_매핑.local.toml"  # 실제 사이�
 SOURCES_PATH = ROOT / "설정" / "출처.toml"                  # 링크 출처 예시 설정
 LOCAL_SOURCES_PATH = ROOT / "설정" / "출처.local.toml"      # 실제 출처 설정 (git 제외)
 ENV_PATH = ROOT / ".env"
+USERS_PATH = ROOT / "설정" / "사용자.local.toml"   # 사람별 계정(git 제외). 있으면 로그인해야 쓴다 (auth 설계 의도 5). 예시: 설정/사용자.예시.toml
 # 붙여넣기 입력 길이 상한 (설계 의도 4). 측정한 평가셋에서 가장 긴 제목은 57자, 본문은 438자다.
 TITLE_MAX = 100
 BODY_MAX = 1000

@@ -25,11 +25,11 @@ def web(store, login=None):
 
 def test_check_and_lock_after_too_many_fails():
     login = auth.Login(PASSWORD)
-    assert login.check(PASSWORD, "a", now=0) is True
+    assert login.check(PASSWORD, "a", now=0) == auth.SHARED                 # 공용 비밀번호로 들어온 사람(누구인지 모름)
     assert [login.check("틀림", "a", now=t) for t in range(5)] == [False] * 5
     assert login.check(PASSWORD, "a", now=10) is None          # 1분 안에 5번 틀려 잠시 막힘 — 맞는 비밀번호도 받지 않는다
-    assert login.check(PASSWORD, "b", now=10) is True          # 다른 기기는 영향 없음
-    assert login.check(PASSWORD, "a", now=70) is True          # 1분이 지나면 다시 받는다
+    assert login.check(PASSWORD, "b", now=10) == auth.SHARED   # 다른 기기는 영향 없음
+    assert login.check(PASSWORD, "a", now=70) == auth.SHARED   # 1분이 지나면 다시 받는다
 
 
 def test_token_signed_and_expires():
@@ -37,8 +37,8 @@ def test_token_signed_and_expires():
     token = login.token(now=1_000)
     assert login.valid(token, now=1_000 + 60)
     assert not login.valid(token, now=1_000 + config.LOGIN_HOURS * 3600)              # 만료
-    issued, nonce, sig = token.split(".")
-    assert not login.valid(f"{int(issued) + 99999}.{nonce}.{sig}", now=1_000)         # 시각을 고치면 서명이 맞지 않는다
+    user, issued, nonce, sig = token.split(".")
+    assert not login.valid(f"{user}.{int(issued) + 99999}.{nonce}.{sig}", now=1_000)  # 시각을 고치면 서명이 맞지 않는다
     assert not login.valid(token[:-1] + ("0" if token[-1] != "0" else "1"), now=1_000)
     assert not login.valid(auth.Login(PASSWORD).token(now=1_000), now=1_000)          # 서버를 다시 켜면(새 키) 옛 쿠키는 무효
     assert not any(login.valid(t, now=1_000) for t in (None, "", "abc", "x.y.z", "..", "1.x.é", "1.é.ab"))   # 이상한 문자도 오류 없이 거절

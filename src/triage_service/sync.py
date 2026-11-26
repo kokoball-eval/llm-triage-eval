@@ -55,6 +55,9 @@
    기록을 먼저 남기고 실패는 동기화 결과에 보인다. 표식 쓰기가 실패하면 조건이 그대로라 다음 동기화에서 다시 시도한다. 이월 횟수는
    기록의 줄 수다. 방금(config.CARRY_RECHECK_MINUTES) 옮긴 티켓은 다시 옮기지 않는다 — Jira 검색은 색인이라 바꾼 라벨이 몇 초 늦게
    읽혀 두 번 이월로 세는 것을 막는다(독립 검토 지적). 사람이 표식을 지난 날짜로 되돌리면 다음 동기화에서 다시 옮기고 횟수가 는다. shortcut: 이월 시각은 동기화가 발견한 때라 목요일이 지나고 처음 동기화할 때 옮겨진다.
+16. 사람별 로그인(auth 설계 의도 5)이면 내 업무의 "나"는 로그인한 사람의 BTS 계정이다. 저장된 담당자는 표시 이름이라 이름이
+   필요하므로, 동기화할 때 자동 배정 팀 그룹 구성원 전체를 읽어 계정 ID → 구성원 표(people)를 둔다(팀 수만큼 BTS 요청이 늘어,
+   사람별 로그인일 때만 읽는다). 표에 없으면 사용자 파일의 이름으로 대신한다.
 """
 
 import threading
@@ -172,9 +175,10 @@ def carry(store: Store, tracker, result: dict, today: date | None = None) -> dic
 class Syncer:
     """설계 의도 10~12 — 동기화를 한 번에 하나만 돌리고 마지막 결과를 기억한다."""
 
-    def __init__(self, store: Store, tracker, qa_team: str = ""):
-        self.store, self.tracker, self.qa_team, self.lock = store, tracker, qa_team, threading.Lock()
+    def __init__(self, store: Store, tracker, qa_team: str = "", teams: tuple = ()):
+        self.store, self.tracker, self.qa_team, self.teams, self.lock = store, tracker, qa_team, teams, threading.Lock()
         self.me: Member | None = None   # 설계 의도 13
+        self.people: dict[str, Member] = {}   # 설계 의도 16 — BTS 계정 ID → 구성원(이름), 사람별 로그인일 때만 읽는다
         self.me_error = ""   # 내 계정을 못 읽은 이유 — 티켓 동기화는 멀쩡하니 연결 표시(status)에는 섞지 않고 /mine 에서만 보인다
         self.last: dict | None = None   # {"at": 시각, "result": run() 의 결과}
         self.thread: threading.Thread | None = None
@@ -229,6 +233,11 @@ class Syncer:
                 self.me, self.me_error = next((m for m in self.tracker.members(self.qa_team) if m.id == me), None), ""
             except Exception as e:
                 self.me_error = str(e)
+            if self.teams:   # 설계 의도 16 — 토큰 주인을 못 읽어도 구성원 표는 따로 읽는다(실패하면 이전 표를 둔다)
+                try:
+                    self.people = {m.id: m for team in self.teams for m in self.tracker.members(team)}
+                except Exception as e:
+                    self.me_error = str(e)
         self.last = {"at": datetime.now(), "result": result}
         return result
 

@@ -27,6 +27,8 @@
    배정했다가 Resolve 접수(sync 설계 의도 14)로 QA 구성원이 담당이 된 건은 실패해도 담당이 QA 에 남아, 개발은 알림을 못 받고 QA 화면에서도
    사라지는 구멍이 있었다. QA 팀이었던 건은 [모듈] 규칙의 팀으로 가고, 그것도 QA팀이면(모듈 없음) 담당은 두고 상태만 바꾼다. 기존 이슈에 연결한 건도 담당은 건드리지 않는다. 자동 배정을 쓰지 않으면 상태만 바꾼다. 넘길 팀을 사람이 고르는
    입력은 두지 않는다(실패는 원래 팀으로 돌려주는 동작이라).
+9. 사람별 로그인이면 누른 사람(actor)을 받는다: 긴급 사인은 누른 사람이 QA팀장인지 보고(없으면 예전처럼 BTS 토큰 주인), BTS 코멘트
+   끝에 "(실행: 이름)"을 붙이고 QA 동작 기록에 남긴다. 동기화가 하는 쓰기(Resolve 접수·이월)는 사람이 없어 비워 둔다.
 """
 
 from triage_service import assign, flow
@@ -67,7 +69,7 @@ def urgent(rec: dict) -> bool:
 
 
 def act(store: Store, tracker, rid: int, action: str, comment: str = "", team: str = assign.AUTO,
-        rules: dict | None = None) -> dict:
+        rules: dict | None = None, actor_bts: str = "", actor_name: str = "") -> dict:
     """QA 동작 하나. 입력 문제는 ValueError(문제 목록), 상태가 맞지 않으면 Conflict. 결과 {"ok", "after", "error"}."""
     rec = store.get(rid)
     if action not in ACTIONS:
@@ -97,8 +99,8 @@ def act(store: Store, tracker, rid: int, action: str, comment: str = "", team: s
             new_team = ""
     who = {}
     try:
-        if action == "sign" and tracker.me() != tracker.lead(rules["qa"]):
-            raise assign.BadChoice([f"{rules['qa']}팀장만 사인할 수 있습니다 (BTS 토큰 주인이 설정의 팀장이 아님)"])
+        if action == "sign" and (actor_bts or tracker.me()) != tracker.lead(rules["qa"]):   # 설계 의도 9 — 누른 사람, 없으면 토큰 주인
+            raise assign.BadChoice([f"{rules['qa']}팀장만 사인할 수 있습니다" + ("" if actor_bts else " (BTS 토큰 주인이 설정의 팀장이 아님)")])
         if new_team:   # 설계 의도 5·7 — 개발팀 그룹에서 한 사람
             who = assign.assignee(tracker, rules, new_team, {**rec["final_fields"], "처리": "개발 배정"},
                                   assign.recent(store.list(flow.REGISTERED)))
@@ -113,13 +115,15 @@ def act(store: Store, tracker, rid: int, action: str, comment: str = "", team: s
     if before not in ok:
         _remember(store, tracker, rid)
         raise Conflict(f"BTS 상태가 지금 {before} 라 {label}을(를) 할 수 없습니다. 홈에서 [지금 동기화]를 누른 뒤 다시 확인하세요")
-    note = f"[트리아지 서비스 · {label}] {comment}".rstrip() if comment or who else ""
+    note = f"[트리아지 서비스 · {label}] {comment}".rstrip() if comment or who or actor_name else ""
     if who:
         note += f" (담당: {who['name']})"
-    return write(store, tracker, rid, label, before, target, new_team, note, who.get("id", ""))
+    if actor_name:   # 설계 의도 9
+        note += f" (실행: {actor_name})"
+    return write(store, tracker, rid, label, before, target, new_team, note, who.get("id", ""), actor_name)
 
 def write(store: Store, tracker, rid: int, label: str, before: str | None, target: str, team: str, note: str,
-          assignee: str = "") -> dict:
+          assignee: str = "", actor: str = "") -> dict:
     """BTS 에 쓰고 다시 읽어 확인한 뒤 기록한다 (설계 의도 3). target 이 비면 상태는 그대로 두는 동작이다."""
     key = store.get(rid)["ticket_key"]
     error = None
@@ -131,7 +135,7 @@ def write(store: Store, tracker, rid: int, label: str, before: str | None, targe
     after = _remember(store, tracker, rid)
     if error is None and target and after != target:
         error = f"BTS 가 바꾸지 않았습니다 (목표 {target}, 지금 {after or '읽지 못함'}) — BTS 워크플로를 확인하세요"
-    store.save_qa(rid, label, before, after, team, note, error)
+    store.save_qa(rid, label, before, after, team, note, error, actor)
     return {"ok": error is None, "after": after, "error": error}
 
 

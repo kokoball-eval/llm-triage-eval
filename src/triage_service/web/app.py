@@ -57,6 +57,10 @@
    회귀 테스트, 검토 대기·실패 리포트 — 버튼이 그 처리 칸으로 데려간다)과 새 리포트 넣기, 내가 넘긴 이슈다. 예전 QA 보드(/qa)는
    홈으로 넘기고, [지금 동기화]는 끝나면 홈으로 돌아간다. 새 리포트 화면(/new)은 링크 미리보기·입력 오류를 다시 그릴 때 쓰고
    메뉴에서는 내 업무에 속한다.
+21. 사람별 로그인(auth 설계 의도 5)이면 요청마다 로그인한 사람을 확인해 이 PC 에서도 로그인을 받는다. 내 업무의 "나"와 긴급 사인
+   확인은 로그인한 사람의 BTS 계정이고, 등록·QA 동작에는 누른 사람의 이름을 남긴다(배정 기록 by, QA 동작 기록 actor, BTS 코멘트
+   "(실행: 이름)"). BTS 에 쓰는 토큰은 서비스 공용이라 BTS 화면에는 공용 계정으로 보인다 — 누가 했는지는 이 기록으로 안다.
+   메뉴·동작을 역할(리더·실무자)로 나누는 것은 다음 단계다.
 """
 
 from contextlib import asynccontextmanager
@@ -76,7 +80,7 @@ from triage_eval.contracts import ENUMS, FIELDS, MODULES, NO_MODULE, split_modul
 from triage_service import assign, auth, config, flow, metrics, qa, review, sync
 from triage_service import sprint as sprint_mod   # 대시보드의 sprint 매개변수와 이름이 겹치지 않게
 from triage_service.bts import make_tracker, settings
-from triage_service.contracts import REPORTERS, TRACKS
+from triage_service.contracts import REPORTERS, TRACKS, Member
 from triage_service import intake
 from triage_service.intake import reception
 from triage_service.intake import settings as intake_settings
@@ -87,7 +91,7 @@ from triage_service.worker import Worker
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 templates.env.globals.update(TITLE_MAX=config.TITLE_MAX, BODY_MAX=config.BODY_MAX, split_modules=split_modules, FIELDS=FIELDS, ENUMS=ENUMS, MODULES=MODULES, NO_MODULE=NO_MODULE, TRACKS=TRACKS, REPORTERS=REPORTERS,
                              STATES=flow.STATES, PENDING=flow.PENDING, REVIEW=flow.REVIEW, FAILED=flow.FAILED,
-                             REFRESH=config.STATUS_REFRESH_SEC, BOTTLENECK_DAYS=config.BOTTLENECK_DAYS)
+                             REFRESH=config.STATUS_REFRESH_SEC, BOTTLENECK_DAYS=config.BOTTLENECK_DAYS, ROLES=auth.ROLES)
 
 
 def create_app(store: Store | None = None, worker: Worker | None = None, tracker=None,
@@ -124,15 +128,20 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
         return await call_next(request)
 
     @app.middleware("http")
-    async def login_required(request: Request, call_next):   # 설계 의도 19
-        if login and request.url.path not in ("/login", "/logout") and request.client.host not in ("127.0.0.1", "::1")                 and not login.valid(request.cookies.get(auth.COOKIE)):
+    async def login_required(request: Request, call_next):   # 설계 의도 19·21
+        user = login.valid(request.cookies.get(auth.COOKIE)) if login else None
+        request.state.user = user
+        here = request.client.host in ("127.0.0.1", "::1") and not login.users if login else True   # 사람별 로그인이면 이 PC 도 로그인
+        if login and user is None and not here and request.url.path not in ("/login", "/logout"):
             return RedirectResponse("/login", status_code=303)
         return await call_next(request)
 
-    syncer = app.state.syncer = sync.Syncer(store, tracker, assign_rules["qa"] if assign_rules else "")   # app.state: 시험이 뒤에서 도는 동기화를 기다릴 수 있게
+    people_teams = tuple(assign.teams(assign_rules)) if login and login.users and assign_rules else ()   # sync 설계 의도 16
+    syncer = app.state.syncer = sync.Syncer(store, tracker, assign_rules["qa"] if assign_rules else "", people_teams)   # app.state: 시험이 뒤에서 도는 동기화를 기다릴 수 있게
 
     def page(request: Request, name: str, status_code: int = 200, **ctx) -> HTMLResponse:
-        return templates.TemplateResponse(request, name, {"bts": syncer.status(), "lan": bool(login), **ctx}, status_code=status_code)
+        return templates.TemplateResponse(request, name, {"bts": syncer.status(), "lan": bool(lan_urls), "user": getattr(request.state, "user", None),
+                                                          **ctx}, status_code=status_code)
 
     def synced_page(request: Request, name: str, **ctx) -> HTMLResponse:
         """설계 의도 15 — 홈·내 업무·대시보드: 때가 됐으면 뒤에서 동기화하고 읽어 둔 값으로 바로 연다."""
@@ -184,19 +193,21 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
     def login_page(request: Request):
         if not login:
             raise HTTPException(404)
-        return page(request, "login.html", lan=False, bts=None, guest=True)   # 로그인 전에는 메뉴·BTS 연결 상태(주소·오류 문구)를 보이지 않는다
+        return page(request, "login.html", lan=False, bts=None, guest=True, named=bool(login.users))   # 로그인 전에는 메뉴·BTS 연결 상태(주소·오류 문구)를 보이지 않는다
 
     @app.post("/login")
     async def login_post(request: Request):   # 설계 의도 19 — 비밀번호 비교·실패 제한은 auth.Login
         if not login:
             raise HTTPException(404)
-        password = t if isinstance(t := (await request.form()).get("password", ""), str) else ""
-        ok = login.check(password, request.client.host)
+        form = await request.form()
+        password, user_id = (t if isinstance(t := form.get(k, ""), str) else "" for k in ("password", "id"))
+        ok = await run_in_threadpool(login.check, password, request.client.host, user_id.strip())   # scrypt(약 40ms)가 다른 요청을 막지 않게
         if not ok:
-            error = "너무 많이 틀렸습니다. 1분 뒤에 다시 시도하세요" if ok is None else "비밀번호가 맞지 않습니다"
-            return page(request, "login.html", status_code=429 if ok is None else 401, error=error, lan=False, bts=None, guest=True)
+            error = "너무 많이 틀렸습니다. 1분 뒤에 다시 시도하세요" if ok is None else                 "이름 또는 비밀번호가 맞지 않습니다" if login.users else "비밀번호가 맞지 않습니다"
+            return page(request, "login.html", status_code=429 if ok is None else 401, error=error, lan=False, bts=None, guest=True,
+                        named=bool(login.users), user_id=user_id)
         done = RedirectResponse("/", status_code=303)
-        done.set_cookie(auth.COOKIE, login.token(), max_age=config.LOGIN_HOURS * 3600, httponly=True, samesite="lax")
+        done.set_cookie(auth.COOKIE, login.token(ok), max_age=config.LOGIN_HOURS * 3600, httponly=True, samesite="lax")
         return done
 
     @app.post("/logout")
@@ -243,7 +254,8 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
     @app.get("/mine", response_class=HTMLResponse)
     def mine(request: Request, mode: str = ""):   # 설계 의도 20, sync 설계 의도 13 — 화면은 읽어 둔 값만 보여 준다
         tickets = [t for m in store.milestones() for t in store.tickets(m["name"])]
-        m = syncer.me and sync.mine(sync.targets(store), tickets, store.ticket_changes(), store.qa_log(), syncer.me)
+        me = person(request)
+        m = me and sync.mine(sync.targets(store), tickets, store.ticket_changes(), store.qa_log(), me)
         return synced_page(request, "mine.html", m=m, rules=bool(assign_rules), synced=syncer.last is not None, me_error=syncer.me_error,
                            review=store.list(flow.REVIEW), failed=store.list(flow.FAILED), open_new=bool(mode),
                            form={"track": "A"}, mode="link" if mode == "link" else "paste",
@@ -253,6 +265,18 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
     async def qa_sync():   # 결과는 홈이 보인다(syncer.last)
         await run_in_threadpool(syncer.now)
         return RedirectResponse("/", status_code=303)
+
+    def person(request: Request):
+        """설계 의도 21 — 내 업무의 "나". 사람별 로그인이면 로그인한 사람의 BTS 계정, 아니면 BTS 토큰 주인(sync 설계 의도 13·16)."""
+        user = getattr(request.state, "user", None)
+        if not (login and login.users and user):
+            return syncer.me
+        return syncer.people.get(user.bts) or Member(user.bts, user.name)
+
+    def actor(request: Request) -> tuple[str, str]:
+        """설계 의도 21 — (BTS 계정, 이름) 누른 사람. 사람별 로그인이 아니면 ("", "") — 예전처럼 토큰 주인으로 본다."""
+        user = getattr(request.state, "user", None)
+        return (user.bts, user.name) if login and login.users and user else ("", "")
 
     def shown(milestones: list[dict], wanted: str) -> str:
         """설계 의도 13·14 — 고른 마일스톤, 없으면 현재, 모두 출시했으면 마지막 마일스톤."""
@@ -327,7 +351,8 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
         member = t if isinstance(t := form.get("member", assign.AUTO), str) and team == assign.AUTO else assign.AUTO   # 설계 의도 16
         sprint_ = t if isinstance(t := form.get("sprint", ""), str) else ""
         try:   # DB·BTS 호출은 기다리는 동안 다른 요청을 막지 않게 스레드에서 (설계 의도 6)
-            await run_in_threadpool(syncer.hold, review.register, store, tracker, rid, values, assign_rules, team, repro, milestone, member, sprint_)
+            await run_in_threadpool(syncer.hold, review.register, store, tracker, rid, values, assign_rules, team, repro, milestone, member, sprint_,
+                                    actor(request)[1])
         except ValueError as e:   # 다시 그릴 때도 구성원을 BTS 에서 읽으므로 스레드에서 (설계 의도 6)
             return await run_in_threadpool(detail_page, request, store.get(rid), values, e.args[0], 422, team, repro, milestone, member, sprint_)
         except flow.FlowError as e:
@@ -345,7 +370,8 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
         action, comment, team = (v if isinstance(v := form.get(k, d), str) else d
                                  for k, d in (("action", ""), ("comment", ""), ("team", assign.AUTO)))
         try:
-            result = await run_in_threadpool(syncer.hold, qa.act, store, tracker, rid, action, comment, team, assign_rules)
+            result = await run_in_threadpool(syncer.hold, qa.act, store, tracker, rid, action, comment, team, assign_rules,
+                                          *actor(request))
         except ValueError as e:
             return qa_refused(request, rid, e.args[0], 422, comment, team)
         except qa.Conflict as e:

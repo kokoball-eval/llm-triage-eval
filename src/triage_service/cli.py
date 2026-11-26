@@ -8,14 +8,21 @@
 3. 자동 배정을 쓰면 --check 가 팀마다 설정한 계정이 BTS 에서 담당자가 될 수 있는지도 확인한다. 계정이 틀리면 등록할
    때마다 BTS 가 거절하기 때문이다.
 4. --check 는 BTS 워크플로에 다섯 상태(contracts.STATUSES)가 있는지도 본다. 없으면 첫 상태·QA 동작이 BTS 에서 거절된다.
+5. --lan 은 같은 와이파이의 휴대폰이 접속하는 망 접속 모드다(auth.py). 시연 비밀번호(.env 의 TRIAGE_DEMO_PASSWORD, 8자 이상)가
+   없으면 시작하지 않는다. 와이파이가 바뀌면 이 PC 의 주소도 바뀌므로 켤 때마다 찾아 받는 주소에 더하고, 휴대폰으로 열 주소와
+   QR 코드를 터미널에 보인다. 주소는 바깥으로 나가는 경로를 고르는 방식(UDP 연결 — 실제로 보내지 않는다)으로 찾고, 인터넷이
+   없는 핫스팟에서도 되도록 이 PC 이름의 주소를 함께 쓴다.
 """
 
+import os
+import socket
 import sys
 from collections import Counter
 
+import segno
 import uvicorn
 
-from triage_service import assign, config, intake
+from triage_service import assign, auth, config, intake
 from triage_service.contracts import STATUSES
 from triage_service.bts import make_tracker, settings
 from triage_service.intake import settings as intake_settings
@@ -24,7 +31,7 @@ from triage_service.web.app import create_app
 
 
 def main(argv: list[str] | None = None) -> int:
-    """uv run triage-serve [--check]. --check 는 서버를 띄우지 않고 BTS 연결(설정·토큰·검색 권한)만 확인한다."""
+    """uv run triage-serve [--check | --lan]. --check 는 서버를 띄우지 않고 BTS 연결(설정·토큰·검색 권한)만 확인한다."""
     argv = sys.argv[1:] if argv is None else argv
     sys.stdout.reconfigure(encoding="utf-8")
     config.load_env()
@@ -64,11 +71,40 @@ def main(argv: list[str] | None = None) -> int:
         on = [s.name for s in intake.make_sources(loaded_sources)]
         print(f"링크 출처: 켜짐 {on or '없음'}" + "".join(f" · {k} 꺼짐({v})" for k, v in loaded_sources["off"].items()))
         return 0
+    login, hosts, url, host = None, config.ALLOWED_HOSTS, "", config.HOST
+    if "--lan" in argv:   # 설계 의도 5
+        password = os.environ.get("TRIAGE_DEMO_PASSWORD", "")
+        if len(password) < config.PASSWORD_MIN:
+            print(f"망 접속 모드에는 .env 의 TRIAGE_DEMO_PASSWORD(시연 비밀번호, {config.PASSWORD_MIN}자 이상)가 필요합니다")
+            return 2
+        ips = lan_addresses()
+        if not ips:
+            print("이 PC 의 와이파이 주소를 찾지 못했습니다 — 와이파이나 핫스팟에 연결했는지 확인하세요")
+            return 2
+        login, hosts, host, url = auth.Login(password), (*config.ALLOWED_HOSTS, *ips), config.LAN_HOST, f"http://{ips[0]}:{config.PORT}"
+        print(f"망 접속 모드 — 같은 와이파이의 휴대폰에서 {url} (공용 시연 비밀번호로 로그인, 암호화하지 않는 HTTP)")
+        segno.make(url).terminal(compact=True)
     print(f"작업 페이지: http://{config.HOST}:{config.PORT}  · BTS: {loaded['use']} ({config.mapping_path().name})  (종료: Ctrl+C)")
     app = create_app(store, tracker=make_tracker(loaded, store), sources=intake.make_sources(loaded_sources),
-                     sources_off=loaded_sources["off"], assign_rules=loaded["assign"])
-    uvicorn.run(app, host=config.HOST, port=config.PORT)
+                     sources_off=loaded_sources["off"], assign_rules=loaded["assign"], allowed_hosts=hosts, login=login, lan_url=url)
+    uvicorn.run(app, host=host, port=config.PORT, proxy_headers=login is None)   # 망 접속 모드에서는 X-Forwarded-For 로 이 PC 인 척하는 것을 막는다
     return 0
+
+
+def lan_addresses() -> list[str]:
+    """설계 의도 5 — 이 PC 의 망 주소(사설 IPv4, 루프백 제외). 바깥으로 나가는 경로의 주소를 앞에 둔다."""
+    found = []
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            s.connect(("10.255.255.255", 1))   # 경로만 고르고 보내지 않는다
+            found.append(s.getsockname()[0])
+    except OSError:
+        pass
+    try:
+        found += socket.gethostbyname_ex(socket.gethostname())[2]
+    except OSError:
+        pass
+    return [ip for ip in dict.fromkeys(found) if not ip.startswith(("127.", "0.", "169.254."))]
 
 
 if __name__ == "__main__":

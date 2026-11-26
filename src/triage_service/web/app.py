@@ -49,6 +49,9 @@
 18. 검토 화면에서 목표 스프린트(sprint.py)를 고른다. 기본값은 리포트를 받은 날과 우선순위로 정한 규칙의 업데이트이고,
    선택지는 지금 진행 중인 업데이트부터 6주다. 대시보드는 고른 스프린트(기본: 지금 진행 중)의 목표 이슈 완료 현황을 보인다.
    스프린트 표식은 마일스톤 티켓에서 읽으므로 마일스톤이 없는 티켓은 세지 않는다.
+19. 망 접속 모드(cli --lan, auth.py)에서는 로그인하지 않은 요청을 로그인 화면으로 보낸다. 이 PC 자신(127.0.0.1)에서 온 요청은
+   지금처럼 받는다. 로그인 화면과 휴대폰 접속 화면(주소·QR)은 망 접속 모드에서만 있다. 받는 주소 목록과 다른 사이트 요청 차단은
+   그대로라, 휴대폰은 이 PC 의 와이파이 주소로만 들어온다.
 """
 
 from contextlib import asynccontextmanager
@@ -59,11 +62,13 @@ from urllib.parse import urlsplit
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from markupsafe import Markup
+import segno
 from starlette.concurrency import run_in_threadpool
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from triage_eval.contracts import ENUMS, FIELDS, MODULES, NO_MODULE, split_modules
-from triage_service import assign, config, flow, metrics, qa, review, sync
+from triage_service import assign, auth, config, flow, metrics, qa, review, sync
 from triage_service import sprint as sprint_mod   # 대시보드의 sprint 매개변수와 이름이 겹치지 않게
 from triage_service.bts import make_tracker, settings
 from triage_service.contracts import REPORTERS, TRACKS
@@ -82,8 +87,10 @@ templates.env.globals.update(TITLE_MAX=config.TITLE_MAX, BODY_MAX=config.BODY_MA
 
 def create_app(store: Store | None = None, worker: Worker | None = None, tracker=None,
                start_worker: bool = True, allowed_hosts=config.ALLOWED_HOSTS,
-               sources: list | None = None, sources_off: dict | None = None, assign_rules: dict | None = None) -> FastAPI:
-    """assign_rules: 자동 배정 규칙(설정 [assign], 없으면 배정하지 않음). tracker 를 넘기지 않으면 설정 파일에서 둘 다 읽는다."""
+               sources: list | None = None, sources_off: dict | None = None, assign_rules: dict | None = None,
+               login: auth.Login | None = None, lan_url: str = "") -> FastAPI:
+    """assign_rules: 자동 배정 규칙(설정 [assign], 없으면 배정하지 않음). tracker 를 넘기지 않으면 설정 파일에서 둘 다 읽는다.
+    login·lan_url: 망 접속 모드(cli --lan)의 로그인과 휴대폰으로 열 주소 — 없으면 지금처럼 이 PC 만 받는다(설계 의도 19)."""
     store = store or Store(config.DB_PATH)
     worker = worker or Worker(store)
     if tracker is None:
@@ -111,10 +118,16 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
                 return PlainTextResponse("다른 사이트에서 보낸 요청은 받지 않습니다", status_code=403)
         return await call_next(request)
 
+    @app.middleware("http")
+    async def login_required(request: Request, call_next):   # 설계 의도 19
+        if login and request.url.path not in ("/login", "/logout") and request.client.host not in ("127.0.0.1", "::1")                 and not login.valid(request.cookies.get(auth.COOKIE)):
+            return RedirectResponse("/login", status_code=303)
+        return await call_next(request)
+
     syncer = app.state.syncer = sync.Syncer(store, tracker, assign_rules["qa"] if assign_rules else "")   # app.state: 시험이 뒤에서 도는 동기화를 기다릴 수 있게
 
     def page(request: Request, name: str, status_code: int = 200, **ctx) -> HTMLResponse:
-        return templates.TemplateResponse(request, name, {"bts": syncer.status(), **ctx}, status_code=status_code)
+        return templates.TemplateResponse(request, name, {"bts": syncer.status(), "lan": bool(login), **ctx}, status_code=status_code)
 
     def synced_page(request: Request, name: str, **ctx) -> HTMLResponse:
         """설계 의도 15 — 첫 화면·QA 보드·내 담당·대시보드: 때가 됐으면 뒤에서 동기화하고 읽어 둔 값으로 바로 연다."""
@@ -161,6 +174,37 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
 
     def counts() -> dict:
         return {s: len(store.list(s)) for s in flow.STATES}
+
+    @app.get("/login", response_class=HTMLResponse)
+    def login_page(request: Request):
+        if not login:
+            raise HTTPException(404)
+        return page(request, "login.html", lan=False, bts=None, guest=True)   # 로그인 전에는 메뉴·BTS 연결 상태(주소·오류 문구)를 보이지 않는다
+
+    @app.post("/login")
+    async def login_post(request: Request):   # 설계 의도 19 — 비밀번호 비교·실패 제한은 auth.Login
+        if not login:
+            raise HTTPException(404)
+        password = t if isinstance(t := (await request.form()).get("password", ""), str) else ""
+        ok = login.check(password, request.client.host)
+        if not ok:
+            error = "너무 많이 틀렸습니다. 1분 뒤에 다시 시도하세요" if ok is None else "비밀번호가 맞지 않습니다"
+            return page(request, "login.html", status_code=429 if ok is None else 401, error=error, lan=False, bts=None, guest=True)
+        done = RedirectResponse("/", status_code=303)
+        done.set_cookie(auth.COOKIE, login.token(), max_age=config.LOGIN_HOURS * 3600, httponly=True, samesite="lax")
+        return done
+
+    @app.post("/logout")
+    def logout():
+        done = RedirectResponse("/login", status_code=303)
+        done.delete_cookie(auth.COOKIE)
+        return done
+
+    @app.get("/connect", response_class=HTMLResponse)
+    def connect(request: Request):   # 설계 의도 19 — 휴대폰으로 열 주소와 QR 코드
+        if not lan_url:
+            raise HTTPException(404)
+        return page(request, "connect.html", url=lan_url, qr=Markup(segno.make(lan_url).svg_inline(scale=8)))
 
     @app.get("/", response_class=HTMLResponse)
     def home(request: Request, milestone: str = ""):   # 설계 의도 8·13

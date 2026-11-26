@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}휴대폰 접속{% endblock %}
+{% block body %}
+<h1>휴대폰 접속</h1>
+<p>같은 와이파이(또는 같은 핫스팟)에 연결한 휴대폰 카메라로 아래 QR 코드를 찍거나 주소를 여세요.</p>
+<div class="card" style="display:inline-block;padding:16px">{{ qr }}</div>
+<p class="big" style="word-break:break-all">{{ url }}</p>
+<p class="muted">로그인은 공용 시연 비밀번호로 합니다. 통신은 암호화되지 않으니(HTTP) 시연 데이터만 쓰고, 카페처럼 기기끼리 막힌 와이파이에서는 휴대폰 핫스팟을 쓰세요.</p>
+{% endblock %}

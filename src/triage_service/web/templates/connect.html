@@ -2,8 +2,16 @@
 {% block title %}휴대폰 접속{% endblock %}
 {% block body %}
 <h1>휴대폰 접속</h1>
-<p>같은 와이파이(또는 같은 핫스팟)에 연결한 휴대폰 카메라로 아래 QR 코드를 찍거나 주소를 여세요.</p>
-<div class="card" style="display:inline-block;padding:16px">{{ qr }}</div>
-<p class="big" style="word-break:break-all">{{ url }}</p>
+<p>휴대폰이 연결된 와이파이(또는 핫스팟)와 같은 망의 주소를 고르세요. 휴대폰 카메라로 QR 코드를 찍거나 주소를 엽니다.{% if urls | length > 1 %} 이 노트북에는 망이 {{ urls | length }}개 붙어 있어 주소가 여러 개입니다.{% endif %}</p>
+<div class="grid">
+{% for url, qr, kind in urls %}
+  <div class="card">
+    <span class="badge" style="{{ 'background:var(--accent);color:#fff' if kind == 'phone' else '' }}">{{ kinds[kind].split(' — ')[0] }}</span>
+    <div style="max-width:220px;margin-top:8px">{{ qr }}</div>
+    <p class="big" style="word-break:break-all;font-size:18px;margin:8px 0 4px">{{ url }}</p>
+    <p class="muted" style="margin:0">{{ kinds[kind].split(' — ')[1] }}</p>
+  </div>
+{% endfor %}
+</div>
 <p class="muted">로그인은 공용 시연 비밀번호로 합니다. 통신은 암호화되지 않으니(HTTP) 시연 데이터만 쓰고, 카페처럼 기기끼리 막힌 와이파이에서는 휴대폰 핫스팟을 쓰세요.</p>
 {% endblock %}

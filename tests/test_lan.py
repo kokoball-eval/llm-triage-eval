@@ -17,7 +17,7 @@ PASSWORD = "demo-pass-1234"
 
 def web(store, login=None):
     app = create_app(store, Worker(store, client_factory=FakeClient), fake(store), start_worker=False,
-                     allowed_hosts=("testserver",), sources=[], login=login, lan_url="http://192.168.0.23:8000" if login else "")
+                     allowed_hosts=("testserver",), sources=[], login=login, lan_urls=[("http://192.168.0.23:8000", "phone"), ("http://10.2.16.88:8000", "pc"), ("http://172.22.64.1:8000", "virtual")] if login else [])
     return TestClient(app)
 
 
@@ -67,7 +67,8 @@ def test_lan_requires_login_then_works(store):
     page = client.get("/").text
     assert "로그아웃" in page and "휴대폰 접속" in page
     connect = client.get("/connect").text
-    assert "<svg" in connect and "http://192.168.0.23:8000" in connect
+    assert connect.count("<svg") >= 3 and "http://192.168.0.23:8000" in connect and "http://10.2.16.88:8000" in connect   # 주소마다 QR
+    assert connect.count("휴대폰용") >= 1 and "PC용(유선)" in connect and "가상 망" in connect   # 종류 구분
     client.post("/logout")
     assert client.get("/", follow_redirects=False).status_code == 303
 
@@ -89,8 +90,8 @@ def test_forged_cookie_and_foreign_host_rejected(store):
 
 # ── 실행 명령 ────────────────────────────────────────────
 
-@pytest.mark.parametrize("password", [None, "short"])
-def test_cli_lan_refuses_without_strong_password(password, tmp_path, monkeypatch, capsys):
+@pytest.mark.parametrize("password, said", [(None, "줄이 필요합니다"), ("short", "5자입니다")])
+def test_cli_lan_refuses_without_strong_password(password, said, tmp_path, monkeypatch, capsys):
     monkeypatch.setenv("TRIAGE_BTS_MAPPING", str(config.MAPPING_PATH))
     monkeypatch.setattr(config, "DB_PATH", tmp_path / "service.db")
     monkeypatch.setattr(config, "load_env", lambda: None)   # 이 PC 의 .env 에 시연 비밀번호가 있어도 시험이 흔들리지 않게
@@ -100,7 +101,8 @@ def test_cli_lan_refuses_without_strong_password(password, tmp_path, monkeypatch
         monkeypatch.setenv("TRIAGE_DEMO_PASSWORD", password)
     monkeypatch.setattr(cli.uvicorn, "run", lambda *a, **k: pytest.fail("서버를 띄우면 안 된다"))
     assert cli.main(["--lan"]) == 2
-    assert "TRIAGE_DEMO_PASSWORD" in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert "TRIAGE_DEMO_PASSWORD" in out and said in out   # 없을 때와 짧을 때를 구분해 알린다
 
 
 def test_cli_lan_starts_on_all_interfaces_with_lan_host(tmp_path, monkeypatch, capsys):
@@ -108,17 +110,35 @@ def test_cli_lan_starts_on_all_interfaces_with_lan_host(tmp_path, monkeypatch, c
     monkeypatch.setattr(config, "DB_PATH", tmp_path / "service.db")
     monkeypatch.setenv("TRIAGE_DEMO_PASSWORD", PASSWORD)
     monkeypatch.setattr(config, "load_env", lambda: None)
-    monkeypatch.setattr(cli, "lan_addresses", lambda: ["192.168.0.23"])
+    monkeypatch.setattr(cli, "lan_addresses", lambda: [("192.168.0.23", "phone"), ("10.2.16.88", "pc")])
     seen = {}
     monkeypatch.setattr(cli.uvicorn, "run", lambda app, host, port, proxy_headers: seen.update(app=app, host=host, proxy=proxy_headers))
     assert cli.main(["--lan"]) == 0
     out = capsys.readouterr().out
-    assert seen["host"] == config.LAN_HOST and "http://192.168.0.23:8000" in out
+    assert seen["host"] == config.LAN_HOST and "http://192.168.0.23:8000" in out and "http://10.2.16.88:8000" in out   # 주소를 모두 보인다
+    assert "주소별 QR" in out and "휴대폰용" in out and "PC용(유선)" in out   # 터미널에도 종류를 적는다
     assert seen["proxy"] is False   # X-Forwarded-For 로 이 PC(127.0.0.1)인 척해 로그인을 건너뛰지 못하게
+    for ip in ("192.168.0.23", "10.2.16.88"):   # 두 망 주소 모두에서 받는다
+        client = TestClient(seen["app"], base_url=f"http://{ip}:8000")
+        assert client.get("/", follow_redirects=False).headers["location"] == "/login"
     client = TestClient(seen["app"], base_url="http://192.168.0.23:8000")
     assert client.get("/", follow_redirects=False).headers["location"] == "/login"   # 와이파이 주소로 온 요청을 받는다(로그인 화면으로)
 
 
-def test_lan_addresses_skip_loopback(monkeypatch):
-    monkeypatch.setattr(cli.socket, "gethostbyname_ex", lambda name: (name, [], ["127.0.0.1", "169.254.3.4", "192.168.0.23"]))
-    assert "192.168.0.23" in cli.lan_addresses() and "127.0.0.1" not in cli.lan_addresses()
+@pytest.mark.parametrize("card, kind", [
+    ("Wi-Fi", "phone"), ("WLAN", "phone"), ("무선 LAN 어댑터", "phone"),
+    ("이더넷", "pc"), ("Ethernet 2", "pc"),
+    ("vEthernet (WSL (Hyper-V firewall))", "virtual"), ("VMware Network Adapter VMnet8", "virtual"), ("Bluetooth 네트워크 연결", "virtual"),
+    ("낯선 이름", "other")])
+def test_kind_of_card_name(card, kind):
+    assert cli.kind_of(card) == kind
+
+
+def test_lan_addresses_by_card_phone_first_and_skip_loopback(monkeypatch):
+    import socket
+    from types import SimpleNamespace as NS
+    inet = lambda ip: NS(family=socket.AF_INET, address=ip)   # noqa: E731
+    monkeypatch.setattr(cli.psutil, "net_if_addrs", lambda: {
+        "이더넷": [inet("10.2.16.88")], "vEthernet (WSL)": [inet("172.22.64.1")], "Wi-Fi": [inet("10.2.165.60"), inet("10.2.165.60")],
+        "Loopback Pseudo-Interface 1": [inet("127.0.0.1")], "로컬 영역 연결* 1": [inet("169.254.72.174")]})
+    assert cli.lan_addresses() == [("10.2.165.60", "phone"), ("10.2.16.88", "pc"), ("172.22.64.1", "virtual")]

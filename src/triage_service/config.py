@@ -31,6 +31,9 @@ ALLOWED_HOSTS = ("127.0.0.1", "localhost")
 LAN_HOST = "0.0.0.0"      # 망 접속 모드(--lan)에서 받는 주소 — 이 PC 의 모든 망 (auth 설계 의도 1)
 PASSWORD_MIN = 8          # 망 접속 모드의 시연 비밀번호 최소 길이 (.env 의 TRIAGE_DEMO_PASSWORD)
 LOGIN_MAX_FAILS = 5       # 같은 기기에서 1분에 이만큼 틀리면 잠시 막는다 (auth 설계 의도 2)
+# 망 접속 모드 화면·터미널에 적는 주소 종류 (cli 설계 의도 5)
+KINDS = {"phone": "휴대폰용 — 휴대폰이 같은 Wi-Fi에 있을 때", "pc": "PC용(유선) — 휴대폰은 접속할 수 없음",
+         "virtual": "가상 망 — 휴대폰은 접속할 수 없음", "other": "종류를 알 수 없음 — 안 열리면 다른 주소를 쓰세요"}
 LOGIN_HOURS = 12          # 로그인 쿠키가 유효한 시간 (auth 설계 의도 3)
 MAPPING_PATH = ROOT / "설정" / "bts_매핑.toml"              # 저장소에 올리는 예시 설정
 LOCAL_MAPPING_PATH = ROOT / "설정" / "bts_매핑.local.toml"  # 실제 사이트 설정 (git 제외)

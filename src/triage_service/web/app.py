@@ -88,9 +88,9 @@ templates.env.globals.update(TITLE_MAX=config.TITLE_MAX, BODY_MAX=config.BODY_MA
 def create_app(store: Store | None = None, worker: Worker | None = None, tracker=None,
                start_worker: bool = True, allowed_hosts=config.ALLOWED_HOSTS,
                sources: list | None = None, sources_off: dict | None = None, assign_rules: dict | None = None,
-               login: auth.Login | None = None, lan_url: str = "") -> FastAPI:
+               login: auth.Login | None = None, lan_urls: list[tuple[str, str]] | None = None) -> FastAPI:
     """assign_rules: 자동 배정 규칙(설정 [assign], 없으면 배정하지 않음). tracker 를 넘기지 않으면 설정 파일에서 둘 다 읽는다.
-    login·lan_url: 망 접속 모드(cli --lan)의 로그인과 휴대폰으로 열 주소 — 없으면 지금처럼 이 PC 만 받는다(설계 의도 19)."""
+    login·lan_urls: 망 접속 모드(cli --lan)의 로그인과 휴대폰으로 열 수 있는 (주소, 종류) 목록 — 없으면 지금처럼 이 PC 만 받는다(설계 의도 19)."""
     store = store or Store(config.DB_PATH)
     worker = worker or Worker(store)
     if tracker is None:
@@ -202,9 +202,9 @@ def create_app(store: Store | None = None, worker: Worker | None = None, tracker
 
     @app.get("/connect", response_class=HTMLResponse)
     def connect(request: Request):   # 설계 의도 19 — 휴대폰으로 열 주소와 QR 코드
-        if not lan_url:
+        if not lan_urls:
             raise HTTPException(404)
-        return page(request, "connect.html", url=lan_url, qr=Markup(segno.make(lan_url).svg_inline(scale=8)))
+        return page(request, "connect.html", urls=[(u, Markup(segno.make(u).svg_inline(scale=6)), kind) for u, kind in lan_urls], kinds=config.KINDS)
 
     @app.get("/", response_class=HTMLResponse)
     def home(request: Request, milestone: str = ""):   # 설계 의도 8·13

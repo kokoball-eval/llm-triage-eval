@@ -10,8 +10,11 @@
 4. --check 는 BTS 워크플로에 다섯 상태(contracts.STATUSES)가 있는지도 본다. 없으면 첫 상태·QA 동작이 BTS 에서 거절된다.
 5. --lan 은 같은 와이파이의 휴대폰이 접속하는 망 접속 모드다(auth.py). 시연 비밀번호(.env 의 TRIAGE_DEMO_PASSWORD, 8자 이상)가
    없으면 시작하지 않는다. 와이파이가 바뀌면 이 PC 의 주소도 바뀌므로 켤 때마다 찾아 받는 주소에 더하고, 휴대폰으로 열 주소와
-   QR 코드를 터미널에 보인다. 주소는 바깥으로 나가는 경로를 고르는 방식(UDP 연결 — 실제로 보내지 않는다)으로 찾고, 인터넷이
-   없는 핫스팟에서도 되도록 이 PC 이름의 주소를 함께 쓴다.
+   QR 코드를 터미널에 보인다. 주소는 psutil 로 네트워크 카드마다 읽고, 카드 이름으로 휴대폰용(Wi-Fi)·PC용(유선)·가상 망을
+   짐작해 주소 옆에 적는다(2026-11-26 경민 요청). 노트북이 유선과 와이파이에 함께 붙어 있으면 주소가 여럿이고 서버는 휴대폰이 어느
+   망에 있는지 모른다(실제 시연 준비에서 QR 이 유선 주소를 가리켜 휴대폰이 접속하지 못했다). 그래서 하나만 고르지 않고 모두 보여
+   주며, 주소가 둘 이상이면 QR 은 /connect 화면에서 주소별로 본다. shortcut: 카드 이름 단어로 짐작하는 것이라 낯선 이름은
+   "알 수 없음"으로 나온다 — 그런 이름이 나오면 kind_of 의 단어를 더한다.
 """
 
 import os
@@ -19,6 +22,7 @@ import socket
 import sys
 from collections import Counter
 
+import psutil
 import segno
 import uvicorn
 
@@ -71,40 +75,54 @@ def main(argv: list[str] | None = None) -> int:
         on = [s.name for s in intake.make_sources(loaded_sources)]
         print(f"링크 출처: 켜짐 {on or '없음'}" + "".join(f" · {k} 꺼짐({v})" for k, v in loaded_sources["off"].items()))
         return 0
-    login, hosts, url, host = None, config.ALLOWED_HOSTS, "", config.HOST
+    login, hosts, urls, host = None, config.ALLOWED_HOSTS, [], config.HOST
     if "--lan" in argv:   # 설계 의도 5
         password = os.environ.get("TRIAGE_DEMO_PASSWORD", "")
         if len(password) < config.PASSWORD_MIN:
-            print(f"망 접속 모드에는 .env 의 TRIAGE_DEMO_PASSWORD(시연 비밀번호, {config.PASSWORD_MIN}자 이상)가 필요합니다")
+            print("망 접속 모드에는 .env 의 TRIAGE_DEMO_PASSWORD(시연 비밀번호) 줄이 필요합니다" if not password else
+                  f"TRIAGE_DEMO_PASSWORD 가 {len(password)}자입니다 — {config.PASSWORD_MIN}자 이상으로 바꾸세요")
             return 2
-        ips = lan_addresses()
-        if not ips:
+        found = lan_addresses()
+        if not found:
             print("이 PC 의 와이파이 주소를 찾지 못했습니다 — 와이파이나 핫스팟에 연결했는지 확인하세요")
             return 2
-        login, hosts, host, url = auth.Login(password), (*config.ALLOWED_HOSTS, *ips), config.LAN_HOST, f"http://{ips[0]}:{config.PORT}"
-        print(f"망 접속 모드 — 같은 와이파이의 휴대폰에서 {url} (공용 시연 비밀번호로 로그인, 암호화하지 않는 HTTP)")
-        segno.make(url).terminal(compact=True)
+        urls = [(f"http://{ip}:{config.PORT}", kind) for ip, kind in found]
+        login, hosts, host = auth.Login(password), (*config.ALLOWED_HOSTS, *(ip for ip, _ in found)), config.LAN_HOST
+        print("망 접속 모드 — 휴대폰이 붙은 망의 주소로 여세요 (공용 시연 비밀번호로 로그인, 암호화하지 않는 HTTP):")
+        for u, kind in urls:
+            print(f"  {u}   [{config.KINDS[kind]}]")
+        if len(urls) == 1:
+            segno.make(urls[0][0]).terminal(compact=True)
+        else:   # 유선·와이파이·가상 망이 함께 있으면 어느 주소가 휴대폰의 망인지 서버는 모른다 — QR 은 화면에서 주소별로 본다
+            print(f"망이 여러 개입니다. 노트북 브라우저에서 http://127.0.0.1:{config.PORT}/connect 를 열면 주소별 QR 코드가 있습니다.")
     print(f"작업 페이지: http://{config.HOST}:{config.PORT}  · BTS: {loaded['use']} ({config.mapping_path().name})  (종료: Ctrl+C)")
     app = create_app(store, tracker=make_tracker(loaded, store), sources=intake.make_sources(loaded_sources),
-                     sources_off=loaded_sources["off"], assign_rules=loaded["assign"], allowed_hosts=hosts, login=login, lan_url=url)
+                     sources_off=loaded_sources["off"], assign_rules=loaded["assign"], allowed_hosts=hosts, login=login, lan_urls=urls)
     uvicorn.run(app, host=host, port=config.PORT, proxy_headers=login is None)   # 망 접속 모드에서는 X-Forwarded-For 로 이 PC 인 척하는 것을 막는다
     return 0
 
 
-def lan_addresses() -> list[str]:
-    """설계 의도 5 — 이 PC 의 망 주소(사설 IPv4, 루프백 제외). 바깥으로 나가는 경로의 주소를 앞에 둔다."""
-    found = []
-    try:
-        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-            s.connect(("10.255.255.255", 1))   # 경로만 고르고 보내지 않는다
-            found.append(s.getsockname()[0])
-    except OSError:
-        pass
-    try:
-        found += socket.gethostbyname_ex(socket.gethostname())[2]
-    except OSError:
-        pass
-    return [ip for ip in dict.fromkeys(found) if not ip.startswith(("127.", "0.", "169.254."))]
+ORDER = {kind: i for i, kind in enumerate(config.KINDS)}   # 휴대폰용을 앞에 둔다
+
+
+def kind_of(card: str) -> str:
+    """설계 의도 5 — 네트워크 카드 이름으로 주소의 종류(KINDS 의 키)를 짐작한다. 이름은 윈도우 언어마다 다르다(이더넷·Ethernet)."""
+    name = card.lower()
+    if any(w in name for w in ("vethernet", "wsl", "docker", "vmware", "virtualbox", "vbox", "hyper-v", "tailscale", "bluetooth")):
+        return "virtual"
+    if any(w in name for w in ("wi-fi", "wifi", "wlan", "wireless", "무선")):
+        return "phone"
+    return "pc" if any(w in name for w in ("ethernet", "이더넷", "eth")) else "other"
+
+
+def lan_addresses() -> list[tuple[str, str]]:
+    """설계 의도 5 — 이 PC 의 망 주소(IPv4, 루프백·자동 할당 제외)와 종류. 휴대폰용이 앞이다."""
+    found = {}
+    for card, addresses in psutil.net_if_addrs().items():
+        for a in addresses:
+            if a.family == socket.AF_INET and not a.address.startswith(("127.", "0.", "169.254.")):
+                found.setdefault(a.address, kind_of(card))
+    return sorted(found.items(), key=lambda item: ORDER[item[1]])
 
 
 if __name__ == "__main__":
